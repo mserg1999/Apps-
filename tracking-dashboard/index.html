@@ -15,20 +15,23 @@
 <script src="vendor/chart.umd.js"></script>
 <style>
   :root{
-    --bg:#f2f5f9;
+    --bg:#f5f3fb;
     --panel:#ffffff;
-    --ink:#1b2733;
-    --muted:#64748b;
-    --accent:#2563eb;
-    --accent-dark:#1d4ed8;
-    --success:#16a34a;
-    --success-bg:#e7f6ec;
-    --warning:#d97706;
-    --warning-bg:#fdf1e0;
-    --danger:#dc2626;
-    --danger-bg:#fbe7e7;
-    --border:#e2e8f0;
-    --shadow:0 8px 24px rgba(15,23,42,0.08);
+    --ink:#3f3d56;
+    --muted:#8b899e;
+    --accent:#4f46e5;
+    --accent-dark:#3f37c9;
+    --accent-soft:#a5b4fc;
+    --accent-bg:#eef1ff;
+    --success:#059669;
+    --success-bg:#d1fae5;
+    --warning:#b45309;
+    --warning-bg:#fef3c7;
+    --danger:#be123c;
+    --danger-bg:#ffe4e6;
+    --neutral-tint:#f1edfa;
+    --border:#ece9f7;
+    --shadow:0 8px 24px rgba(90,80,150,0.08);
     --radius:14px;
   }
   *{box-sizing:border-box;}
@@ -79,7 +82,7 @@
     cursor:pointer;
     transition:background .15s ease, color .15s ease;
   }
-  .tab-btn:hover{background:#eef2f7;}
+  .tab-btn:hover{background:var(--neutral-tint);}
   .tab-btn.active{background:var(--accent); color:#fff;}
   .topbar-actions{display:flex; gap:8px; flex-wrap:wrap;}
 
@@ -126,6 +129,40 @@
   .stat-card.danger{border-left-color:var(--danger);}
   .stat-card.ok{border-left-color:var(--success);}
   .stat-num{font-size:1.9rem; font-weight:800;}
+
+  .section-title{margin:0 0 12px; font-size:1.1rem; color:var(--ink); font-weight:800;}
+  .status-board{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:16px;
+    margin-bottom:24px;
+  }
+  @media (max-width:1000px){ .status-board{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:560px){ .status-board{grid-template-columns:1fr;} }
+  .status-box{
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:20px;
+    min-height:230px;
+    display:flex;
+    flex-direction:column;
+  }
+  .status-box.tone-not-started{background:var(--accent-bg);}
+  .status-box.tone-in-progress{background:var(--warning-bg);}
+  .status-box.tone-blocked{background:var(--danger-bg);}
+  .status-box.tone-done{background:var(--success-bg);}
+  .status-box-head{display:flex; align-items:baseline; gap:10px; margin-bottom:14px;}
+  .status-box-count{font-size:2.6rem; font-weight:800; line-height:1;}
+  .status-box.tone-not-started .status-box-count{color:var(--accent-dark);}
+  .status-box.tone-in-progress .status-box-count{color:var(--warning);}
+  .status-box.tone-blocked .status-box-count{color:var(--danger);}
+  .status-box.tone-done .status-box-count{color:var(--success);}
+  .status-box-label{font-weight:700; font-size:0.95rem; color:var(--ink);}
+  .status-box-list{list-style:none; margin:0; padding:0; flex:1; overflow-y:auto; max-height:190px; display:flex; flex-direction:column; gap:6px;}
+  .status-box-list li{background:rgba(255,255,255,0.55); border-radius:8px; padding:8px 10px; font-size:0.82rem; font-weight:600; color:var(--ink);}
+  .status-box-list .sb-due{display:block; font-weight:600; font-size:0.72rem; color:var(--muted); margin-top:2px;}
+  .status-box-more{font-size:0.78rem; color:var(--muted); font-weight:700; margin-top:8px;}
+  .status-box-empty{color:var(--muted); font-size:0.85rem; text-align:center; margin:auto 0;}
   .stat-label{color:var(--muted); font-size:0.85rem; font-weight:600;}
 
   button.pill{
@@ -141,7 +178,7 @@
   }
   button.pill:hover{transform:translateY(-1px);}
   .pill.green{background:var(--accent); color:#fff;}
-  .pill.grey{background:#eef2f7; color:var(--ink);}
+  .pill.grey{background:var(--neutral-tint); color:var(--ink);}
   .pill.red{background:var(--danger-bg); color:var(--danger);}
   .pill.ghost{background:transparent; border:1.5px solid var(--border); color:var(--ink);}
   .pill.small{padding:5px 12px; font-size:0.75rem;}
@@ -174,7 +211,7 @@
   }
   .toolbar input#taskSearch, .toolbar input#sheetSearch{flex:1; min-width:160px;}
   .toolbar label{display:flex; align-items:center; gap:6px; font-size:0.85rem; color:var(--muted); font-weight:600;}
-  .view-toggle{display:flex; gap:4px; background:#eef2f7; border-radius:999px; padding:3px;}
+  .view-toggle{display:flex; gap:4px; background:var(--neutral-tint); border-radius:999px; padding:3px;}
   .view-toggle button{background:transparent; color:var(--muted);}
   .view-toggle button.active{background:var(--panel); color:var(--ink); box-shadow:0 2px 6px rgba(15,23,42,0.12);}
 
@@ -201,35 +238,35 @@
     font-size:0.72rem;
     font-weight:700;
   }
-  .badge.priority-low{background:#eef2f7; color:var(--muted);}
-  .badge.priority-medium{background:#e0edff; color:var(--accent-dark);}
+  .badge.priority-low{background:var(--neutral-tint); color:var(--muted);}
+  .badge.priority-medium{background:var(--accent-bg); color:var(--accent-dark);}
   .badge.priority-high{background:var(--warning-bg); color:var(--warning);}
   .badge.priority-urgent{background:var(--danger-bg); color:var(--danger);}
-  .badge.status-not-started{background:#eef2f7; color:var(--muted);}
+  .badge.status-not-started{background:var(--accent-bg); color:var(--accent-dark);}
   .badge.status-in-progress{background:var(--warning-bg); color:var(--warning);}
   .badge.status-blocked{background:var(--danger-bg); color:var(--danger);}
   .badge.status-done{background:var(--success-bg); color:var(--success);}
-  .badge.due-badge{background:#eef2f7; color:var(--muted);}
+  .badge.due-badge{background:var(--neutral-tint); color:var(--muted);}
   .badge.due-badge.overdue-tag{background:var(--danger-bg); color:var(--danger);}
-  .tag-chip{background:#eef2f7; color:var(--muted); padding:2px 9px; border-radius:999px; font-size:0.72rem;}
+  .tag-chip{background:var(--neutral-tint); color:var(--muted); padding:2px 9px; border-radius:999px; font-size:0.72rem;}
   .task-actions{display:flex; gap:6px; flex-shrink:0;}
   .icon-btn{border:none; background:transparent; cursor:pointer; font-size:1rem; color:var(--muted); padding:4px 6px; border-radius:8px;}
-  .icon-btn:hover{background:#eef2f7;}
+  .icon-btn:hover{background:var(--neutral-tint);}
 
   .board-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
   @media (max-width:1000px){ .board-grid{grid-template-columns:repeat(2,1fr);} }
   @media (max-width:560px){ .board-grid{grid-template-columns:1fr;} }
-  .board-col{background:#f7f9fc; border-radius:12px; padding:12px; min-height:80px;}
+  .board-col{background:var(--neutral-tint); border-radius:12px; padding:12px; min-height:80px;}
   .board-col h3{margin:0 0 10px; font-size:0.85rem; color:var(--muted); display:flex; justify-content:space-between;}
   .board-card{background:var(--panel); border-radius:10px; padding:10px 12px; margin-bottom:8px; box-shadow:0 2px 8px rgba(15,23,42,0.06);}
   .board-card.overdue{box-shadow:inset 0 0 0 1.5px var(--danger);}
   .board-card .task-title{font-size:0.88rem;}
   .board-card{cursor:grab;}
   .board-card.dragging{opacity:0.4;}
-  .board-col.drag-over{background:#e0edff;}
+  .board-col.drag-over{background:var(--accent-bg);}
 
   .subtask-toggle{
-    background:#eef2f7; color:var(--muted); border:none; border-radius:999px;
+    background:var(--neutral-tint); color:var(--muted); border:none; border-radius:999px;
     padding:3px 10px; font-size:0.72rem; font-weight:700; cursor:pointer;
   }
   .subtask-toggle.all-done{background:var(--success-bg); color:var(--success);}
@@ -242,14 +279,14 @@
   .subtask-add-row{display:flex; gap:8px; margin-top:4px;}
   .subtask-add-row input{flex:1; font-size:0.82rem; padding:6px 10px;}
 
-  .import-panel{background:#f7f9fc; border-radius:12px; padding:16px; margin-top:14px;}
+  .import-panel{background:var(--neutral-tint); border-radius:12px; padding:16px; margin-top:14px;}
   .import-panel textarea{width:100%; font-family:monospace; font-size:0.8rem;}
   .sheet-checkbox-row{display:flex; align-items:center; gap:8px; padding:6px 0; font-size:0.88rem;}
 
   .summary-list{list-style:none; margin:0; padding:0; max-height:340px; overflow-y:auto;}
   .summary-list li{
     display:flex; justify-content:space-between; align-items:center;
-    padding:10px 12px; border-radius:10px; background:#f7f9fc; margin-bottom:8px; gap:10px;
+    padding:10px 12px; border-radius:10px; background:var(--neutral-tint); margin-bottom:8px; gap:10px;
   }
   .summary-list .sd{font-weight:700; font-size:0.88rem;}
   .summary-list .st{color:var(--muted); font-size:0.8rem;}
@@ -258,7 +295,7 @@
   .table-scroll{overflow-x:auto; border:1px solid var(--border); border-radius:12px;}
   table{border-collapse:collapse; width:100%; font-size:0.85rem;}
   table th, table td{padding:9px 12px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap;}
-  table th{background:#f7f9fc; cursor:pointer; user-select:none; position:sticky; top:0;}
+  table th{background:var(--neutral-tint); cursor:pointer; user-select:none; position:sticky; top:0;}
   table th .sort-arrow{color:var(--accent); margin-left:4px;}
   table tbody tr:hover{background:#fafcff;}
   .load-more-wrap{text-align:center; margin-top:14px;}
@@ -271,7 +308,7 @@
   .top-values{display:flex; flex-direction:column; gap:6px; margin-top:6px;}
   .top-value-bar-wrap{display:flex; align-items:center; gap:8px; font-size:0.82rem;}
   .top-value-label{width:110px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .top-value-track{width:120px; flex-shrink:0; background:#eef2f7; border-radius:6px; overflow:hidden;}
+  .top-value-track{width:120px; flex-shrink:0; background:var(--neutral-tint); border-radius:6px; overflow:hidden;}
   .top-value-bar{height:8px; border-radius:6px; background:var(--accent);}
   .top-value-count{color:var(--muted); font-size:0.78rem; flex-shrink:0; width:28px; text-align:right;}
 
@@ -306,6 +343,9 @@
 
 <!-- OVERVIEW -->
 <section id="tab-overview" class="tab-panel active">
+  <h2 class="section-title">🟣 Live Task Status</h2>
+  <div class="status-board" id="statusBoard"></div>
+
   <div class="stat-grid">
     <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Total tasks</div></div>
     <div class="stat-card warn"><div class="stat-num" id="statInProgress">0</div><div class="stat-label">In progress</div></div>
@@ -1112,8 +1152,57 @@
   const upcomingEmpty = document.getElementById('upcomingEmpty');
   const sheetsSummaryList = document.getElementById('sheetsSummaryList');
   const sheetsSummaryEmpty = document.getElementById('sheetsSummaryEmpty');
+  const statusBoard = document.getElementById('statusBoard');
+
+  function renderStatusBoard(){
+    statusBoard.innerHTML = '';
+    ['not-started','in-progress','blocked','done'].forEach(statusKey => {
+      const box = document.createElement('div');
+      box.className = `status-box tone-${statusKey}`;
+
+      const statusTasks = tasks.filter(t => t.status === statusKey).sort((a,b) => {
+        if(!a.dueDate && !b.dueDate) return 0;
+        if(!a.dueDate) return 1;
+        if(!b.dueDate) return -1;
+        return a.dueDate.localeCompare(b.dueDate);
+      });
+
+      const head = document.createElement('div');
+      head.className = 'status-box-head';
+      head.innerHTML = `<span class="status-box-count">${statusTasks.length}</span><span class="status-box-label">${STATUS_LABELS[statusKey]}</span>`;
+      box.appendChild(head);
+
+      if(!statusTasks.length){
+        const empty = document.createElement('div');
+        empty.className = 'status-box-empty';
+        empty.textContent = 'Nothing here';
+        box.appendChild(empty);
+      } else {
+        const list = document.createElement('ul');
+        list.className = 'status-box-list';
+        const visible = statusTasks.slice(0, 6);
+        visible.forEach(t => {
+          const li = document.createElement('li');
+          const overdue = isOverdue(t);
+          li.innerHTML = escapeHtml(t.title) + (t.dueDate
+            ? `<span class="sb-due">${overdue ? '⚠ Overdue — ' : '📅 '}${fmtDate(t.dueDate)}</span>`
+            : '');
+          list.appendChild(li);
+        });
+        box.appendChild(list);
+        if(statusTasks.length > visible.length){
+          const more = document.createElement('div');
+          more.className = 'status-box-more';
+          more.textContent = `+${statusTasks.length - visible.length} more`;
+          box.appendChild(more);
+        }
+      }
+      statusBoard.appendChild(box);
+    });
+  }
 
   function renderOverview(){
+    renderStatusBoard();
     document.getElementById('statTotal').textContent = tasks.length;
     document.getElementById('statInProgress').textContent = tasks.filter(t => t.status === 'in-progress').length;
     document.getElementById('statOverdue').textContent = tasks.filter(isOverdue).length;
@@ -1528,7 +1617,9 @@
         datasets: [{
           label: measure === '__count__' ? 'Count of rows' : ('Sum of ' + measure),
           data: values,
-          backgroundColor: '#2563eb',
+          backgroundColor: '#a5b4fc',
+          borderColor: '#4f46e5',
+          borderWidth: 1.5,
           borderRadius: 6
         }]
       },
