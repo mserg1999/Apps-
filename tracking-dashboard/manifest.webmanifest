@@ -1,0 +1,13 @@
+{
+  "name": "Work Tracking Dashboard",
+  "short_name": "Dashboard",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f1b26",
+  "theme_color": "#1e405c",
+  "description": "Track pending work tasks live and import data sheets for quick analysis.",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
