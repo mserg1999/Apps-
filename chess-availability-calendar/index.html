@@ -91,6 +91,46 @@
     width:110px;
     color:var(--ink);
   }
+  .role-bar{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin:10px auto 0;
+    max-width:640px;
+    padding:0 16px;
+  }
+  .role-label{
+    color:var(--muted);
+    font-size:0.85rem;
+    font-weight:700;
+  }
+  .role-btn{
+    border:2px solid transparent;
+    background:var(--panel);
+    box-shadow:var(--shadow);
+    border-radius:999px;
+    padding:7px 16px;
+    font-weight:700;
+    font-size:0.85rem;
+    cursor:pointer;
+    color:var(--muted);
+    font-family:inherit;
+    transition:transform .12s ease;
+  }
+  .role-btn:hover{transform:translateY(-1px);}
+  .role-btn.active{
+    background:var(--accent);
+    color:#fff;
+  }
+  .stats-line{
+    text-align:center;
+    color:var(--muted);
+    font-size:0.85rem;
+    font-weight:700;
+    margin:0 0 12px;
+  }
   .container{
     max-width:1100px;
     margin:28px auto 0;
@@ -181,6 +221,11 @@
     color:var(--accent-dark);
   }
   .day-cell.selected.has-slots::after{color:#fff;}
+  .day-cell.has-confirmed::after{
+    content:'♚';
+    color:var(--accent-dark);
+  }
+  .day-cell.selected.has-confirmed::after{color:#fff;}
   .day-cell .dnum{font-size:0.95rem;}
 
   .time-panel-empty{
@@ -220,6 +265,11 @@
     border-color:var(--accent-dark);
   }
   .slot.on::before{content:'♞ ';}
+  .slot.on.confirmed{
+    background:var(--accent-dark);
+    box-shadow: inset 0 0 0 2px #fff3;
+  }
+  .slot.on.confirmed::before{content:'♚ ';}
   .day-actions{
     display:flex;
     gap:10px;
@@ -255,6 +305,11 @@
     border-radius:10px;
     background:#faf3e6;
     margin-bottom:8px;
+    gap:10px;
+  }
+  .summary-list li.confirmed-row{
+    background:#e3efe8;
+    box-shadow: inset 0 0 0 1px var(--accent);
   }
   .summary-list .sd{
     font-weight:800;
@@ -264,7 +319,34 @@
     color:var(--muted);
     font-size:0.8rem;
   }
-  .summary-list button{
+  .summary-list .added-by{
+    color:var(--muted);
+    font-size:0.75rem;
+    font-style:italic;
+  }
+  .summary-list .row-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-shrink:0;
+  }
+  .summary-list .confirm-toggle{
+    border:none;
+    border-radius:999px;
+    padding:6px 12px;
+    font-weight:700;
+    font-size:0.75rem;
+    cursor:pointer;
+    font-family:inherit;
+    background:var(--board-light);
+    color:var(--ink);
+    white-space:nowrap;
+  }
+  .summary-list .confirm-toggle.is-confirmed{
+    background:var(--accent);
+    color:#fff;
+  }
+  .summary-list .remove-range{
     border:none;
     background:none;
     color:var(--danger);
@@ -383,6 +465,12 @@
   </div>
 </div>
 
+<div class="role-bar">
+  <span class="role-label">On this device, I'm:</span>
+  <button class="role-btn" id="roleTeacherBtn">🎓 Teacher</button>
+  <button class="role-btn" id="roleStudentBtn">📖 Student</button>
+</div>
+
 <p class="hint">Click a date, then click (or drag across) the time slots you're available. Selected days show a little ♟ pawn. Turn on reminders below so you never miss a lesson.</p>
 
 <p class="sync-status" id="syncStatus">Checking sync status…</p>
@@ -415,6 +503,7 @@
   <div class="card" style="grid-column: 1 / -1;">
     <h2>Your Availability Summary</h2>
     <p class="sub">Every lesson time you've marked as available.</p>
+    <p class="stats-line" id="statsLine"></p>
     <ul class="summary-list" id="summaryList"></ul>
     <div class="empty-msg" id="emptyMsg">Nothing scheduled yet — pick some times above!</div>
   </div>
@@ -475,6 +564,7 @@
   const timePanelSub = document.getElementById('timePanelSub');
   const timePanelBody = document.getElementById('timePanelBody');
   const summaryList = document.getElementById('summaryList');
+  const statsLine = document.getElementById('statsLine');
   const emptyMsg = document.getElementById('emptyMsg');
   const toast = document.getElementById('toast');
   const syncStatusEl = document.getElementById('syncStatus');
@@ -503,10 +593,41 @@
     });
   });
 
+  const ROLE_KEY = 'chess-availability-role';
+  let myRole = localStorage.getItem(ROLE_KEY) || 'teacher';
+  const roleTeacherBtn = document.getElementById('roleTeacherBtn');
+  const roleStudentBtn = document.getElementById('roleStudentBtn');
+  function renderRoleButtons(){
+    roleTeacherBtn.classList.toggle('active', myRole === 'teacher');
+    roleStudentBtn.classList.toggle('active', myRole === 'student');
+  }
+  roleTeacherBtn.addEventListener('click', () => { myRole = 'teacher'; localStorage.setItem(ROLE_KEY, myRole); renderRoleButtons(); });
+  roleStudentBtn.addEventListener('click', () => { myRole = 'student'; localStorage.setItem(ROLE_KEY, myRole); renderRoleButtons(); });
+  renderRoleButtons();
+
+  function currentAdderName(){
+    return myRole === 'teacher' ? (teacherInput.value.trim() || 'Doug') : (studentInput.value.trim() || 'Mahlet');
+  }
+
+  function normalizeAvailability(data){
+    const result = {};
+    Object.keys(data || {}).forEach(key => {
+      const val = data[key];
+      if(Array.isArray(val)){
+        const obj = {};
+        val.forEach(mins => { obj[mins] = { addedBy: '', confirmed: false }; });
+        result[key] = obj;
+      } else if(val && typeof val === 'object'){
+        result[key] = val;
+      }
+    });
+    return result;
+  }
+
   function loadData(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : {};
+      return normalizeAvailability(raw ? JSON.parse(raw) : {});
     }catch(e){ return {}; }
   }
   function saveData(){
@@ -531,17 +652,29 @@
     });
   }
 
+  function maybeNotify(title, body){
+    if(notificationsSupported && Notification.permission === 'granted' && reminderSettings.enabled){
+      fireNotification(title, body);
+    }
+  }
+
   function notifyOfRemoteChanges(previous, updated){
-    const teacher = teacherInput.value.trim() || 'Doug';
-    const student = studentInput.value.trim() || 'Mahlet';
     Object.keys(updated).forEach(key => {
-      const prevMins = new Set(previous[key] || []);
-      const addedMins = (updated[key] || []).filter(m => !prevMins.has(m));
+      const prevSlots = previous[key] || {};
+      const updatedSlots = updated[key] || {};
+      const addedMins = Object.keys(updatedSlots).filter(m => !(m in prevSlots));
       if(addedMins.length){
-        showToast(`New availability added for ${fmtNiceDate(key)} ♟`);
-        if(notificationsSupported && Notification.permission === 'granted' && reminderSettings.enabled){
-          fireNotification('♟️ Calendar Updated', `New availability added for ${fmtNiceDate(key)}.`);
-        }
+        const addedBy = updatedSlots[addedMins[0]] && updatedSlots[addedMins[0]].addedBy;
+        const who = addedBy ? `${addedBy} added` : 'New';
+        showToast(`${who} availability for ${fmtNiceDate(key)} ♟`);
+        maybeNotify('♟️ Calendar Updated', `${who} availability for ${fmtNiceDate(key)}.`);
+      }
+      const newlyConfirmed = Object.keys(updatedSlots).some(m =>
+        updatedSlots[m].confirmed && !(prevSlots[m] && prevSlots[m].confirmed)
+      );
+      if(newlyConfirmed){
+        showToast(`Lesson confirmed for ${fmtNiceDate(key)} ♚`);
+        maybeNotify('♚ Lesson Confirmed', `A lesson on ${fmtNiceDate(key)} was confirmed.`);
       }
     });
   }
@@ -550,7 +683,7 @@
     setSyncStatus('🔄 Synced — you and the other person see the same calendar.', 'ok');
     if(!doc.exists) return;
     const data = doc.data() || {};
-    const remoteAvailability = data.availability || {};
+    const remoteAvailability = normalizeAvailability(data.availability || {});
     const previous = availability;
     applyingRemoteUpdate = true;
     availability = remoteAvailability;
@@ -638,7 +771,10 @@
 
       cell.className = 'day-cell' + (isDark ? ' dark':'') + (isPast ? ' past':'') + (isToday ? ' today':'');
       if(selectedDateKey === key) cell.classList.add('selected');
-      if(availability[key] && availability[key].length) cell.classList.add('has-slots');
+      const daySlots = availability[key] || {};
+      const dayMins = Object.keys(daySlots);
+      if(dayMins.length) cell.classList.add('has-slots');
+      if(dayMins.some(m => daySlots[m] && daySlots[m].confirmed)) cell.classList.add('has-confirmed');
 
       cell.innerHTML = `<span class="dnum">${d}</span>`;
       if(!isPast){
@@ -664,14 +800,15 @@
     timePanelTitle.textContent = fmtNiceDate(selectedDateKey);
     timePanelSub.textContent = 'Click a slot to toggle it, or click and drag across several.';
 
-    const current = new Set(availability[selectedDateKey] || []);
+    const daySlots = availability[selectedDateKey] || {};
 
     const grid = document.createElement('div');
     grid.className = 'slots-grid';
 
     ALL_SLOTS.forEach(mins => {
       const el = document.createElement('div');
-      el.className = 'slot' + (current.has(mins) ? ' on' : '');
+      const slotData = daySlots[mins];
+      el.className = 'slot' + (slotData ? ' on' : '') + (slotData && slotData.confirmed ? ' confirmed' : '');
       el.textContent = minutesToLabel(mins);
       el.dataset.mins = mins;
 
@@ -697,10 +834,13 @@
       grid.appendChild(el);
     });
 
+    const weekdayName = new Date(selectedDateKey.split('-')[0], selectedDateKey.split('-')[1]-1, selectedDateKey.split('-')[2]).toLocaleDateString(undefined,{weekday:'long'});
+
     const actions = document.createElement('div');
     actions.className = 'day-actions';
     actions.innerHTML = `
       <button class="pill green" id="markAllBtn">✓ Mark whole day free</button>
+      <button class="pill grey" id="repeatWeeklyBtn">🔁 Repeat every ${weekdayName} (8 weeks)</button>
       <button class="pill red" id="clearDayBtn">✕ Clear this day</button>
     `;
 
@@ -709,7 +849,9 @@
     timePanelBody.appendChild(actions);
 
     document.getElementById('markAllBtn').addEventListener('click', () => {
-      availability[selectedDateKey] = ALL_SLOTS.slice();
+      const day = {};
+      ALL_SLOTS.forEach(mins => { day[mins] = { addedBy: currentAdderName(), confirmed:false }; });
+      availability[selectedDateKey] = day;
       saveData();
       renderTimePanel();
       renderCalendar();
@@ -723,16 +865,45 @@
       renderCalendar();
       renderSummary();
     });
+    document.getElementById('repeatWeeklyBtn').addEventListener('click', () => {
+      const sourceMins = Object.keys(availability[selectedDateKey] || {}).map(Number);
+      if(!sourceMins.length){
+        showToast('Add some times first, then repeat them.');
+        return;
+      }
+      const [y,m,d] = selectedDateKey.split('-').map(Number);
+      const baseDate = new Date(y, m-1, d);
+      const weeksToRepeat = 8;
+      for(let w=1; w<=weeksToRepeat; w++){
+        const target = new Date(baseDate);
+        target.setDate(target.getDate() + 7*w);
+        const key = dateKey(target.getFullYear(), target.getMonth(), target.getDate());
+        const existing = availability[key] || {};
+        sourceMins.forEach(mins => {
+          if(!(mins in existing)){
+            existing[mins] = { addedBy: currentAdderName(), confirmed:false };
+          }
+        });
+        availability[key] = existing;
+      }
+      saveData();
+      renderCalendar();
+      renderSummary();
+      showToast(`Repeated for the next ${weeksToRepeat} ${weekdayName}s ♟`);
+    });
   }
 
   document.addEventListener('mouseup', () => { dragMode = null; });
 
   function toggleSlot(mins, on){
-    const set = new Set(availability[selectedDateKey] || []);
-    if(on) set.add(mins); else set.delete(mins);
-    const arr = Array.from(set).sort((a,b)=>a-b);
-    if(arr.length){
-      availability[selectedDateKey] = arr;
+    const day = Object.assign({}, availability[selectedDateKey] || {});
+    if(on){
+      day[mins] = { addedBy: currentAdderName(), confirmed: false };
+    } else {
+      delete day[mins];
+    }
+    if(Object.keys(day).length){
+      availability[selectedDateKey] = day;
     } else {
       delete availability[selectedDateKey];
     }
@@ -754,34 +925,66 @@
     return ranges;
   }
 
+  function updateStatsLine(total, confirmed){
+    if(!total){ statsLine.textContent = ''; return; }
+    statsLine.textContent = `📅 ${total} time${total===1?'':'s'} proposed · ♚ ${confirmed} confirmed lesson${confirmed===1?'':'s'}`;
+  }
+
   function renderSummary(){
     const keys = Object.keys(availability).sort();
     summaryList.innerHTML = '';
-    emptyMsg.style.display = keys.length ? 'none' : 'block';
+    let totalRanges = 0;
+    let confirmedCount = 0;
 
     keys.forEach(key => {
-      const mins = (availability[key] || []).slice().sort((a,b)=>a-b);
+      const slotMap = availability[key] || {};
+      const mins = Object.keys(slotMap).map(Number).sort((a,b)=>a-b);
       if(!mins.length) return;
       const ranges = mergeConsecutive(mins);
-      const timeStr = ranges.map(r => `${minutesToLabel(r[0])} – ${minutesToLabel(r[1])}`).join(', ');
 
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <div>
-          <div class="sd">${fmtNiceDate(key)}</div>
-          <div class="st">${timeStr}</div>
-        </div>
-        <button title="Remove day" aria-label="Remove day">✕</button>
-      `;
-      li.querySelector('button').addEventListener('click', () => {
-        delete availability[key];
-        saveData();
-        renderCalendar();
-        renderSummary();
-        if(selectedDateKey === key) renderTimePanel();
+      ranges.forEach(range => {
+        totalRanges++;
+        const rangeMins = [];
+        for(let m = range[0]; m < range[1]; m += SLOT_MINUTES) rangeMins.push(m);
+        const confirmed = rangeMins.every(m => slotMap[m] && slotMap[m].confirmed);
+        if(confirmed) confirmedCount++;
+        const addedBy = (slotMap[range[0]] && slotMap[range[0]].addedBy) || '';
+
+        const li = document.createElement('li');
+        li.className = confirmed ? 'confirmed-row' : '';
+        li.innerHTML = `
+          <div>
+            <div class="sd">${fmtNiceDate(key)} ${confirmed ? '♚' : '♟'}</div>
+            <div class="st">${minutesToLabel(range[0])} – ${minutesToLabel(range[1])}${addedBy ? ` <span class="added-by">· added by ${addedBy}</span>` : ''}</div>
+          </div>
+          <div class="row-actions">
+            <button class="confirm-toggle${confirmed ? ' is-confirmed' : ''}" title="${confirmed ? 'Unconfirm' : 'Confirm this lesson'}">${confirmed ? '✓ Confirmed' : 'Confirm'}</button>
+            <button class="remove-range" title="Remove" aria-label="Remove">✕</button>
+          </div>
+        `;
+        li.querySelector('.confirm-toggle').addEventListener('click', () => {
+          const newVal = !confirmed;
+          rangeMins.forEach(m => { if(slotMap[m]) slotMap[m].confirmed = newVal; });
+          saveData();
+          renderCalendar();
+          renderSummary();
+          if(selectedDateKey === key) renderTimePanel();
+          if(newVal) launchConfetti();
+        });
+        li.querySelector('.remove-range').addEventListener('click', () => {
+          rangeMins.forEach(m => { delete slotMap[m]; });
+          if(Object.keys(slotMap).length === 0) delete availability[key]; else availability[key] = slotMap;
+          saveData();
+          renderCalendar();
+          renderSummary();
+          if(selectedDateKey === key) renderTimePanel();
+        });
+        summaryList.appendChild(li);
       });
-      summaryList.appendChild(li);
     });
+
+    emptyMsg.style.display = totalRanges ? 'none' : 'block';
+    updateStatsLine(totalRanges, confirmedCount);
   }
 
   function showToast(msg){
@@ -865,9 +1068,15 @@
     const student = studentInput.value.trim() || 'Mahlet';
 
     Object.keys(availability).forEach(key => {
-      const mins = (availability[key] || []).slice().sort((a,b)=>a-b);
+      const slotMap = availability[key] || {};
+      const mins = Object.keys(slotMap).map(Number).sort((a,b)=>a-b);
       const ranges = mergeConsecutive(mins);
       ranges.forEach(range => {
+        const rangeMins = [];
+        for(let m = range[0]; m < range[1]; m += SLOT_MINUTES) rangeMins.push(m);
+        const confirmed = rangeMins.every(m => slotMap[m] && slotMap[m].confirmed);
+        if(!confirmed) return;
+
         const [y,m,d] = key.split('-').map(Number);
         const startDate = new Date(y, m-1, d, Math.floor(range[0]/60), range[0]%60, 0, 0);
         if(now >= startDate) return;
