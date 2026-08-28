@@ -13,6 +13,8 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <style>
   :root{
     --board-light:#f0d9b5;
@@ -351,6 +353,17 @@
     font-size:0.9rem;
     padding:0 16px;
   }
+  .sync-status{
+    text-align:center;
+    max-width:700px;
+    margin:8px auto 0;
+    font-size:0.85rem;
+    font-weight:700;
+    padding:0 16px;
+  }
+  .sync-status.ok{ color:var(--accent-dark); }
+  .sync-status.warn{ color:var(--danger); }
+  .sync-status.off{ color:var(--muted); }
 </style>
 </head>
 <body>
@@ -371,6 +384,8 @@
 </div>
 
 <p class="hint">Click a date, then click (or drag across) the time slots you're available. Selected days show a little ♟ pawn. Turn on reminders below so you never miss a lesson.</p>
+
+<p class="sync-status" id="syncStatus">Checking sync status…</p>
 
 <div class="container">
   <div class="card">
@@ -462,6 +477,20 @@
   const summaryList = document.getElementById('summaryList');
   const emptyMsg = document.getElementById('emptyMsg');
   const toast = document.getElementById('toast');
+  const syncStatusEl = document.getElementById('syncStatus');
+
+  const firebaseConfig = {
+    apiKey: "REPLACE_ME",
+    authDomain: "REPLACE_ME",
+    projectId: "REPLACE_ME",
+    storageBucket: "REPLACE_ME",
+    messagingSenderId: "REPLACE_ME",
+    appId: "REPLACE_ME"
+  };
+  let db = null;
+  let sharedDocRef = null;
+  let firestoreReady = false;
+  let applyingRemoteUpdate = false;
 
   const savedNames = JSON.parse(localStorage.getItem('chess-availability-names') || '{}');
   if(savedNames.teacher) teacherInput.value = savedNames.teacher;
@@ -482,6 +511,82 @@
   }
   function saveData(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(availability));
+    if(!applyingRemoteUpdate) pushSharedCalendar();
+  }
+
+  function setSyncStatus(text, mode){
+    syncStatusEl.textContent = text;
+    syncStatusEl.className = 'sync-status' + (mode ? ' ' + mode : '');
+  }
+
+  function pushSharedCalendar(){
+    if(!firestoreReady) return;
+    sharedDocRef.set({
+      availability,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      setSyncStatus('🔄 Synced — you and the other person see the same calendar.', 'ok');
+    }).catch(() => {
+      setSyncStatus('⚠️ Could not sync your latest change — check your connection.', 'warn');
+    });
+  }
+
+  function notifyOfRemoteChanges(previous, updated){
+    const teacher = teacherInput.value.trim() || 'Doug';
+    const student = studentInput.value.trim() || 'Mahlet';
+    Object.keys(updated).forEach(key => {
+      const prevMins = new Set(previous[key] || []);
+      const addedMins = (updated[key] || []).filter(m => !prevMins.has(m));
+      if(addedMins.length){
+        showToast(`New availability added for ${fmtNiceDate(key)} ♟`);
+        if(notificationsSupported && Notification.permission === 'granted' && reminderSettings.enabled){
+          fireNotification('♟️ Calendar Updated', `New availability added for ${fmtNiceDate(key)}.`);
+        }
+      }
+    });
+  }
+
+  function handleRemoteSnapshot(doc){
+    setSyncStatus('🔄 Synced — you and the other person see the same calendar.', 'ok');
+    if(!doc.exists) return;
+    const data = doc.data() || {};
+    const remoteAvailability = data.availability || {};
+    const previous = availability;
+    applyingRemoteUpdate = true;
+    availability = remoteAvailability;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(availability));
+    renderCalendar();
+    renderTimePanel();
+    renderSummary();
+    notifyOfRemoteChanges(previous, remoteAvailability);
+    checkReminders();
+    applyingRemoteUpdate = false;
+  }
+
+  function initFirebase(){
+    if(!firebaseConfig.apiKey || firebaseConfig.apiKey === 'REPLACE_ME'){
+      setSyncStatus('⚠️ Shared syncing isn\'t set up yet — this calendar is local to this device only.', 'off');
+      return;
+    }
+    try{
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      db.enablePersistence().catch(() => {});
+      sharedDocRef = db.collection('chess-availability').doc('shared-calendar');
+      firestoreReady = true;
+      setSyncStatus('🔄 Connecting…', 'off');
+      sharedDocRef.get().then(doc => {
+        if(!doc.exists && Object.keys(availability).length){
+          pushSharedCalendar();
+        }
+      }).catch(() => {}).finally(() => {
+        sharedDocRef.onSnapshot(handleRemoteSnapshot, () => {
+          setSyncStatus('⚠️ Sync connection lost — showing your last known calendar.', 'warn');
+        });
+      });
+    }catch(e){
+      setSyncStatus('⚠️ Shared syncing failed to start — this calendar is local to this device only.', 'warn');
+    }
   }
   function dateKey(y,m,d){
     return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -939,6 +1044,7 @@
   renderCalendar();
   renderTimePanel();
   renderSummary();
+  initFirebase();
 })();
 </script>
 </body>
