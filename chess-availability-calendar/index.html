@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chess Lesson Availability</title>
+<meta name="theme-color" content="#1f5a40">
+<meta name="description" content="Doug's chess lesson availability calendar and reminders for Mahlet">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Chess Lessons">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -402,23 +409,28 @@
   <div class="card" style="grid-column: 1 / -1;">
     <h2>🔔 Lesson Reminders</h2>
     <p class="sub" id="reminderStatus">Reminders are off.</p>
+    <p class="reminder-note">Every lesson gets exactly two nudges: <strong>7:00 PM the night before</strong>, and <strong>8:00 AM the day of</strong>. No account, no outside calendar — just this app.</p>
     <div class="reminder-controls">
-      <label for="leadTime" class="reminder-label">Remind me</label>
-      <select id="leadTime">
-        <option value="10">10 minutes before</option>
-        <option value="30" selected>30 minutes before</option>
-        <option value="60">1 hour before</option>
-        <option value="1440">1 day before</option>
-      </select>
       <button class="pill green" id="toggleReminderBtn">🔔 Turn On Reminders</button>
       <button class="pill grey" id="testReminderBtn">🔊 Send Test Reminder</button>
     </div>
-    <p class="reminder-note">This app has no server and doesn't sync to any account or calendar — reminders fire right from this browser tab, so keep it open (or pinned) around lesson time.</p>
+    <p class="reminder-note">Reminders fire from this browser/app while it's running in the background — installing it as an app below (rather than just a browser tab) makes that much more reliable.</p>
+  </div>
+</div>
+
+<div class="container" style="margin-top:24px;">
+  <div class="card" style="grid-column: 1 / -1;">
+    <h2>📲 Install as an App</h2>
+    <p class="sub" id="installStatus">Checking installability…</p>
+    <div class="reminder-controls">
+      <button class="pill green" id="installBtn" style="display:none;">📲 Install App</button>
+      <button class="pill grey" id="downloadAppBtn">💾 Save Offline Copy (.html)</button>
+    </div>
+    <p class="reminder-note" id="installHint"></p>
   </div>
 </div>
 
 <div class="footer-actions">
-  <button class="pill grey" id="downloadAppBtn">💾 Download This App</button>
   <button class="pill red" id="clearAllBtn">🗑 Clear All</button>
 </div>
 
@@ -689,14 +701,15 @@
 
   const REMINDER_SETTINGS_KEY = 'chess-availability-reminders';
   const NOTIFIED_KEY = 'chess-availability-notified';
+  const NIGHT_BEFORE_HOUR = 19;
+  const DAY_OF_HOUR = 8;
   const reminderStatus = document.getElementById('reminderStatus');
   const toggleReminderBtn = document.getElementById('toggleReminderBtn');
-  const leadTimeSelect = document.getElementById('leadTime');
   const notificationsSupported = typeof Notification !== 'undefined';
+  let swRegistration = null;
 
-  let reminderSettings = Object.assign({enabled:false, leadMinutes:30}, JSON.parse(localStorage.getItem(REMINDER_SETTINGS_KEY) || '{}'));
+  let reminderSettings = Object.assign({enabled:false}, JSON.parse(localStorage.getItem(REMINDER_SETTINGS_KEY) || '{}'));
   let notifiedSet = new Set(JSON.parse(localStorage.getItem(NOTIFIED_KEY) || '[]'));
-  leadTimeSelect.value = String(reminderSettings.leadMinutes);
 
   function saveReminderSettings(){
     localStorage.setItem(REMINDER_SETTINGS_KEY, JSON.stringify(reminderSettings));
@@ -717,7 +730,7 @@
       return;
     }
     if(reminderSettings.enabled && Notification.permission === 'granted'){
-      reminderStatus.textContent = `Reminders are on — you'll be notified ${leadTimeSelect.options[leadTimeSelect.selectedIndex].text.replace(' before','')} before each lesson.`;
+      reminderStatus.textContent = 'Reminders are on.';
       toggleReminderBtn.textContent = '🔕 Turn Off Reminders';
     } else {
       reminderStatus.textContent = 'Reminders are off.';
@@ -726,6 +739,12 @@
   }
 
   function fireNotification(title, body){
+    if(swRegistration && swRegistration.showNotification){
+      swRegistration.showNotification(title, {body, icon:'icons/icon-192.png', badge:'icons/icon-192.png'}).catch(() => {
+        try{ new Notification(title, {body}); }catch(e){ showToast(body); }
+      });
+      return;
+    }
     try{
       const n = new Notification(title, {body});
       n.onclick = () => window.focus();
@@ -746,11 +765,30 @@
       ranges.forEach(range => {
         const [y,m,d] = key.split('-').map(Number);
         const startDate = new Date(y, m-1, d, Math.floor(range[0]/60), range[0]%60, 0, 0);
-        const notifyAt = new Date(startDate.getTime() - reminderSettings.leadMinutes*60000);
-        const id = `${key}-${range[0]}`;
-        if(now >= notifyAt && now < startDate && !notifiedSet.has(id)){
-          fireNotification('♟️ Chess Lesson Reminder', `${teacher} teaches ${student} at ${minutesToLabel(range[0])} on ${fmtNiceDate(key)}.`);
-          notifiedSet.add(id);
+        if(now >= startDate) return;
+
+        const lessonDayStart = new Date(y, m-1, d, 0, 0, 0, 0);
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        const isBeforeLessonDay = todayStart < lessonDayStart;
+
+        const nightBeforeAt = new Date(startDate);
+        nightBeforeAt.setDate(nightBeforeAt.getDate() - 1);
+        nightBeforeAt.setHours(NIGHT_BEFORE_HOUR, 0, 0, 0);
+
+        const dayOfAt = new Date(startDate);
+        dayOfAt.setHours(DAY_OF_HOUR, 0, 0, 0);
+
+        const nightId = `${key}-${range[0]}-night`;
+        const dayId = `${key}-${range[0]}-day`;
+
+        if(isBeforeLessonDay && now >= nightBeforeAt && !notifiedSet.has(nightId)){
+          fireNotification('♟️ Chess Lesson Tomorrow', `${teacher} teaches ${student} tomorrow at ${minutesToLabel(range[0])}.`);
+          notifiedSet.add(nightId);
+          saveNotified();
+        }
+        if(now >= dayOfAt && !notifiedSet.has(dayId)){
+          fireNotification('♟️ Chess Lesson Today', `${teacher} teaches ${student} today at ${minutesToLabel(range[0])}.`);
+          notifiedSet.add(dayId);
           saveNotified();
         }
       });
@@ -777,12 +815,6 @@
     });
   });
 
-  leadTimeSelect.addEventListener('change', () => {
-    reminderSettings.leadMinutes = Number(leadTimeSelect.value);
-    saveReminderSettings();
-    renderReminderStatus();
-  });
-
   document.getElementById('testReminderBtn').addEventListener('click', () => {
     if(!notificationsSupported){
       showToast('Notifications aren\'t supported in this browser.');
@@ -804,7 +836,69 @@
 
   renderReminderStatus();
   checkReminders();
-  setInterval(checkReminders, 20000);
+  setInterval(checkReminders, 60000);
+
+  const installStatus = document.getElementById('installStatus');
+  const installHint = document.getElementById('installHint');
+  const installBtn = document.getElementById('installBtn');
+  let deferredInstallPrompt = null;
+
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const isFileProtocol = location.protocol === 'file:';
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  if('serviceWorker' in navigator && !isFileProtocol){
+    navigator.serviceWorker.register('service-worker.js')
+      .then(reg => { swRegistration = reg; })
+      .catch(() => {});
+  }
+
+  function renderInstallStatus(){
+    if(isStandalone){
+      installStatus.textContent = 'Installed — you\'re running this as an app already. ♟';
+      installHint.textContent = '';
+      installBtn.style.display = 'none';
+      return;
+    }
+    if(isFileProtocol){
+      installStatus.textContent = 'Opened as a local file — installing needs the app to be hosted (http/https), not just double-clicked.';
+      installHint.textContent = 'Host this folder (e.g. with GitHub Pages) and open it there to get a real installable app, or use "Save Offline Copy" for a portable version.';
+      return;
+    }
+    if(deferredInstallPrompt){
+      installStatus.textContent = 'Ready to install — add it to your home screen or desktop like a real app.';
+      installBtn.style.display = 'inline-block';
+      return;
+    }
+    if(isIOS){
+      installStatus.textContent = 'Install on iOS: tap the Share icon, then "Add to Home Screen".';
+      return;
+    }
+    installStatus.textContent = 'Use your browser\'s "Install App" option (often in the address bar or menu) to add this to your device.';
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    renderInstallStatus();
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if(!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    if(choice.outcome === 'accepted') showToast('Installed! Find it with your other apps ♟');
+    deferredInstallPrompt = null;
+    installBtn.style.display = 'none';
+    renderInstallStatus();
+  });
+
+  window.addEventListener('appinstalled', () => {
+    showToast('Installed! Find it with your other apps ♟');
+    renderInstallStatus();
+  });
+
+  renderInstallStatus();
 
   document.getElementById('downloadAppBtn').addEventListener('click', () => {
     const html = document.documentElement.outerHTML;
