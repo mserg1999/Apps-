@@ -310,6 +310,32 @@
   @keyframes fall{
     to{ transform: translateY(105vh) rotate(360deg); opacity:0.2; }
   }
+  .reminder-controls{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin:14px 0;
+  }
+  .reminder-label{
+    font-weight:700;
+    font-size:0.9rem;
+  }
+  .reminder-controls select{
+    padding:9px 12px;
+    border-radius:10px;
+    border:2px solid #efe7da;
+    font-family:inherit;
+    font-weight:700;
+    font-size:0.85rem;
+    background:#faf3e6;
+    color:var(--ink);
+  }
+  .reminder-note{
+    color:var(--muted);
+    font-size:0.82rem;
+    margin:0;
+  }
   .hint{
     text-align:center;
     max-width:700px;
@@ -337,7 +363,7 @@
   </div>
 </div>
 
-<p class="hint">Click a date, then click (or drag across) the time slots you're available. Selected days show a little ♟ pawn. When you're done, download the calendar file and send it along.</p>
+<p class="hint">Click a date, then click (or drag across) the time slots you're available. Selected days show a little ♟ pawn. Turn on reminders below so you never miss a lesson.</p>
 
 <div class="container">
   <div class="card">
@@ -366,14 +392,32 @@
 <div class="container" style="margin-top:24px;">
   <div class="card" style="grid-column: 1 / -1;">
     <h2>Your Availability Summary</h2>
-    <p class="sub">Everything Mahlet will see on the calendar invite.</p>
+    <p class="sub">Every lesson time you've marked as available.</p>
     <ul class="summary-list" id="summaryList"></ul>
     <div class="empty-msg" id="emptyMsg">Nothing scheduled yet — pick some times above!</div>
   </div>
 </div>
 
+<div class="container" style="margin-top:24px;">
+  <div class="card" style="grid-column: 1 / -1;">
+    <h2>🔔 Lesson Reminders</h2>
+    <p class="sub" id="reminderStatus">Reminders are off.</p>
+    <div class="reminder-controls">
+      <label for="leadTime" class="reminder-label">Remind me</label>
+      <select id="leadTime">
+        <option value="10">10 minutes before</option>
+        <option value="30" selected>30 minutes before</option>
+        <option value="60">1 hour before</option>
+        <option value="1440">1 day before</option>
+      </select>
+      <button class="pill green" id="toggleReminderBtn">🔔 Turn On Reminders</button>
+      <button class="pill grey" id="testReminderBtn">🔊 Send Test Reminder</button>
+    </div>
+    <p class="reminder-note">This app has no server and doesn't sync to any account or calendar — reminders fire right from this browser tab, so keep it open (or pinned) around lesson time.</p>
+  </div>
+</div>
+
 <div class="footer-actions">
-  <button class="pill green" id="downloadBtn">⬇ Download Calendar (.ics)</button>
   <button class="pill grey" id="downloadAppBtn">💾 Download This App</button>
   <button class="pill red" id="clearAllBtn">🗑 Clear All</button>
 </div>
@@ -643,74 +687,124 @@
     }
   }
 
-  function pad(n){ return String(n).padStart(2,'0'); }
+  const REMINDER_SETTINGS_KEY = 'chess-availability-reminders';
+  const NOTIFIED_KEY = 'chess-availability-notified';
+  const reminderStatus = document.getElementById('reminderStatus');
+  const toggleReminderBtn = document.getElementById('toggleReminderBtn');
+  const leadTimeSelect = document.getElementById('leadTime');
+  const notificationsSupported = typeof Notification !== 'undefined';
 
-  function toICSDate(key, mins){
-    const [y,m,d] = key.split('-').map(Number);
-    const h = Math.floor(mins/60), min = mins%60;
-    return `${y}${pad(m)}${pad(d)}T${pad(h)}${pad(min)}00`;
+  let reminderSettings = Object.assign({enabled:false, leadMinutes:30}, JSON.parse(localStorage.getItem(REMINDER_SETTINGS_KEY) || '{}'));
+  let notifiedSet = new Set(JSON.parse(localStorage.getItem(NOTIFIED_KEY) || '[]'));
+  leadTimeSelect.value = String(reminderSettings.leadMinutes);
+
+  function saveReminderSettings(){
+    localStorage.setItem(REMINDER_SETTINGS_KEY, JSON.stringify(reminderSettings));
+  }
+  function saveNotified(){
+    localStorage.setItem(NOTIFIED_KEY, JSON.stringify(Array.from(notifiedSet)));
   }
 
-  function buildICS(){
-    const teacher = teacherInput.value.trim() || 'Doug';
-    const student = studentInput.value.trim() || 'Mahlet';
-    const keys = Object.keys(availability).sort();
-    const now = new Date();
-    const stamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth()+1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}Z`;
-
-    let events = '';
-    let count = 0;
-
-    keys.forEach(key => {
-      const mins = (availability[key] || []).slice().sort((a,b)=>a-b);
-      if(!mins.length) return;
-      const ranges = mergeConsecutive(mins);
-      ranges.forEach(range => {
-        count++;
-        const uid = `chess-${key}-${range[0]}-${Math.random().toString(36).slice(2,8)}@chess-availability`;
-        events += [
-          'BEGIN:VEVENT',
-          `UID:${uid}`,
-          `DTSTAMP:${stamp}`,
-          `DTSTART:${toICSDate(key, range[0])}`,
-          `DTEND:${toICSDate(key, range[1])}`,
-          `SUMMARY:Chess Lesson: ${teacher} teaches ${student} ♟️`,
-          `DESCRIPTION:${teacher} is available to teach ${student} chess during this time.`,
-          'END:VEVENT'
-        ].join('\r\n') + '\r\n';
-      });
-    });
-
-    const ics = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//Chess Availability Calendar//EN',
-      'CALSCALE:GREGORIAN',
-      events.trimEnd(),
-      'END:VCALENDAR'
-    ].join('\r\n');
-
-    return {ics, count};
-  }
-
-  document.getElementById('downloadBtn').addEventListener('click', () => {
-    const {ics, count} = buildICS();
-    if(count === 0){
-      showToast('Pick some times first! ♟');
+  function renderReminderStatus(){
+    if(!notificationsSupported){
+      reminderStatus.textContent = 'This browser doesn\'t support notifications.';
+      toggleReminderBtn.disabled = true;
       return;
     }
-    const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'chess-lesson-availability.ics';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    launchConfetti();
-    showToast('Calendar downloaded! Send it to ' + (studentInput.value.trim() || 'Mahlet') + ' ♟');
+    if(Notification.permission === 'denied'){
+      reminderStatus.textContent = 'Notifications are blocked for this page — allow them in your browser\'s site settings to turn reminders on.';
+      toggleReminderBtn.textContent = '🔔 Turn On Reminders';
+      return;
+    }
+    if(reminderSettings.enabled && Notification.permission === 'granted'){
+      reminderStatus.textContent = `Reminders are on — you'll be notified ${leadTimeSelect.options[leadTimeSelect.selectedIndex].text.replace(' before','')} before each lesson.`;
+      toggleReminderBtn.textContent = '🔕 Turn Off Reminders';
+    } else {
+      reminderStatus.textContent = 'Reminders are off.';
+      toggleReminderBtn.textContent = '🔔 Turn On Reminders';
+    }
+  }
+
+  function fireNotification(title, body){
+    try{
+      const n = new Notification(title, {body});
+      n.onclick = () => window.focus();
+    }catch(e){
+      showToast(body);
+    }
+  }
+
+  function checkReminders(){
+    if(!notificationsSupported || !reminderSettings.enabled || Notification.permission !== 'granted') return;
+    const now = new Date();
+    const teacher = teacherInput.value.trim() || 'Doug';
+    const student = studentInput.value.trim() || 'Mahlet';
+
+    Object.keys(availability).forEach(key => {
+      const mins = (availability[key] || []).slice().sort((a,b)=>a-b);
+      const ranges = mergeConsecutive(mins);
+      ranges.forEach(range => {
+        const [y,m,d] = key.split('-').map(Number);
+        const startDate = new Date(y, m-1, d, Math.floor(range[0]/60), range[0]%60, 0, 0);
+        const notifyAt = new Date(startDate.getTime() - reminderSettings.leadMinutes*60000);
+        const id = `${key}-${range[0]}`;
+        if(now >= notifyAt && now < startDate && !notifiedSet.has(id)){
+          fireNotification('♟️ Chess Lesson Reminder', `${teacher} teaches ${student} at ${minutesToLabel(range[0])} on ${fmtNiceDate(key)}.`);
+          notifiedSet.add(id);
+          saveNotified();
+        }
+      });
+    });
+  }
+
+  toggleReminderBtn.addEventListener('click', () => {
+    if(!notificationsSupported) return;
+    if(reminderSettings.enabled){
+      reminderSettings.enabled = false;
+      saveReminderSettings();
+      renderReminderStatus();
+      return;
+    }
+    Notification.requestPermission().then(perm => {
+      reminderSettings.enabled = (perm === 'granted');
+      saveReminderSettings();
+      renderReminderStatus();
+      if(perm === 'granted'){
+        showToast('Reminders are on ♟');
+        launchConfetti();
+        checkReminders();
+      }
+    });
   });
+
+  leadTimeSelect.addEventListener('change', () => {
+    reminderSettings.leadMinutes = Number(leadTimeSelect.value);
+    saveReminderSettings();
+    renderReminderStatus();
+  });
+
+  document.getElementById('testReminderBtn').addEventListener('click', () => {
+    if(!notificationsSupported){
+      showToast('Notifications aren\'t supported in this browser.');
+      return;
+    }
+    if(Notification.permission === 'granted'){
+      fireNotification('♟️ Test Reminder', 'This is what a lesson reminder will look like!');
+    } else {
+      Notification.requestPermission().then(perm => {
+        if(perm === 'granted'){
+          fireNotification('♟️ Test Reminder', 'This is what a lesson reminder will look like!');
+        } else {
+          showToast('Notification permission was not granted.');
+        }
+        renderReminderStatus();
+      });
+    }
+  });
+
+  renderReminderStatus();
+  checkReminders();
+  setInterval(checkReminders, 20000);
 
   document.getElementById('downloadAppBtn').addEventListener('click', () => {
     const html = document.documentElement.outerHTML;
