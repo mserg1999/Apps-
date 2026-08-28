@@ -1,0 +1,3 @@
+[build]
+  base = "chess-availability-calendar/"
+  publish = "chess-availability-calendar/"

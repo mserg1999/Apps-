@@ -14,13 +14,28 @@ A fun, chess-themed availability picker for Doug to mark the days and times he's
 
 ## Installing it as a real app
 
-Installing (rather than just opening the HTML file) needs the app served over `http://` or `https://` — browsers won't let a page installed from a bare double-clicked file register a service worker or show an install prompt. The easiest free option is GitHub Pages:
+Installing (rather than just opening the HTML file) needs the app served over `http://` or `https://` — browsers won't let a page installed from a bare double-clicked file register a service worker or show an install prompt.
 
-1. In the repo settings, enable **GitHub Pages** for this branch (or merge to your default branch first), serving from the `/chess-availability-calendar` folder (or root, adjusting the path).
-2. Open the published URL in Chrome, Edge, or Android — you'll see an "Install App" button in the page (and usually one in the browser's address bar too).
-3. On iOS Safari, use the Share icon → **Add to Home Screen**.
+**Note:** GitHub Pages only works for free on a *public* repo (a private repo needs GitHub Pro, or an org on GitHub Team/Enterprise). If this repo stays private, use a free static host instead — it deploys straight from the private repo with no plan upgrade:
 
-Once installed, it opens in its own window/icon like a native app and keeps working without an internet connection.
+1. Go to [netlify.com](https://www.netlify.com) and sign in with GitHub (free).
+2. **Add new site → Import an existing project → GitHub**, authorize it, and pick this repository.
+3. Netlify reads the included `netlify.toml`, so the base/publish directory is already set to `chess-availability-calendar/` — just pick the branch with the app on it and click **Deploy**.
+4. You'll get a URL like `https://your-site-name.netlify.app` in under a minute. Rename it in Site settings → General → "Change site name" if you want something friendlier.
+5. Share that URL with Doug (text, email, whatever) — see "Getting it onto Doug's home screen" below.
+
+If you'd rather use GitHub Pages, just flip the repo to public first (Settings → General → Danger Zone → Change visibility), then Settings → Pages → Source → deploy from a branch → root. The app will be reachable at `<pages-url>/chess-availability-calendar/`.
+
+Once hosted, it opens in its own window/icon like a native app and keeps working without an internet connection.
+
+## Getting it onto Doug's home screen
+
+Once the app has a real URL (from Netlify, GitHub Pages, or any host), send that link to Doug. He opens it once, then:
+
+- **iPhone (Safari):** tap the **Share** icon (square with an arrow) → scroll down → **Add to Home Screen** → **Add**.
+- **Android (Chrome):** Chrome usually shows an **Install app** banner automatically — tap it. If not, tap the **⋮** menu → **Install app** (or **Add to Home screen**).
+
+Either way, an app icon (the green chess knight) shows up on his home screen. Tapping it opens the calendar full-screen, no browser bar, and it keeps working offline. The first time he opens it, have him tap **Turn On Reminders** and allow notifications so the night-before/day-of nudges work.
 
 ## Just running it locally
 
