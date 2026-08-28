@@ -224,7 +224,27 @@
   .board-card{background:var(--panel); border-radius:10px; padding:10px 12px; margin-bottom:8px; box-shadow:0 2px 8px rgba(15,23,42,0.06);}
   .board-card.overdue{box-shadow:inset 0 0 0 1.5px var(--danger);}
   .board-card .task-title{font-size:0.88rem;}
-  .board-card select{width:100%; margin-top:8px; font-size:0.75rem; padding:5px 8px;}
+  .board-card{cursor:grab;}
+  .board-card.dragging{opacity:0.4;}
+  .board-col.drag-over{background:#e0edff;}
+
+  .subtask-toggle{
+    background:#eef2f7; color:var(--muted); border:none; border-radius:999px;
+    padding:3px 10px; font-size:0.72rem; font-weight:700; cursor:pointer;
+  }
+  .subtask-toggle.all-done{background:var(--success-bg); color:var(--success);}
+  .subtask-list{margin-top:10px; display:flex; flex-direction:column; gap:6px;}
+  .subtask-item{display:flex; align-items:center; gap:8px; font-size:0.85rem;}
+  .subtask-item input[type="checkbox"]{width:15px; height:15px; margin:0; cursor:pointer;}
+  .subtask-item.done span{text-decoration:line-through; color:var(--muted);}
+  .subtask-item span{flex:1;}
+  .subtask-item .icon-btn{font-size:0.85rem; padding:2px 6px;}
+  .subtask-add-row{display:flex; gap:8px; margin-top:4px;}
+  .subtask-add-row input{flex:1; font-size:0.82rem; padding:6px 10px;}
+
+  .import-panel{background:#f7f9fc; border-radius:12px; padding:16px; margin-top:14px;}
+  .import-panel textarea{width:100%; font-family:monospace; font-size:0.8rem;}
+  .sheet-checkbox-row{display:flex; align-items:center; gap:8px; padding:6px 0; font-size:0.88rem;}
 
   .summary-list{list-style:none; margin:0; padding:0; max-height:340px; overflow-y:auto;}
   .summary-list li{
@@ -330,7 +350,14 @@
         </select>
         <input type="date" id="taskDue">
         <input id="taskTags" placeholder="tags, comma, separated" maxlength="200">
+        <select id="taskRepeat">
+          <option value="">No repeat</option>
+          <option value="daily">Repeat daily</option>
+          <option value="weekly">Repeat weekly</option>
+          <option value="monthly">Repeat monthly</option>
+        </select>
       </div>
+      <textarea id="taskSubtasksInput" placeholder="Checklist items, one per line (optional)" rows="2"></textarea>
       <div class="form-actions">
         <button type="submit" class="pill green" id="taskSubmitBtn">+ Add Task</button>
         <button type="button" class="pill grey" id="cancelEditBtn" style="display:none;">Cancel edit</button>
@@ -368,7 +395,9 @@
       </div>
       <button class="pill grey" id="exportTasksBtn">⬇ Export CSV</button>
       <label class="pill grey file-label">⬆ Import CSV<input type="file" id="importTasksInput" accept=".csv" hidden></label>
+      <label class="pill grey file-label">📅 Import Calendar (.ics)<input type="file" id="importIcsInput" accept=".ics" hidden></label>
     </div>
+    <p class="hint" id="boardHint" style="display:none;">Drag a card between columns to change its status.</p>
     <div id="taskListView"></div>
     <div id="taskBoardView" style="display:none;"></div>
     <div class="empty-msg" id="tasksEmptyMsg" style="display:none;">No tasks match your filters.</div>
@@ -382,10 +411,29 @@
     <p class="sub">Upload a CSV or Excel (.xlsx/.xls) file. It's parsed in your browser and saved locally — nothing is uploaded anywhere.</p>
     <div class="toolbar">
       <label class="pill green file-label">⬆ Upload File<input type="file" id="sheetFileInput" accept=".csv,.xlsx,.xls" hidden></label>
+      <button class="pill grey" id="pasteDataBtn">📋 Paste Data</button>
       <select id="sheetSelector"><option value="">No sheets loaded</option></select>
       <button class="pill red" id="removeSheetBtn">🗑 Remove Sheet</button>
     </div>
     <p class="hint" id="sheetsHint">No data sheet loaded yet.</p>
+
+    <div class="import-panel" id="pastePanel" style="display:none;">
+      <p class="sub" style="margin-bottom:8px;">Paste data copied from Excel/Google Sheets (include the header row).</p>
+      <textarea id="pasteTextarea" rows="6" placeholder="Paste tab or comma-separated data here..."></textarea>
+      <div class="form-actions" style="margin-top:10px;">
+        <button class="pill green" id="importPastedBtn">Import Pasted Data</button>
+        <button class="pill grey" id="cancelPasteBtn">Cancel</button>
+      </div>
+    </div>
+
+    <div class="import-panel" id="multiSheetPicker" style="display:none;">
+      <p class="sub" style="margin-bottom:8px;">This workbook has multiple sheets — choose which to import:</p>
+      <div id="multiSheetCheckboxes"></div>
+      <div class="form-actions" style="margin-top:10px;">
+        <button class="pill green" id="importSelectedSheetsBtn">Import Selected</button>
+        <button class="pill grey" id="cancelMultiSheetBtn">Cancel</button>
+      </div>
+    </div>
   </div>
 
   <div class="card" id="sheetContentCard" style="display:none;">
@@ -498,15 +546,53 @@
   const taskPriorityInput = document.getElementById('taskPriority');
   const taskDueInput = document.getElementById('taskDue');
   const taskTagsInput = document.getElementById('taskTags');
+  const taskRepeatInput = document.getElementById('taskRepeat');
+  const taskSubtasksInput = document.getElementById('taskSubtasksInput');
   const taskFormTitle = document.getElementById('taskFormTitle');
   const taskSubmitBtn = document.getElementById('taskSubmitBtn');
   const cancelEditBtn = document.getElementById('cancelEditBtn');
+  const expandedTasks = new Set();
+
+  function parseChecklistLines(text){
+    return text.split('\n').map(l => l.trim()).filter(Boolean).map(line => ({id: uid(), text: line, done:false}));
+  }
+  function advanceDueDate(dateStr, repeat){
+    if(!dateStr || !repeat) return null;
+    const [y,m,d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m-1, d);
+    if(repeat === 'daily') dt.setDate(dt.getDate() + 1);
+    else if(repeat === 'weekly') dt.setDate(dt.getDate() + 7);
+    else if(repeat === 'monthly') dt.setMonth(dt.getMonth() + 1);
+    else return null;
+    return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+  }
+  function spawnNextOccurrence(t){
+    if(!t.repeat) return;
+    const nextDue = advanceDueDate(t.dueDate, t.repeat);
+    if(!nextDue) return;
+    tasks.push({
+      id: uid(),
+      title: t.title,
+      description: t.description,
+      status: 'not-started',
+      priority: t.priority,
+      dueDate: nextDue,
+      tags: (t.tags || []).slice(),
+      repeat: t.repeat,
+      subtasks: (t.subtasks || []).map(s => ({id: uid(), text: s.text, done:false})),
+      createdAt: new Date().toISOString(),
+      completedAt: null
+    });
+    showToast(`Next occurrence scheduled for ${fmtDate(nextDue)}`);
+  }
 
   taskForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const title = taskTitleInput.value.trim();
     if(!title) return;
     const tags = taskTagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
+
+    const newSubtasks = parseChecklistLines(taskSubtasksInput.value);
 
     if(editingId){
       const t = tasks.find(x => x.id === editingId);
@@ -518,7 +604,9 @@
         t.priority = taskPriorityInput.value;
         t.dueDate = taskDueInput.value;
         t.tags = tags;
-        if(!wasDone && t.status === 'done') t.completedAt = new Date().toISOString();
+        t.repeat = taskRepeatInput.value;
+        t.subtasks = (t.subtasks || []).concat(newSubtasks);
+        if(!wasDone && t.status === 'done'){ t.completedAt = new Date().toISOString(); spawnNextOccurrence(t); }
         if(t.status !== 'done') t.completedAt = null;
       }
       showToast('Task updated');
@@ -531,6 +619,8 @@
         priority: taskPriorityInput.value,
         dueDate: taskDueInput.value,
         tags,
+        repeat: taskRepeatInput.value,
+        subtasks: newSubtasks,
         createdAt: new Date().toISOString(),
         completedAt: taskStatusInput.value === 'done' ? new Date().toISOString() : null
       });
@@ -562,6 +652,8 @@
     taskPriorityInput.value = t.priority;
     taskDueInput.value = t.dueDate || '';
     taskTagsInput.value = (t.tags || []).join(', ');
+    taskRepeatInput.value = t.repeat || '';
+    taskSubtasksInput.value = '';
     taskFormTitle.textContent = 'Edit Task';
     taskSubmitBtn.textContent = 'Save Changes';
     cancelEditBtn.style.display = 'inline-block';
@@ -581,11 +673,37 @@
   function setTaskStatus(id, status){
     const t = tasks.find(x => x.id === id);
     if(!t) return;
+    const wasDone = t.status === 'done';
     t.status = status;
     t.completedAt = status === 'done' ? new Date().toISOString() : null;
+    if(!wasDone && status === 'done') spawnNextOccurrence(t);
     saveTasks();
     renderTasks();
     renderOverview();
+  }
+
+  function toggleSubtask(taskId, subId){
+    const t = tasks.find(x => x.id === taskId);
+    if(!t) return;
+    const s = (t.subtasks || []).find(x => x.id === subId);
+    if(!s) return;
+    s.done = !s.done;
+    saveTasks();
+    renderTasks();
+  }
+  function deleteSubtask(taskId, subId){
+    const t = tasks.find(x => x.id === taskId);
+    if(!t) return;
+    t.subtasks = (t.subtasks || []).filter(x => x.id !== subId);
+    saveTasks();
+    renderTasks();
+  }
+  function addSubtask(taskId, text){
+    const t = tasks.find(x => x.id === taskId);
+    if(!t || !text.trim()) return;
+    t.subtasks = (t.subtasks || []).concat([{id: uid(), text: text.trim(), done:false}]);
+    saveTasks();
+    renderTasks();
   }
 
   const taskSearchInput = document.getElementById('taskSearch');
@@ -603,8 +721,9 @@
     el.addEventListener('input', renderTasks);
     el.addEventListener('change', renderTasks);
   });
-  viewListBtn.addEventListener('click', () => { taskView='list'; viewListBtn.classList.add('active'); viewBoardBtn.classList.remove('active'); taskListView.style.display=''; taskBoardView.style.display='none'; renderTasks(); });
-  viewBoardBtn.addEventListener('click', () => { taskView='board'; viewBoardBtn.classList.add('active'); viewListBtn.classList.remove('active'); taskListView.style.display='none'; taskBoardView.style.display=''; renderTasks(); });
+  const boardHint = document.getElementById('boardHint');
+  viewListBtn.addEventListener('click', () => { taskView='list'; viewListBtn.classList.add('active'); viewBoardBtn.classList.remove('active'); taskListView.style.display=''; taskBoardView.style.display='none'; boardHint.style.display='none'; renderTasks(); });
+  viewBoardBtn.addEventListener('click', () => { taskView='board'; viewBoardBtn.classList.add('active'); viewListBtn.classList.remove('active'); taskListView.style.display='none'; taskBoardView.style.display=''; boardHint.style.display='block'; renderTasks(); });
 
   function getFilteredTasks(){
     const q = taskSearchInput.value.trim().toLowerCase();
@@ -646,6 +765,60 @@
     return html;
   }
 
+  function subtaskBadgeHtml(t){
+    const subs = t.subtasks || [];
+    if(!subs.length) return '';
+    const done = subs.filter(s => s.done).length;
+    const allDone = done === subs.length;
+    return `<button class="subtask-toggle${allDone ? ' all-done':''}" data-task-id="${t.id}">☑ ${done}/${subs.length}</button>`;
+  }
+
+  function subtaskListHtml(t){
+    const subs = t.subtasks || [];
+    let html = '<div class="subtask-list">';
+    subs.forEach(s => {
+      html += `
+        <div class="subtask-item${s.done?' done':''}" data-sub-id="${s.id}">
+          <input type="checkbox" ${s.done?'checked':''}>
+          <span>${escapeHtml(s.text)}</span>
+          <button class="icon-btn sub-del-btn" title="Remove item">✕</button>
+        </div>`;
+    });
+    html += `
+      <div class="subtask-add-row">
+        <input type="text" class="subtask-new-input" placeholder="Add checklist item...">
+        <button class="pill grey small subtask-add-btn">+ Add</button>
+      </div>
+    </div>`;
+    return html;
+  }
+
+  function wireSubtaskControls(container, t){
+    const toggleBtn = container.querySelector('.subtask-toggle');
+    if(toggleBtn){
+      toggleBtn.addEventListener('click', () => {
+        if(expandedTasks.has(t.id)) expandedTasks.delete(t.id); else expandedTasks.add(t.id);
+        renderTasks();
+      });
+    }
+    const listEl = container.querySelector('.subtask-list');
+    if(!listEl) return;
+    listEl.querySelectorAll('.subtask-item').forEach(item => {
+      const subId = item.dataset.subId;
+      item.querySelector('input[type=checkbox]').addEventListener('change', () => toggleSubtask(t.id, subId));
+      item.querySelector('.sub-del-btn').addEventListener('click', () => deleteSubtask(t.id, subId));
+    });
+    const addBtn = listEl.querySelector('.subtask-add-btn');
+    const addInput = listEl.querySelector('.subtask-new-input');
+    if(addBtn && addInput){
+      const commit = () => {
+        if(addInput.value.trim()){ addSubtask(t.id, addInput.value); expandedTasks.add(t.id); }
+      };
+      addBtn.addEventListener('click', commit);
+      addInput.addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); commit(); } });
+    }
+  }
+
   function renderTasks(){
     const list = getFilteredTasks();
     tasksEmptyMsg.style.display = list.length ? 'none' : 'block';
@@ -660,7 +833,8 @@
           <div class="task-main">
             <div class="task-title">${escapeHtml(t.title)}</div>
             ${t.description ? `<div class="task-desc">${escapeHtml(t.description)}</div>` : ''}
-            <div class="task-meta">${taskMetaHtml(t)}</div>
+            <div class="task-meta">${taskMetaHtml(t)}${subtaskBadgeHtml(t)}</div>
+            ${expandedTasks.has(t.id) ? subtaskListHtml(t) : ''}
           </div>
           <div class="task-actions">
             <button class="icon-btn edit-btn" title="Edit">✎</button>
@@ -672,6 +846,7 @@
         });
         row.querySelector('.edit-btn').addEventListener('click', () => startEditTask(t.id));
         row.querySelector('.del-btn').addEventListener('click', () => deleteTask(t.id));
+        wireSubtaskControls(row, t);
         taskListView.appendChild(row);
       });
     } else {
@@ -681,31 +856,43 @@
       ['not-started','in-progress','blocked','done'].forEach(statusKey => {
         const col = document.createElement('div');
         col.className = 'board-col';
+        col.dataset.status = statusKey;
         const colTasks = list.filter(t => t.status === statusKey);
-        col.innerHTML = `<h3>${STATUS_LABELS[statusKey]} <span>${colTasks.length}</span></h3>`;
+        const heading = document.createElement('h3');
+        heading.innerHTML = `${STATUS_LABELS[statusKey]} <span>${colTasks.length}</span>`;
+        col.appendChild(heading);
         colTasks.forEach(t => {
           const card = document.createElement('div');
           card.className = 'board-card' + (isOverdue(t) ? ' overdue' : '');
+          card.draggable = true;
+          card.dataset.taskId = t.id;
           card.innerHTML = `
             <div class="task-title">${escapeHtml(t.title)}</div>
-            <div class="task-meta">${taskMetaHtml(t)}</div>
+            <div class="task-meta">${taskMetaHtml(t)}${subtaskBadgeHtml(t)}</div>
+            ${expandedTasks.has(t.id) ? subtaskListHtml(t) : ''}
           `;
-          const sel = document.createElement('select');
-          ['not-started','in-progress','blocked','done'].forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s; opt.textContent = 'Move to: ' + STATUS_LABELS[s];
-            if(s === statusKey) opt.selected = true;
-            sel.appendChild(opt);
+          card.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', t.id);
+            e.dataTransfer.effectAllowed = 'move';
+            card.classList.add('dragging');
           });
-          sel.addEventListener('change', () => setTaskStatus(t.id, sel.value));
-          card.appendChild(sel);
+          card.addEventListener('dragend', () => card.classList.remove('dragging'));
           const actions = document.createElement('div');
-          actions.style.cssText = 'display:flex;gap:6px;margin-top:6px;';
+          actions.style.cssText = 'display:flex;gap:6px;margin-top:8px;';
           actions.innerHTML = `<button class="icon-btn edit-btn" title="Edit">✎ Edit</button><button class="icon-btn del-btn" title="Delete">✕ Delete</button>`;
           actions.querySelector('.edit-btn').addEventListener('click', () => startEditTask(t.id));
           actions.querySelector('.del-btn').addEventListener('click', () => deleteTask(t.id));
           card.appendChild(actions);
+          wireSubtaskControls(card, t);
           col.appendChild(card);
+        });
+        col.addEventListener('dragover', (e) => { e.preventDefault(); col.classList.add('drag-over'); });
+        col.addEventListener('dragleave', () => col.classList.remove('drag-over'));
+        col.addEventListener('drop', (e) => {
+          e.preventDefault();
+          col.classList.remove('drag-over');
+          const draggedId = e.dataTransfer.getData('text/plain');
+          if(draggedId) setTaskStatus(draggedId, statusKey);
         });
         grid.appendChild(col);
       });
@@ -727,7 +914,8 @@
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
   }
-  function parseCsvText(text){
+  function parseCsvText(text, delimiter){
+    delimiter = delimiter || ',';
     const rows = [];
     let row = [], field = '', inQuotes = false;
     for(let i=0; i<text.length; i++){
@@ -739,7 +927,7 @@
         } else field += c;
       } else {
         if(c === '"') inQuotes = true;
-        else if(c === ','){ row.push(field); field=''; }
+        else if(c === delimiter){ row.push(field); field=''; }
         else if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=''; }
         else if(c === '\r'){ /* skip */ }
         else field += c;
@@ -755,39 +943,162 @@
     downloadCsv('tasks.csv', rows);
   });
 
+  const TITLE_ALIASES = ['title','name','card name','task name','summary','issue summary'];
+  const DESC_ALIASES = ['description','notes','desc','details'];
+  const STATUS_ALIASES = ['status','list','section/column','section','state','column'];
+  const PRIORITY_ALIASES = ['priority'];
+  const DUE_ALIASES = ['duedate','due date','due','deadline'];
+  const TAGS_ALIASES = ['tags','labels'];
+
+  function findColumnIndex(header, aliases){
+    for(const alias of aliases){
+      const idx = header.indexOf(alias);
+      if(idx >= 0) return idx;
+    }
+    return -1;
+  }
+  const STATUS_VALUE_MAP = {
+    'not started':'not-started', 'not-started':'not-started', 'to do':'not-started', 'todo':'not-started',
+    'backlog':'not-started', 'open':'not-started', 'new':'not-started',
+    'in progress':'in-progress', 'in-progress':'in-progress', 'doing':'in-progress', 'active':'in-progress',
+    'in review':'in-progress', 'review':'in-progress',
+    'blocked':'blocked', 'on hold':'blocked', 'stuck':'blocked', 'waiting':'blocked',
+    'done':'done', 'complete':'done', 'completed':'done', 'closed':'done', 'resolved':'done'
+  };
+  const PRIORITY_VALUE_MAP = {
+    'lowest':'low', 'low':'low', 'minor':'low',
+    'medium':'medium', 'normal':'medium', 'moderate':'medium',
+    'high':'high', 'major':'high',
+    'highest':'urgent', 'urgent':'urgent', 'critical':'urgent', 'blocker':'urgent'
+  };
+  function mapStatusValue(raw){
+    return STATUS_VALUE_MAP[String(raw||'').trim().toLowerCase()] || 'not-started';
+  }
+  function mapPriorityValue(raw){
+    return PRIORITY_VALUE_MAP[String(raw||'').trim().toLowerCase()] || 'medium';
+  }
+  function mapDueValue(raw){
+    const s = String(raw||'').trim();
+    if(!s) return '';
+    if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+    const parsed = new Date(s);
+    if(isNaN(parsed)) return '';
+    return parsed.getFullYear() + '-' + String(parsed.getMonth()+1).padStart(2,'0') + '-' + String(parsed.getDate()).padStart(2,'0');
+  }
+
+  function importTaskRows(rows){
+    if(!rows.length) throw new Error('empty');
+    const header = rows[0].map(h => h.trim().toLowerCase());
+    const titleIdx = findColumnIndex(header, TITLE_ALIASES);
+    const descIdx = findColumnIndex(header, DESC_ALIASES);
+    const statusIdx = findColumnIndex(header, STATUS_ALIASES);
+    const priorityIdx = findColumnIndex(header, PRIORITY_ALIASES);
+    const dueIdx = findColumnIndex(header, DUE_ALIASES);
+    const tagsIdx = findColumnIndex(header, TAGS_ALIASES);
+    if(titleIdx < 0) throw new Error('no title column');
+
+    let added = 0;
+    rows.slice(1).forEach(r => {
+      const title = (r[titleIdx] || '').trim();
+      if(!title) return;
+      const rawTags = tagsIdx >= 0 ? (r[tagsIdx] || '') : '';
+      tasks.push({
+        id: uid(),
+        title,
+        description: descIdx >= 0 ? (r[descIdx] || '') : '',
+        status: statusIdx >= 0 ? mapStatusValue(r[statusIdx]) : 'not-started',
+        priority: priorityIdx >= 0 ? mapPriorityValue(r[priorityIdx]) : 'medium',
+        dueDate: dueIdx >= 0 ? mapDueValue(r[dueIdx]) : '',
+        tags: rawTags.split(/[|,;]/).map(t => t.trim()).filter(Boolean),
+        repeat: '',
+        subtasks: [],
+        createdAt: new Date().toISOString(),
+        completedAt: null
+      });
+      added++;
+    });
+    return added;
+  }
+
   document.getElementById('importTasksInput').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if(!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       try{
-        const rows = parseCsvText(reader.result);
-        if(!rows.length) throw new Error('empty');
-        const header = rows[0].map(h => h.trim().toLowerCase());
-        const idx = (name) => header.indexOf(name);
-        let added = 0;
-        rows.slice(1).forEach(r => {
-          const title = (r[idx('title')] || '').trim();
-          if(!title) return;
-          tasks.push({
-            id: uid(),
-            title,
-            description: r[idx('description')] || '',
-            status: Object.keys(STATUS_LABELS).includes(r[idx('status')]) ? r[idx('status')] : 'not-started',
-            priority: Object.keys(PRIORITY_LABELS).includes(r[idx('priority')]) ? r[idx('priority')] : 'medium',
-            dueDate: r[idx('duedate')] || '',
-            tags: (r[idx('tags')] || '').split('|').map(t=>t.trim()).filter(Boolean),
-            createdAt: new Date().toISOString(),
-            completedAt: null
-          });
-          added++;
-        });
+        const added = importTaskRows(parseCsvText(reader.result));
         saveTasks();
         renderTasks();
         renderOverview();
         showToast(`Imported ${added} task${added===1?'':'s'}`);
       }catch(err){
-        showToast('Could not read that CSV file');
+        showToast('Could not read that CSV file — make sure it has a title/name/summary column');
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  function parseIcs(text){
+    const rawLines = text.split(/\r\n|\n|\r/);
+    const lines = [];
+    rawLines.forEach(line => {
+      if(/^[ \t]/.test(line) && lines.length) lines[lines.length-1] += line.slice(1);
+      else lines.push(line);
+    });
+    const events = [];
+    let cur = null;
+    lines.forEach(line => {
+      if(line === 'BEGIN:VEVENT') cur = {};
+      else if(line === 'END:VEVENT'){ if(cur) events.push(cur); cur = null; }
+      else if(cur){
+        const idx = line.indexOf(':');
+        if(idx < 0) return;
+        const key = line.slice(0, idx).split(';')[0];
+        const value = line.slice(idx+1);
+        if(key === 'SUMMARY') cur.summary = value.replace(/\\,/g, ',').replace(/\\n/gi, ' ').replace(/\\;/g, ';');
+        if(key === 'DTSTART') cur.dtstart = value;
+      }
+    });
+    return events;
+  }
+  function icsDateToYmd(val){
+    const m = String(val||'').match(/^(\d{4})(\d{2})(\d{2})/);
+    return m ? `${m[1]}-${m[2]}-${m[3]}` : '';
+  }
+
+  document.getElementById('importIcsInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const events = parseIcs(reader.result);
+        let added = 0;
+        events.forEach(ev => {
+          if(!ev.summary) return;
+          tasks.push({
+            id: uid(),
+            title: ev.summary,
+            description: '',
+            status: 'not-started',
+            priority: 'medium',
+            dueDate: icsDateToYmd(ev.dtstart),
+            tags: ['calendar'],
+            repeat: '',
+            subtasks: [],
+            createdAt: new Date().toISOString(),
+            completedAt: null
+          });
+          added++;
+        });
+        if(!added) throw new Error('no events');
+        saveTasks();
+        renderTasks();
+        renderOverview();
+        showToast(`Imported ${added} event${added===1?'':'s'} from calendar`);
+      }catch(err){
+        showToast('Could not read that .ics file');
       }
       e.target.value = '';
     };
@@ -868,6 +1179,41 @@
   const chartGroupBy = document.getElementById('chartGroupBy');
   const chartMeasure = document.getElementById('chartMeasure');
 
+  function addSheetEntry(name, rowsArr){
+    if(!rowsArr.length) return null;
+    const columns = Object.keys(rowsArr[0]);
+    const id = uid();
+    sheets[id] = { id, name, columns, rows: rowsArr, importedAt: new Date().toISOString() };
+    return id;
+  }
+  function finalizeSheetImport(id, message){
+    if(!id) return;
+    saveSheets();
+    activeSheetId = id;
+    localStorage.setItem(ACTIVE_SHEET_KEY, activeSheetId);
+    visibleRowCount = 100;
+    renderSheetSelector();
+    renderActiveSheet();
+    renderOverview();
+    showToast(message);
+  }
+
+  let pendingWorkbook = null;
+  let pendingBaseName = '';
+  const multiSheetPicker = document.getElementById('multiSheetPicker');
+  const multiSheetCheckboxes = document.getElementById('multiSheetCheckboxes');
+
+  function showMultiSheetPicker(sheetNames){
+    multiSheetCheckboxes.innerHTML = '';
+    sheetNames.forEach((name, i) => {
+      const row = document.createElement('label');
+      row.className = 'sheet-checkbox-row';
+      row.innerHTML = `<input type="checkbox" value="${escapeHtml(name)}" ${i===0?'checked':''}> ${escapeHtml(name)}`;
+      multiSheetCheckboxes.appendChild(row);
+    });
+    multiSheetPicker.style.display = '';
+  }
+
   sheetFileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if(!file) return;
@@ -876,31 +1222,73 @@
       try{
         const data = new Uint8Array(reader.result);
         const wb = XLSX.read(data, {type:'array'});
-        const sheetName = wb.SheetNames[0];
-        const ws = wb.Sheets[sheetName];
-        const rowsArr = XLSX.utils.sheet_to_json(ws, {defval:'', raw:false});
-        if(!rowsArr.length){ showToast('That file has no rows to import'); return; }
-        const columns = Object.keys(rowsArr[0]);
-        const id = uid();
-        sheets[id] = {
-          id, name: file.name.replace(/\.(csv|xlsx|xls)$/i,''),
-          columns, rows: rowsArr,
-          importedAt: new Date().toISOString()
-        };
-        saveSheets();
-        activeSheetId = id;
-        localStorage.setItem(ACTIVE_SHEET_KEY, activeSheetId);
-        visibleRowCount = 100;
-        renderSheetSelector();
-        renderActiveSheet();
-        renderOverview();
-        showToast(`Loaded "${sheets[id].name}" — ${rowsArr.length} rows`);
+        const baseName = file.name.replace(/\.(csv|xlsx|xls)$/i,'');
+        if(wb.SheetNames.length > 1){
+          pendingWorkbook = wb;
+          pendingBaseName = baseName;
+          showMultiSheetPicker(wb.SheetNames);
+        } else {
+          const rowsArr = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:'', raw:false});
+          if(!rowsArr.length){ showToast('That file has no rows to import'); return; }
+          const id = addSheetEntry(baseName, rowsArr);
+          finalizeSheetImport(id, `Loaded "${baseName}" — ${rowsArr.length} rows`);
+        }
       }catch(err){
         showToast('Could not read that file. Make sure it is a valid CSV or Excel file.');
       }
       e.target.value = '';
     };
     reader.readAsArrayBuffer(file);
+  });
+
+  document.getElementById('importSelectedSheetsBtn').addEventListener('click', () => {
+    if(!pendingWorkbook) return;
+    const checked = [...multiSheetCheckboxes.querySelectorAll('input:checked')].map(cb => cb.value);
+    if(!checked.length){ showToast('Pick at least one sheet to import'); return; }
+    let lastId = null, totalRows = 0, count = 0;
+    checked.forEach(name => {
+      const rowsArr = XLSX.utils.sheet_to_json(pendingWorkbook.Sheets[name], {defval:'', raw:false});
+      if(!rowsArr.length) return;
+      const label = checked.length > 1 ? `${pendingBaseName} - ${name}` : pendingBaseName;
+      const id = addSheetEntry(label, rowsArr);
+      if(id){ lastId = id; totalRows += rowsArr.length; count++; }
+    });
+    pendingWorkbook = null;
+    multiSheetPicker.style.display = 'none';
+    if(!count){ showToast('Selected sheet(s) had no rows'); return; }
+    finalizeSheetImport(lastId, `Imported ${count} sheet${count===1?'':'s'} (${totalRows} rows total)`);
+  });
+  document.getElementById('cancelMultiSheetBtn').addEventListener('click', () => {
+    pendingWorkbook = null;
+    multiSheetPicker.style.display = 'none';
+  });
+
+  const pastePanel = document.getElementById('pastePanel');
+  const pasteTextarea = document.getElementById('pasteTextarea');
+  document.getElementById('pasteDataBtn').addEventListener('click', () => {
+    pastePanel.style.display = pastePanel.style.display === 'none' ? '' : 'none';
+  });
+  document.getElementById('cancelPasteBtn').addEventListener('click', () => {
+    pastePanel.style.display = 'none';
+    pasteTextarea.value = '';
+  });
+  document.getElementById('importPastedBtn').addEventListener('click', () => {
+    const text = pasteTextarea.value;
+    if(!text.trim()){ showToast('Paste some data first'); return; }
+    const delimiter = text.split('\n')[0].includes('\t') ? '\t' : ',';
+    const rows = parseCsvText(text, delimiter);
+    if(!rows.length){ showToast('Could not parse that data'); return; }
+    const header = rows[0];
+    const dataRows = rows.slice(1).map(r => {
+      const obj = {};
+      header.forEach((h,i) => { obj[h || `col${i+1}`] = r[i] !== undefined ? r[i] : ''; });
+      return obj;
+    });
+    if(!dataRows.length){ showToast('No data rows found — did you include a header row?'); return; }
+    const id = addSheetEntry('Pasted data ' + new Date().toLocaleTimeString(), dataRows);
+    pastePanel.style.display = 'none';
+    pasteTextarea.value = '';
+    finalizeSheetImport(id, `Imported pasted data — ${dataRows.length} rows`);
   });
 
   function renderSheetSelector(){

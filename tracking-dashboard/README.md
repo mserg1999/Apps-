@@ -14,12 +14,19 @@ Everything — tasks and imported data sheets — is saved to your browser's loc
 **Tasks tab**
 - Add/edit/delete tasks: title, notes, status (Not started / In progress / Blocked / Done), priority (Low/Medium/High/Urgent), due date, and free-form tags.
 - Search, filter by status/priority, sort by due date/priority/status/newest, and hide completed tasks.
-- **List view** (a flat, sortable list with inline checkboxes) or **Board view** (a 4-column kanban-style layout you reassign with a dropdown per card).
+- **List view** (a flat, sortable list with inline checkboxes) or **Board view** (a 4-column kanban-style layout — drag a card between columns to change its status).
 - Overdue tasks are highlighted automatically based on today's date.
-- Import/export tasks as CSV.
+- **Recurring tasks** — set a task to repeat daily/weekly/monthly; marking it done automatically creates the next occurrence with the due date advanced.
+- **Checklists/subtasks** — add a small checklist to any task (one item per line on the form, or add/remove/check items inline); a progress badge like `2/5` shows on the task.
+- Import tasks from:
+  - This app's own CSV export (round-trips cleanly).
+  - **Trello/Asana/Jira-style CSV exports** — recognizes common column names (Card Name, Summary, List, Section/Column, Due Date, Labels, Priority, etc.) and maps their status/priority values onto this app's own.
+  - **A calendar `.ics` export** (Outlook/Google Calendar) — each event becomes a task due on its start date, tagged `calendar`.
+- Export tasks back out as CSV.
 
 **Data Sheets tab**
-- Upload a `.csv`, `.xlsx`, or `.xls` file — parsed entirely in your browser (via the bundled SheetJS library).
+- Upload a `.csv`, `.xlsx`, or `.xls` file — parsed entirely in your browser (via the bundled SheetJS library). A workbook with multiple sheets prompts you to pick which one(s) to import.
+- **Paste Data** — paste rows copied from Excel/Google Sheets directly (tab- or comma-separated, with a header row) without saving a file first.
 - Multiple sheets can be loaded and switched between; each is saved locally so it's still there next time you open the app.
 - Sortable, filterable data table with pagination ("Show more rows").
 - **Column Stats** — pick any column to see count/sum/average/min/max (numeric) or distinct-value breakdown with a top-values bar chart (categorical).
@@ -46,6 +53,11 @@ This repo already has a `netlify.toml` pointed at a different app (`chess-availa
    - **Build command:** leave blank — this is a static site with no build step.
 4. Deploy. You'll get a URL like `https://your-site-name.netlify.app` in under a minute.
 5. Open that URL and use your browser's "Install app" option (or the in-app **Install** button) to add it to your home screen/desktop.
+
+## Known limitations
+
+- Board-view drag-and-drop uses the browser's native HTML5 drag API, which doesn't work on touch screens (phones/tablets) — use List view there instead, where checking the box marks a task done (status changes for other states still require the Edit form on touch devices).
+- The `.ics` calendar importer reads `SUMMARY` and `DTSTART` only (no recurrence rules, reminders, or attendees) and takes just the date, dropping any time-of-day.
 
 ## Data & security notes
 
