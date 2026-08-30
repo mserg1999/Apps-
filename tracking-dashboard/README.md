@@ -40,8 +40,8 @@ A sidebar of purpose-built trackers, grouped by category — click one to see it
 Every tracker supports search, CSV export, and add/edit/delete rows.
 
 **Firms Dashboard tab**
-- **Capacity by Firm** — a bar per firm, ranked by open matter count relative to your busiest firm, so you can see at a glance who's got a lot of work and who has room for more.
-- **Active Firms** table — loss state, work area, matter group, case type, line of business, director, open matter count, and average timekeeper cost, all editable in place.
+- **Capacity by Firm** — a true utilization percentage per firm: set a "Capacity Target" (how many open matters that firm is expected to handle) and the bar shows open matters ÷ target, color- and label-coded (✓ Has room / ● Near capacity / ⚠ Over capacity, over 100% possible). Firms without a target set yet fall back to a bar relative to your busiest firm, so the chart is useful immediately even before you've filled in targets.
+- **Active Firms** table — loss state, work area, matter group, case type, line of business, director, open matter count, capacity target, and average timekeeper cost, all editable in place.
 
 **Data Sheets tab**
 - Upload a `.csv`, `.xlsx`, or `.xls` file — parsed entirely in your browser (via the bundled SheetJS library). A workbook with multiple sheets prompts you to pick which one(s) to import.

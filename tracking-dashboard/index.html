@@ -362,7 +362,15 @@
   .capacity-firm{width:150px; flex-shrink:0; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .capacity-track{flex:1; background:var(--neutral-tint); border-radius:6px; height:16px; overflow:hidden;}
   .capacity-fill{height:100%; background:var(--accent-soft); border-radius:6px;}
-  .capacity-num{width:70px; text-align:right; color:var(--muted); font-weight:700; flex-shrink:0;}
+  .capacity-fill.tone-ok{background:#86efac;}
+  .capacity-fill.tone-warn{background:#fde68a;}
+  .capacity-fill.tone-over{background:#fca5a5;}
+  .capacity-meta{width:200px; flex-shrink:0; text-align:right; display:flex; flex-direction:column; gap:1px;}
+  .capacity-num{font-weight:800; color:var(--ink);}
+  .capacity-sub{font-size:0.72rem; color:var(--muted); white-space:nowrap;}
+  .capacity-sub.status-ok{color:var(--success);}
+  .capacity-sub.status-warn{color:var(--warning);}
+  .capacity-sub.status-over{color:var(--danger);}
 
   .hint{color:var(--muted); font-size:0.85rem; margin-top:8px;}
   .toast{
@@ -546,7 +554,7 @@
 <section id="tab-firms" class="tab-panel">
   <div class="card">
     <h2>📈 Capacity by Firm</h2>
-    <p class="sub">Open matter count per firm, relative to your busiest firm — see who has a lot of work and who has room for more.</p>
+    <p class="sub">Set a "Capacity Target" per firm below to see their true utilization % (open matters ÷ target — over 100% means over capacity). Firms without a target show their open matter count relative to your busiest firm instead.</p>
     <div class="capacity-chart" id="capacityChart"></div>
     <div class="empty-msg" id="capacityEmpty" style="display:none;">Add firms below to see their capacity here.</div>
   </div>
@@ -2336,6 +2344,7 @@
       {key:'lob', label:'Line of Business', type:'text'},
       {key:'director', label:'Director', type:'text'},
       {key:'openMatters', label:'Open Matters', type:'number'},
+      {key:'capacityTarget', label:'Capacity Target', type:'number'},
       {key:'avgCost', label:'Avg Timekeeper Cost', type:'number'}
     ]
   };
@@ -2358,22 +2367,46 @@
   document.getElementById('firmsExportBtn').addEventListener('click', () => exportContextCsv(firmsCtx));
   bindContext(firmsCtx);
 
+  function capacityInfo(row, maxOpen){
+    const open = parseFloat(row.openMatters) || 0;
+    const target = parseFloat(row.capacityTarget) || 0;
+    if(target > 0){
+      return { pct: Math.round((open / target) * 100), open, target, hasTarget: true };
+    }
+    return { pct: Math.round((open / maxOpen) * 100), open, target: 0, hasTarget: false };
+  }
+  function capacityStatus(pct){
+    if(pct > 100) return { cls:'over', text:'⚠ Over capacity' };
+    if(pct >= 80) return { cls:'warn', text:'● Near capacity' };
+    return { cls:'ok', text:'✓ Has room' };
+  }
+
   function renderCapacityChart(){
     const wrap = document.getElementById('capacityChart');
     const rows = firmsRows.filter(r => r.firm && r.firm.trim());
     wrap.innerHTML = '';
     document.getElementById('capacityEmpty').style.display = rows.length ? 'none' : 'block';
     if(!rows.length) return;
-    const sorted = rows.slice().sort((a,b) => (parseFloat(b.openMatters)||0) - (parseFloat(a.openMatters)||0));
-    const max = Math.max(1, ...sorted.map(r => parseFloat(r.openMatters) || 0));
+    const maxOpen = Math.max(1, ...rows.map(r => parseFloat(r.openMatters) || 0));
+    const sorted = rows.slice().sort((a,b) => capacityInfo(b, maxOpen).pct - capacityInfo(a, maxOpen).pct);
     sorted.forEach(r => {
-      const n = parseFloat(r.openMatters) || 0;
-      const pct = Math.max(2, Math.round((n / max) * 100));
+      const info = capacityInfo(r, maxOpen);
+      const barPct = Math.max(2, Math.min(100, info.pct));
+      let toneClass = '';
+      let subHtml = `${info.open} open · relative to busiest firm`;
+      if(info.hasTarget){
+        const status = capacityStatus(info.pct);
+        toneClass = ' tone-' + status.cls;
+        subHtml = `<span class="status-${status.cls}">${info.open} of ${info.target} target · ${status.text}</span>`;
+      }
       const row = document.createElement('div');
       row.className = 'capacity-row';
       row.innerHTML = `<div class="capacity-firm" title="${escapeHtml(r.firm)}">${escapeHtml(r.firm)}</div>
-        <div class="capacity-track"><div class="capacity-fill" style="width:${pct}%"></div></div>
-        <div class="capacity-num">${n} open</div>`;
+        <div class="capacity-track"><div class="capacity-fill${toneClass}" style="width:${barPct}%"></div></div>
+        <div class="capacity-meta">
+          <div class="capacity-num">${info.pct}%</div>
+          <div class="capacity-sub">${subHtml}</div>
+        </div>`;
       wrap.appendChild(row);
     });
   }
