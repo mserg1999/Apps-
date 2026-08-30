@@ -1,14 +1,16 @@
-# Work Tracking Dashboard
+# Mahlet's Tracker
 
-A single-page work dashboard: a live pending-task tracker plus a data-sheet importer for quick CSV/Excel analysis. It's a Progressive Web App (PWA), so it can be installed like a real app and keeps working offline once installed.
+A single-page work dashboard: a live pending-task tracker, a set of firm/case ops trackers (email follow-ups, cyber and engagement-letter reminders, LBA escalations, onboarding, rates, invoices, SharePoint folders), a firms capacity dashboard, and a data-sheet importer for quick CSV/Excel analysis. It's a Progressive Web App (PWA), so it can be installed like a real app and keeps working offline once installed.
 
-Everything — tasks and imported data sheets — is saved to your browser's local storage. Nothing is uploaded anywhere; it's entirely private to your device/browser.
+Everything — tasks, tracker rows, firm records, and imported data sheets — is saved to your browser's local storage. Nothing is uploaded anywhere; it's entirely private to your device/browser.
 
 ## Features
 
 **Overview tab**
 - Live counts: total tasks, in progress, overdue, completed this week.
+- **Live Task Status** — four big boxes (Not Started/In Progress/Blocked/Done) showing a live count and a peek at the actual tasks in each state.
 - "Coming Up" list of your nearest due dates, with overdue items flagged.
+- **Reminders Due Soon** — a rollup pulling anything due within 7 days (or overdue) from the Cyber Security, Engagement Letter, and LBA Escalation trackers.
 - Quick summary of which data sheets you've loaded.
 
 **Tasks tab**
@@ -23,6 +25,23 @@ Everything — tasks and imported data sheets — is saved to your browser's loc
   - **Trello/Asana/Jira-style CSV exports** — recognizes common column names (Card Name, Summary, List, Section/Column, Due Date, Labels, Priority, etc.) and maps their status/priority values onto this app's own.
   - **A calendar `.ics` export** (Outlook/Google Calendar) — each event becomes a task due on its start date, tagged `calendar`.
 - Export tasks back out as CSV.
+- **Daily Ops Checklist** — one button seeds three daily-recurring tasks (check failed invoices, rates approval, add matter groups); click again any time without creating duplicates.
+
+**Firm Trackers tab**
+
+A sidebar of purpose-built trackers, grouped by category — click one to see its own editable table (click any cell to edit it in place, no separate edit mode):
+
+- *Email & Reminders* — Email needing your response (personal/shared inbox), Email needing follow-up, Cyber Security Reminders, Engagement Letter (DocuSign) Reminders, LBA Escalations. Each reminder-style tracker has a due date column that auto-highlights the row red once it's overdue (and clears once you mark it resolved/signed/confirmed/etc.), and a red count badge in the sidebar showing how many rows are overdue.
+- *Firm Setup* — Firms Needing T360 Setup (+ attorney code), Onboarding Intake Forms (contacts, W9, conflict waiver, proposed partner/associate/paralegal rates, states active in), Firm Onboarding Stages (EL Signed / Under Cyber Review / Rate Negotiation / Added to System), Firms Needing New EL.
+- *Finance* — Invoice Issues, Rate Summary – Casualty, Rate Summary – Commercial (firm, approved, TIN/attorney code, partner/associate/paralegal rates, effective date).
+- *Documents* — SharePoint Folder Tracker (which firms have a folder, and what's in it).
+- *Custom* — click **+ New Custom Tracker** to build your own from scratch (name it, add columns of any type — text/number/date/dropdown), or use **Copy rows & columns in** to fork any existing tracker's current data as a starting point ("a blank tracker to pull in from other trackers").
+
+Every tracker supports search, CSV export, and add/edit/delete rows.
+
+**Firms Dashboard tab**
+- **Capacity by Firm** — a bar per firm, ranked by open matter count relative to your busiest firm, so you can see at a glance who's got a lot of work and who has room for more.
+- **Active Firms** table — loss state, work area, matter group, case type, line of business, director, open matter count, and average timekeeper cost, all editable in place.
 
 **Data Sheets tab**
 - Upload a `.csv`, `.xlsx`, or `.xls` file — parsed entirely in your browser (via the bundled SheetJS library). A workbook with multiple sheets prompts you to pick which one(s) to import.
@@ -61,6 +80,7 @@ This repo already has a `netlify.toml` pointed at a different app (`chess-availa
 
 ## Data & security notes
 
-- All data (tasks and imported sheets) lives in your browser's `localStorage`, scoped to whatever URL/origin you open the app from. Using it from `file://`, from `localhost`, and from your deployed URL are three different storage buckets — pick one place and stick with it.
+- All data (tasks, tracker rows, firm records, and imported sheets) lives in your browser's `localStorage`, scoped to whatever URL/origin you open the app from. Using it from `file://`, from `localhost`, and from your deployed URL are three different storage buckets — pick one place and stick with it.
+- This is a single-user, local-only tool by design — there's no login and no server, so nothing here is visible to anyone else or from any other device/browser. If you ever need the same live data on more than one device, that would require real hosting with a database, which is a different (and larger) project than this.
 - Very large spreadsheets may not fit in `localStorage` (typically a few MB per origin). If a sheet fails to save, you'll get a toast warning; the data still works for that session but won't persist after a refresh.
 - Excel parsing uses the bundled [SheetJS](https://sheetjs.com) `xlsx` library (vendored in `vendor/`, not loaded from a CDN, so it also works fully offline). The version available for this project has known, unpatched advisories around parsing maliciously crafted `.xlsx` files (prototype pollution / ReDoS). Only open spreadsheet files you trust; if in doubt, save as `.csv` first (this app's own CSV parser doesn't use that library).

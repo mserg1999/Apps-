@@ -1,11 +1,11 @@
 {
-  "name": "Work Tracking Dashboard",
-  "short_name": "Dashboard",
+  "name": "Mahlet's Tracker",
+  "short_name": "Mahlet's Tracker",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0f1b26",
-  "theme_color": "#1e405c",
-  "description": "Track pending work tasks live and import data sheets for quick analysis.",
+  "background_color": "#f5f3fb",
+  "theme_color": "#4f46e5",
+  "description": "Firm and case tracking: tasks, reminders, onboarding, rates, and a firms capacity dashboard.",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }

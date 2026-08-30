@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Work Tracking Dashboard</title>
-<meta name="theme-color" content="#1e405c">
-<meta name="description" content="Live pending-task tracker with CSV/Excel data sheet import and analysis">
+<title>Mahlet's Tracker</title>
+<meta name="theme-color" content="#4f46e5">
+<meta name="description" content="Firm and case tracking: tasks, reminders, onboarding, rates, and a firms capacity dashboard">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Dashboard">
+<meta name="apple-mobile-web-app-title" content="Mahlet's Tracker">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -312,6 +312,58 @@
   .top-value-bar{height:8px; border-radius:6px; background:var(--accent);}
   .top-value-count{color:var(--muted); font-size:0.78rem; flex-shrink:0; width:28px; text-align:right;}
 
+  /* ---------- Firm Trackers ---------- */
+  .tracker-layout{display:grid; grid-template-columns:230px 1fr; gap:20px; align-items:start;}
+  @media (max-width:800px){ .tracker-layout{grid-template-columns:1fr;} }
+  .tracker-nav{background:var(--panel); border-radius:var(--radius); box-shadow:var(--shadow); padding:12px; position:sticky; top:78px;}
+  .tracker-nav-group{margin-bottom:14px;}
+  .tracker-nav-group:last-child{margin-bottom:0;}
+  .tracker-nav-group h4{margin:0 0 6px; padding:0 8px; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted);}
+  .tracker-nav-item{
+    display:flex; justify-content:space-between; align-items:center;
+    width:100%; text-align:left; border:none; background:transparent;
+    font-family:inherit; font-size:0.85rem; font-weight:600; color:var(--ink);
+    padding:8px 10px; border-radius:8px; cursor:pointer; margin-bottom:2px;
+  }
+  .tracker-nav-item:hover{background:var(--neutral-tint);}
+  .tracker-nav-item.active{background:var(--accent-bg); color:var(--accent-dark);}
+  .tracker-nav-item .count-pill{
+    background:rgba(0,0,0,0.06); color:inherit; font-size:0.68rem; font-weight:700;
+    padding:1px 7px; border-radius:999px;
+  }
+  .tracker-nav-item.active .count-pill{background:rgba(79,70,229,0.16);}
+  .tracker-nav-item.has-due .count-pill{background:var(--danger-bg); color:var(--danger);}
+
+  .tracker-content h2{margin:0 0 2px;}
+  .tracker-add-form{display:flex; flex-wrap:wrap; gap:10px; margin-bottom:6px;}
+  .tracker-add-form .field{display:flex; flex-direction:column; gap:4px; flex:1; min-width:150px;}
+  .tracker-add-form .field label{font-size:0.72rem; font-weight:700; color:var(--muted);}
+  .tracker-add-form .field-actions{display:flex; align-items:flex-end;}
+
+  .tracker-table-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:12px; margin-top:14px;}
+  table.tracker-table{width:100%; border-collapse:collapse; font-size:0.85rem;}
+  table.tracker-table th, table.tracker-table td{padding:9px 12px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap;}
+  table.tracker-table th{background:var(--neutral-tint); font-weight:700;}
+  table.tracker-table tbody tr:hover{background:#fbfaff;}
+  table.tracker-table tbody tr.row-overdue{background:var(--danger-bg);}
+  table.tracker-table td.cell-editable{cursor:pointer;}
+  table.tracker-table td.cell-editable:hover{box-shadow:inset 0 0 0 1.5px var(--accent-soft);}
+  table.tracker-table input, table.tracker-table select{font-size:0.82rem; padding:6px 8px;}
+  .tag-yes{color:var(--success); font-weight:700;}
+  .tag-no{color:var(--muted);}
+  .tracker-row-actions{display:flex; gap:4px;}
+  .tracker-custom-cols{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0;}
+  .custom-col-chip{background:var(--neutral-tint); border-radius:999px; padding:5px 10px 5px 12px; font-size:0.78rem; font-weight:600; display:flex; align-items:center; gap:6px;}
+  .custom-col-chip button{border:none; background:none; color:var(--muted); cursor:pointer; font-size:0.85rem; line-height:1;}
+
+  /* ---------- Firms Dashboard ---------- */
+  .capacity-chart{display:flex; flex-direction:column; gap:10px; margin-top:8px;}
+  .capacity-row{display:flex; align-items:center; gap:10px; font-size:0.85rem;}
+  .capacity-firm{width:150px; flex-shrink:0; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .capacity-track{flex:1; background:var(--neutral-tint); border-radius:6px; height:16px; overflow:hidden;}
+  .capacity-fill{height:100%; background:var(--accent-soft); border-radius:6px;}
+  .capacity-num{width:70px; text-align:right; color:var(--muted); font-weight:700; flex-shrink:0;}
+
   .hint{color:var(--muted); font-size:0.85rem; margin-top:8px;}
   .toast{
     position:fixed; bottom:24px; left:50%;
@@ -327,10 +379,12 @@
 <body>
 
 <header class="topbar">
-  <div class="brand">📊 Work Dashboard</div>
+  <div class="brand">📊 Mahlet's Tracker</div>
   <nav class="tabs">
     <button class="tab-btn active" data-tab="overview">Overview</button>
     <button class="tab-btn" data-tab="tasks">Tasks</button>
+    <button class="tab-btn" data-tab="trackers">Firm Trackers</button>
+    <button class="tab-btn" data-tab="firms">Firms Dashboard</button>
     <button class="tab-btn" data-tab="sheets">Data Sheets</button>
   </nav>
   <div class="topbar-actions">
@@ -364,6 +418,14 @@
       <p class="sub">Sheets you've imported for analysis.</p>
       <ul class="summary-list" id="sheetsSummaryList"></ul>
       <div class="empty-msg" id="sheetsSummaryEmpty">No data sheets imported yet — head to the Data Sheets tab.</div>
+    </div>
+  </div>
+  <div class="container" style="margin-top:0;">
+    <div class="card" style="grid-column:1/-1;">
+      <h2>⏰ Reminders Due Soon</h2>
+      <p class="sub">Cyber security, engagement letter, and LBA escalation reminders — due within 7 days or overdue.</p>
+      <ul class="summary-list" id="remindersDueList"></ul>
+      <div class="empty-msg" id="remindersDueEmpty">Nothing due soon across your reminder trackers. 🎉</div>
     </div>
   </div>
 </section>
@@ -436,11 +498,75 @@
       <button class="pill grey" id="exportTasksBtn">⬇ Export CSV</button>
       <label class="pill grey file-label">⬆ Import CSV<input type="file" id="importTasksInput" accept=".csv" hidden></label>
       <label class="pill grey file-label">📅 Import Calendar (.ics)<input type="file" id="importIcsInput" accept=".ics" hidden></label>
+      <button class="pill grey" id="seedDailyChecklistBtn">✅ Load Daily Ops Checklist</button>
     </div>
     <p class="hint" id="boardHint" style="display:none;">Drag a card between columns to change its status.</p>
     <div id="taskListView"></div>
     <div id="taskBoardView" style="display:none;"></div>
     <div class="empty-msg" id="tasksEmptyMsg" style="display:none;">No tasks match your filters.</div>
+  </div>
+</section>
+
+<!-- FIRM TRACKERS -->
+<section id="tab-trackers" class="tab-panel">
+  <div class="tracker-layout">
+    <nav class="tracker-nav" id="trackerNav"></nav>
+    <div class="card tracker-content">
+      <h2 id="trackerTitle"></h2>
+      <p class="sub" id="trackerDesc"></p>
+
+      <div id="trackerCustomCols" class="tracker-custom-cols" style="display:none;"></div>
+      <div id="trackerCopyFrom" style="display:none; margin-bottom:14px;">
+        <div class="toolbar">
+          <select id="copyFromSelect"></select>
+          <button class="pill grey" id="copyFromBtn">📥 Copy rows &amp; columns in</button>
+        </div>
+      </div>
+
+      <form class="tracker-add-form" id="trackerAddForm"></form>
+      <div class="form-actions" style="margin:4px 0 10px;">
+        <button type="submit" form="trackerAddForm" id="trackerAddSubmitBtn" class="pill green">+ Add Row</button>
+        <button type="button" class="pill grey" id="trackerAddColBtn" style="display:none;">+ Add Column</button>
+      </div>
+
+      <div class="toolbar">
+        <input id="trackerSearch" placeholder="🔍 Search this tracker...">
+        <span class="stats-line" id="trackerRowCount"></span>
+        <button class="pill grey" id="trackerExportBtn">⬇ Export CSV</button>
+      </div>
+      <div class="tracker-table-wrap">
+        <table class="tracker-table" id="trackerTable"><thead></thead><tbody></tbody></table>
+      </div>
+      <div class="empty-msg" id="trackerEmptyMsg" style="display:none;">No rows yet — add one above.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FIRMS DASHBOARD -->
+<section id="tab-firms" class="tab-panel">
+  <div class="card">
+    <h2>📈 Capacity by Firm</h2>
+    <p class="sub">Open matter count per firm, relative to your busiest firm — see who has a lot of work and who has room for more.</p>
+    <div class="capacity-chart" id="capacityChart"></div>
+    <div class="empty-msg" id="capacityEmpty" style="display:none;">Add firms below to see their capacity here.</div>
+  </div>
+
+  <div class="card">
+    <h2>Active Firms</h2>
+    <p class="sub">Loss state, work area, matter group, case type, line of business, director, open matters, and average timekeeper cost.</p>
+    <form class="tracker-add-form" id="firmsAddForm"></form>
+    <div class="form-actions" style="margin:4px 0 10px;">
+      <button type="submit" form="firmsAddForm" id="firmsAddSubmitBtn" class="pill green">+ Add Firm</button>
+    </div>
+    <div class="toolbar">
+      <input id="firmsSearch" placeholder="🔍 Search firms...">
+      <span class="stats-line" id="firmsRowCount"></span>
+      <button class="pill grey" id="firmsExportBtn">⬇ Export CSV</button>
+    </div>
+    <div class="tracker-table-wrap">
+      <table class="tracker-table" id="firmsTable"><thead></thead><tbody></tbody></table>
+    </div>
+    <div class="empty-msg" id="firmsEmptyMsg" style="display:none;">No firms yet — add one above.</div>
   </div>
 </section>
 
@@ -1145,6 +1271,34 @@
     reader.readAsText(file);
   });
 
+  const DAILY_CHECKLIST_ITEMS = ['Check failed invoices', 'Rates approval', 'Add matter groups'];
+  document.getElementById('seedDailyChecklistBtn').addEventListener('click', () => {
+    const existingTitles = new Set(tasks.map(t => t.title.trim().toLowerCase()));
+    let added = 0;
+    DAILY_CHECKLIST_ITEMS.forEach(title => {
+      if(existingTitles.has(title.toLowerCase())) return;
+      tasks.push({
+        id: uid(),
+        title,
+        description: '',
+        status: 'not-started',
+        priority: 'medium',
+        dueDate: todayStr(),
+        tags: ['daily-ops'],
+        repeat: 'daily',
+        subtasks: [],
+        createdAt: new Date().toISOString(),
+        completedAt: null
+      });
+      added++;
+    });
+    if(!added){ showToast('Daily checklist is already loaded'); return; }
+    saveTasks();
+    renderTasks();
+    renderOverview();
+    showToast(`Added ${added} daily task${added===1?'':'s'} — they'll repeat automatically each day`);
+  });
+
   /* =========================================================
      OVERVIEW
      ========================================================= */
@@ -1232,6 +1386,40 @@
       sheetsSummaryList.appendChild(li);
     });
     sheetsSummaryEmpty.style.display = sheetNames.length ? 'none' : 'block';
+
+    renderRemindersDue();
+  }
+
+  const REMINDER_TRACKER_IDS = ['cyber-reminders','el-reminders','lba-escalations'];
+  function renderRemindersDue(){
+    const listEl = document.getElementById('remindersDueList');
+    const emptyEl = document.getElementById('remindersDueEmpty');
+    if(!listEl || typeof getTrackerConfig !== 'function'){ return; }
+    const soon = new Date(); soon.setDate(soon.getDate() + 7);
+    const soonStr = soon.getFullYear() + '-' + String(soon.getMonth()+1).padStart(2,'0') + '-' + String(soon.getDate()).padStart(2,'0');
+
+    const due = [];
+    REMINDER_TRACKER_IDS.forEach(id => {
+      const config = getTrackerConfig(id);
+      if(!config || !config.dueKey) return;
+      getRows(id).forEach(row => {
+        const dueDate = row[config.dueKey];
+        if(!dueDate) return;
+        if(config.statusKey && config.doneValues && config.doneValues.includes(row[config.statusKey])) return;
+        if(dueDate <= soonStr){
+          due.push({trackerLabel: config.label, firm: row.firm || row.contact || '(no firm)', dueDate, overdue: dueDate < todayStr()});
+        }
+      });
+    });
+    due.sort((a,b) => a.dueDate.localeCompare(b.dueDate));
+
+    listEl.innerHTML = '';
+    due.slice(0, 10).forEach(item => {
+      const li = document.createElement('li');
+      li.innerHTML = `<div><div class="sd">${escapeHtml(item.firm)}</div><div class="st">${item.overdue?'⚠ Overdue — ':'📅 '}${fmtDate(item.dueDate)} · ${escapeHtml(item.trackerLabel)}</div></div>`;
+      listEl.appendChild(li);
+    });
+    emptyEl.style.display = due.length ? 'none' : 'block';
   }
 
   /* =========================================================
@@ -1632,6 +1820,565 @@
   }
 
   /* =========================================================
+     FIRM TRACKERS (generic config-driven engine)
+     ========================================================= */
+  function loadJSON(key, fallback){
+    try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+    catch(e){ return fallback; }
+  }
+  function saveJSON(key, val){
+    try{ localStorage.setItem(key, JSON.stringify(val)); }
+    catch(e){ showToast('⚠️ Could not save — storage full?'); }
+  }
+
+  const TRACKER_ROWS_KEY = 'mahlets-tracker-rows-v1';
+  const CUSTOM_DEFS_KEY = 'mahlets-tracker-custom-defs-v1';
+  const ACTIVE_TRACKER_KEY = 'mahlets-tracker-active-v1';
+
+  const TRACKER_CONFIGS = [
+    {
+      id:'email-response', group:'Email & Reminders', label:'Email – Needs Response',
+      desc:'Emails needing your response, across your personal and shared inbox.',
+      dueKey:'respondBy', statusKey:'status', doneValues:['Responded'],
+      columns:[
+        {key:'inbox', label:'Inbox', type:'select', options:['Personal','Shared']},
+        {key:'contact', label:'From / Firm', type:'text'},
+        {key:'subject', label:'Subject', type:'text'},
+        {key:'received', label:'Received', type:'date'},
+        {key:'respondBy', label:'Respond By', type:'date'},
+        {key:'status', label:'Status', type:'select', options:['Needs Response','Responded']},
+        {key:'notes', label:'Notes', type:'textarea'}
+      ]
+    },
+    {
+      id:'email-followup', group:'Email & Reminders', label:'Email – Needs Follow-up',
+      desc:'Emails you sent that still need a follow-up, across both inboxes.',
+      dueKey:'followUpBy', statusKey:'status', doneValues:['Followed Up'],
+      columns:[
+        {key:'inbox', label:'Inbox', type:'select', options:['Personal','Shared']},
+        {key:'contact', label:'Firm / Contact', type:'text'},
+        {key:'subject', label:'Subject', type:'text'},
+        {key:'followUpBy', label:'Follow Up By', type:'date'},
+        {key:'status', label:'Status', type:'select', options:['Pending','Followed Up']},
+        {key:'notes', label:'Notes', type:'textarea'}
+      ]
+    },
+    {
+      id:'cyber-reminders', group:'Email & Reminders', label:'Cyber Security Reminders',
+      desc:'Cyber security reminders sent to firms.',
+      dueKey:'nextDue', statusKey:'status', doneValues:['Confirmed'],
+      columns:[
+        {key:'firm', label:'Firm', type:'text'},
+        {key:'contact', label:'Contact', type:'text'},
+        {key:'lastSent', label:'Last Sent', type:'date'},
+        {key:'nextDue', label:'Next Reminder Due', type:'date'},
+        {key:'status', label:'Status', type:'select', options:['Pending','Sent','Confirmed']},
+        {key:'notes', label:'Notes', type:'textarea'}
+      ]
+    },
+    {
+      id:'el-reminders', group:'Email & Reminders', label:'Engagement Letter (DocuSign) Reminders',
+      desc:'Engagement letter reminders sent to firms via DocuSign.',
+      dueKey:'reminderDue', statusKey:'status', doneValues:['Signed'],
+      columns:[
+        {key:'firm', label:'Firm', type:'text'},
+        {key:'contact', label:'Contact', type:'text'},
+        {key:'sentDate', label:'Sent Date', type:'date'},
+        {key:'reminderDue', label:'Reminder Due', type:'date'},
+        {key:'status', label:'Status', type:'select', options:['Sent','Signed','Overdue']},
+        {key:'notes', label:'Notes', type:'textarea'}
+      ]
+    },
+    {
+      id:'lba-escalations', group:'Email & Reminders', label:'LBA Escalations',
+      desc:'LBA escalations to complete.',
+      dueKey:'dueDate', statusKey:'status', doneValues:['Resolved'],
+      columns:[
+        {key:'firm', label:'Firm', type:'text'},
+        {key:'matter', label:'Matter / Case #', type:'text'},
+        {key:'reason', label:'Reason', type:'text'},
+        {key:'opened', label:'Opened', type:'date'},
+        {key:'dueDate', label:'Due Date', type:'date'},
+        {key:'status', label:'Status', type:'select', options:['Open','In Progress','Resolved']},
+        {key:'notes', label:'Notes', type:'textarea'}
+      ]
+    },
+    {
+      id:'t360-setup', group:'Firm Setup', label:'Firms Needing T360 Setup',
+      desc:'Firms that need to be added to T360 and assigned an attorney code.',
+      statusKey:'status', doneValues:['Added'],
+      columns:[
+        {key:'firm', label:'Firm', type:'text'},
+        {key:'attorneyCode', label:'Attorney Code', type:'text'},
+        {key:'requested', label:'Requested', type:'date'},
+        {key:'status', label:'Status', type:'select', options:['Not Added','Pending','Added']},
+        {key:'notes', label:'Notes', type:'textarea'}
+      ]
+    },
+    {
+      id:'onboarding-intake', group:'Firm Setup', label:'Onboarding Intake Forms',
+      desc:'Intake details collected while onboarding a new firm.',
+      columns:[
+        {key:'firm', label:'Firm', type:'text'},
+        {key:'primaryContact', label:'Primary Contact', type:'text'},
+        {key:'billingContact', label:'Billing Contact', type:'text'},
+        {key:'cyberContact', label:'Cyber Contact', type:'text'},
+        {key:'w9', label:'W9 Received', type:'select', options:['Yes','No']},
+        {key:'conflictWaiver', label:'Conflict Waiver', type:'select', options:['Yes','No']},
+        {key:'ratePartner', label:'Proposed Rate – Partner', type:'number'},
+        {key:'rateAssociate', label:'Proposed Rate – Associate', type:'number'},
+        {key:'rateParalegal', label:'Proposed Rate – Paralegal', type:'number'},
+        {key:'statesActive', label:'States Active In', type:'text'},
+        {key:'notes', label:'Notes', type:'textarea'}
+      ]
+    },
+    {
+      id:'onboarding-stages', group:'Firm Setup', label:'Firm Onboarding Stages',
+      desc:'Where each firm stands in the onboarding pipeline.',
+      columns:[
+        {key:'firm', label:'Firm', type:'text'},
+        {key:'stage', label:'Stage', type:'select', options:['EL Signed','Under Cyber Review','Rate Negotiation','Added to System']},
+        {key:'updated', label:'Last Updated', type:'date'},
+        {key:'notes', label:'Notes', type:'textarea'}
+      ]
+    },
+    {
+      id:'firms-need-el', group:'Firm Setup', label:'Firms Needing New EL',
+      desc:'Firms with no agreement in place, or needing a new engagement letter.',
+      statusKey:'status', doneValues:['Resolved'],
+      columns:[
+        {key:'firm', label:'Firm', type:'text'},
+        {key:'reason', label:'Reason', type:'text'},
+        {key:'identified', label:'Identified', type:'date'},
+        {key:'status', label:'Status', type:'select', options:['Needs EL','In Progress','Resolved']},
+        {key:'notes', label:'Notes', type:'textarea'}
+      ]
+    },
+    {
+      id:'invoice-issues', group:'Finance', label:'Invoice Issues',
+      desc:'Invoice issues by firm.',
+      statusKey:'status', doneValues:['Resolved'],
+      columns:[
+        {key:'firm', label:'Firm', type:'text'},
+        {key:'issue', label:'Issue', type:'text'},
+        {key:'status', label:'Status', type:'select', options:['Open','In Progress','Resolved']},
+        {key:'date', label:'Date', type:'date'}
+      ]
+    },
+    {
+      id:'rate-summary-casualty', group:'Finance', label:'Rate Summary – Casualty',
+      desc:'Approved rates by firm — Casualty.',
+      columns:[
+        {key:'firm', label:'Firm', type:'text'},
+        {key:'approved', label:'Approved', type:'select', options:['Yes','No']},
+        {key:'tinCode', label:'TIN / Attorney Code', type:'text'},
+        {key:'ratePartner', label:'Partner Rate', type:'number'},
+        {key:'rateAssociate', label:'Associate Rate', type:'number'},
+        {key:'rateParalegal', label:'Paralegal Rate', type:'number'},
+        {key:'effectiveDate', label:'Effective Date', type:'date'},
+        {key:'notes', label:'Notes', type:'textarea'}
+      ]
+    },
+    {
+      id:'rate-summary-commercial', group:'Finance', label:'Rate Summary – Commercial',
+      desc:'Approved rates by firm — Commercial.',
+      columns:[
+        {key:'firm', label:'Firm', type:'text'},
+        {key:'approved', label:'Approved', type:'select', options:['Yes','No']},
+        {key:'tinCode', label:'TIN / Attorney Code', type:'text'},
+        {key:'ratePartner', label:'Partner Rate', type:'number'},
+        {key:'rateAssociate', label:'Associate Rate', type:'number'},
+        {key:'rateParalegal', label:'Paralegal Rate', type:'number'},
+        {key:'effectiveDate', label:'Effective Date', type:'date'},
+        {key:'notes', label:'Notes', type:'textarea'}
+      ]
+    },
+    {
+      id:'sharepoint-folders', group:'Documents', label:'SharePoint Folder Tracker',
+      desc:'Which firms have a SharePoint folder, and what documents are in it.',
+      columns:[
+        {key:'firm', label:'Firm', type:'text'},
+        {key:'hasFolder', label:'Has Folder', type:'select', options:['Yes','No']},
+        {key:'documents', label:'Documents Present', type:'text'},
+        {key:'updated', label:'Last Updated', type:'date'},
+        {key:'notes', label:'Notes', type:'textarea'}
+      ]
+    }
+  ];
+
+  let trackerRows = loadJSON(TRACKER_ROWS_KEY, {});
+  let customDefs = loadJSON(CUSTOM_DEFS_KEY, []);
+  let activeTrackerId = localStorage.getItem(ACTIVE_TRACKER_KEY) || TRACKER_CONFIGS[0].id;
+
+  function saveTrackerRows(){ saveJSON(TRACKER_ROWS_KEY, trackerRows); }
+  function saveCustomDefs(){ saveJSON(CUSTOM_DEFS_KEY, customDefs); }
+
+  function allTrackerConfigs(){
+    return TRACKER_CONFIGS.concat(customDefs.map(d => Object.assign(
+      {group:'Custom', desc:'Your own tracker — add columns, or pull rows in from any other tracker.', isCustom:true},
+      d
+    )));
+  }
+  function getTrackerConfig(id){ return allTrackerConfigs().find(c => c.id === id); }
+  function getRows(id){ if(!trackerRows[id]) trackerRows[id] = []; return trackerRows[id]; }
+
+  function rowIsOverdue(config, row){
+    if(!config.dueKey || !row[config.dueKey]) return false;
+    if(config.statusKey && config.doneValues && config.doneValues.includes(row[config.statusKey])) return false;
+    return row[config.dueKey] < todayStr();
+  }
+
+  function fieldInputHtml(col, value){
+    value = value == null ? '' : value;
+    if(col.type === 'select'){
+      return `<select data-key="${col.key}">` +
+        col.options.map(o => `<option value="${escapeHtml(o)}" ${o===value?'selected':''}>${escapeHtml(o)}</option>`).join('') +
+        `</select>`;
+    }
+    if(col.type === 'textarea') return `<textarea data-key="${col.key}" rows="1">${escapeHtml(value)}</textarea>`;
+    if(col.type === 'date') return `<input type="date" data-key="${col.key}" value="${escapeHtml(value)}">`;
+    if(col.type === 'number') return `<input type="number" data-key="${col.key}" value="${escapeHtml(value)}" step="any">`;
+    return `<input type="text" data-key="${col.key}" value="${escapeHtml(value)}">`;
+  }
+  function renderCellDisplay(td, col, value){
+    if(col.type === 'select' && (value === 'Yes' || value === 'No')){
+      td.innerHTML = value === 'Yes' ? '<span class="tag-yes">✓ Yes</span>' : '<span class="tag-no">No</span>';
+    } else if(col.type === 'date' && value){
+      td.textContent = fmtDate(value);
+    } else {
+      td.textContent = value || '';
+    }
+  }
+
+  function renderTableForContext(ctx){
+    const config = ctx.getConfig();
+    const rows = ctx.getRows();
+    const q = ctx.els.search.value.trim().toLowerCase();
+    const filtered = q ? rows.filter(r => config.columns.some(c => String(r[c.key]||'').toLowerCase().includes(q))) : rows;
+
+    ctx.els.rowCount.textContent = `${filtered.length} of ${rows.length} rows`;
+    ctx.els.empty.style.display = rows.length ? 'none' : 'block';
+
+    const thead = ctx.els.table.querySelector('thead');
+    const tbody = ctx.els.table.querySelector('tbody');
+    thead.innerHTML = ''; tbody.innerHTML = '';
+
+    const trh = document.createElement('tr');
+    config.columns.forEach(col => { const th = document.createElement('th'); th.textContent = col.label; trh.appendChild(th); });
+    trh.appendChild(document.createElement('th'));
+    thead.appendChild(trh);
+
+    filtered.forEach(row => {
+      const tr = document.createElement('tr');
+      if(rowIsOverdue(config, row)) tr.className = 'row-overdue';
+      config.columns.forEach(col => {
+        const td = document.createElement('td');
+        td.className = 'cell-editable';
+        renderCellDisplay(td, col, row[col.key]);
+        td.addEventListener('click', () => startCellEditGeneric(td, ctx, row, col));
+        tr.appendChild(td);
+      });
+      const tdActions = document.createElement('td');
+      tdActions.innerHTML = '<div class="tracker-row-actions"><button class="icon-btn del-row-btn" title="Delete row">✕</button></div>';
+      tdActions.querySelector('.del-row-btn').addEventListener('click', () => {
+        if(!confirm('Delete this row?')) return;
+        const rowsArr = ctx.getRows();
+        const idx = rowsArr.findIndex(r => r.id === row.id);
+        if(idx >= 0) rowsArr.splice(idx, 1);
+        ctx.saveRows();
+        renderTableForContext(ctx);
+        if(ctx.onAfterChange) ctx.onAfterChange();
+      });
+      tr.appendChild(tdActions);
+      tbody.appendChild(tr);
+    });
+  }
+
+  function startCellEditGeneric(td, ctx, row, col){
+    if(td.querySelector('input,select,textarea')) return;
+    const value = row[col.key] || '';
+    td.innerHTML = fieldInputHtml(col, value);
+    const input = td.querySelector('[data-key]');
+    input.focus();
+    const commit = () => {
+      row[col.key] = input.value;
+      ctx.saveRows();
+      renderCellDisplay(td, col, row[col.key]);
+      const config = ctx.getConfig();
+      const tr = td.closest('tr');
+      if(config.dueKey) tr.classList.toggle('row-overdue', rowIsOverdue(config, row));
+      if(ctx.onAfterChange) ctx.onAfterChange();
+    };
+    input.addEventListener('blur', commit);
+    if(input.tagName !== 'TEXTAREA'){
+      input.addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); input.blur(); } });
+    }
+  }
+
+  function renderAddFormForContext(ctx){
+    const config = ctx.getConfig();
+    ctx.els.form.innerHTML = '';
+    config.columns.forEach(col => {
+      const field = document.createElement('div');
+      field.className = 'field';
+      field.innerHTML = `<label>${escapeHtml(col.label)}</label>` + fieldInputHtml(col, '');
+      ctx.els.form.appendChild(field);
+    });
+  }
+
+  function exportContextCsv(ctx){
+    const config = ctx.getConfig();
+    const rows = ctx.getRows();
+    const header = config.columns.map(c => c.label);
+    const body = rows.map(r => config.columns.map(c => r[c.key] || ''));
+    downloadCsv(config.label.toLowerCase().replace(/[^a-z0-9]+/g,'-') + '.csv', [header].concat(body));
+  }
+
+  function bindContext(ctx){
+    ctx.els.form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const config = ctx.getConfig();
+      const row = {id: uid()};
+      config.columns.forEach(col => {
+        const el = ctx.els.form.querySelector(`[data-key="${col.key}"]`);
+        row[col.key] = el ? el.value : '';
+      });
+      if(!config.columns.some(col => (row[col.key]||'').toString().trim())) return;
+      ctx.getRows().push(row);
+      ctx.saveRows();
+      renderTableForContext(ctx);
+      if(ctx.onAfterChange) ctx.onAfterChange();
+      showToast('Row added');
+      renderAddFormForContext(ctx);
+    });
+    ctx.els.search.addEventListener('input', () => renderTableForContext(ctx));
+  }
+
+  const trackerCtx = {
+    getConfig: () => getTrackerConfig(activeTrackerId),
+    getRows: () => getRows(activeTrackerId),
+    saveRows: () => saveTrackerRows(),
+    els: {
+      form: document.getElementById('trackerAddForm'),
+      search: document.getElementById('trackerSearch'),
+      table: document.getElementById('trackerTable'),
+      rowCount: document.getElementById('trackerRowCount'),
+      empty: document.getElementById('trackerEmptyMsg')
+    },
+    onAfterChange: () => { renderTrackerNav(); renderOverview(); }
+  };
+
+  const TRACKER_GROUP_ORDER = ['Email & Reminders','Firm Setup','Finance','Documents','Custom'];
+
+  function renderTrackerNav(){
+    const configs = allTrackerConfigs();
+    const nav = document.getElementById('trackerNav');
+    nav.innerHTML = '';
+    TRACKER_GROUP_ORDER.forEach(groupName => {
+      const groupConfigs = configs.filter(c => c.group === groupName);
+      if(!groupConfigs.length && groupName !== 'Custom') return;
+      const groupEl = document.createElement('div');
+      groupEl.className = 'tracker-nav-group';
+      groupEl.innerHTML = `<h4>${escapeHtml(groupName)}</h4>`;
+      groupConfigs.forEach(c => {
+        const rows = getRows(c.id);
+        const dueCount = rows.filter(r => rowIsOverdue(c, r)).length;
+        const btn = document.createElement('button');
+        btn.className = 'tracker-nav-item' + (c.id === activeTrackerId ? ' active' : '') + (dueCount ? ' has-due' : '');
+        btn.innerHTML = `<span>${escapeHtml(c.label)}</span><span class="count-pill">${dueCount || rows.length}</span>`;
+        btn.addEventListener('click', () => {
+          activeTrackerId = c.id;
+          localStorage.setItem(ACTIVE_TRACKER_KEY, activeTrackerId);
+          document.getElementById('trackerSearch').value = '';
+          renderTrackerNav();
+          renderTrackerView();
+        });
+        groupEl.appendChild(btn);
+      });
+      if(groupName === 'Custom'){
+        const addBtn = document.createElement('button');
+        addBtn.className = 'tracker-nav-item';
+        addBtn.style.color = 'var(--accent-dark)';
+        addBtn.textContent = '+ New Custom Tracker';
+        addBtn.addEventListener('click', createCustomTrackerPrompt);
+        groupEl.appendChild(addBtn);
+      }
+      nav.appendChild(groupEl);
+    });
+  }
+
+  function renderCustomColsChips(config){
+    const wrap = document.getElementById('trackerCustomCols');
+    wrap.innerHTML = '';
+    if(!config.columns.length){
+      wrap.innerHTML = '<span class="hint" style="margin:0;">No columns yet — click "+ Add Column" or copy from another tracker.</span>';
+      return;
+    }
+    config.columns.forEach(col => {
+      const chip = document.createElement('span');
+      chip.className = 'custom-col-chip';
+      chip.innerHTML = `${escapeHtml(col.label)} <button title="Remove column">✕</button>`;
+      chip.querySelector('button').addEventListener('click', () => removeCustomColumn(config.id, col.key));
+      wrap.appendChild(chip);
+    });
+  }
+  function renderCopyFromSelect(config){
+    const sel = document.getElementById('copyFromSelect');
+    sel.innerHTML = '';
+    allTrackerConfigs().filter(c => c.id !== config.id).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = c.label;
+      sel.appendChild(opt);
+    });
+  }
+
+  function renderTrackerView(){
+    const config = getTrackerConfig(activeTrackerId);
+    if(!config) return;
+    document.getElementById('trackerTitle').textContent = config.label;
+    document.getElementById('trackerDesc').textContent = config.desc || '';
+
+    const customColsWrap = document.getElementById('trackerCustomCols');
+    const addColBtn = document.getElementById('trackerAddColBtn');
+    const copyFromWrap = document.getElementById('trackerCopyFrom');
+    if(config.isCustom){
+      customColsWrap.style.display = '';
+      addColBtn.style.display = '';
+      copyFromWrap.style.display = '';
+      renderCustomColsChips(config);
+      renderCopyFromSelect(config);
+    } else {
+      customColsWrap.style.display = 'none';
+      addColBtn.style.display = 'none';
+      copyFromWrap.style.display = 'none';
+    }
+
+    renderAddFormForContext(trackerCtx);
+    renderTableForContext(trackerCtx);
+  }
+
+  function createCustomTrackerPrompt(){
+    const name = prompt('Name this tracker:', 'Custom Tracker');
+    if(!name || !name.trim()) return;
+    const id = 'custom-' + uid();
+    customDefs.push({id, label: name.trim(), columns: []});
+    saveCustomDefs();
+    activeTrackerId = id;
+    localStorage.setItem(ACTIVE_TRACKER_KEY, activeTrackerId);
+    renderTrackerNav();
+    renderTrackerView();
+    showToast('Custom tracker created — add columns or copy from another tracker.');
+  }
+  function removeCustomColumn(trackerId, colKey){
+    const def = customDefs.find(d => d.id === trackerId);
+    if(!def) return;
+    if(!confirm('Remove this column? Data in it will be lost from all rows.')) return;
+    def.columns = def.columns.filter(c => c.key !== colKey);
+    saveCustomDefs();
+    getRows(trackerId).forEach(r => { delete r[colKey]; });
+    saveTrackerRows();
+    renderTrackerView();
+  }
+
+  document.getElementById('trackerAddColBtn').addEventListener('click', () => {
+    const config = getTrackerConfig(activeTrackerId);
+    if(!config || !config.isCustom) return;
+    const name = prompt('New column name:');
+    if(!name || !name.trim()) return;
+    let type = (prompt('Column type: text, textarea, date, number, or select', 'text') || 'text').trim().toLowerCase();
+    if(!['text','textarea','date','number','select'].includes(type)) type = 'text';
+    const col = {key: 'c_' + uid(), label: name.trim(), type};
+    if(type === 'select'){
+      const optsRaw = prompt('Options, comma-separated:', 'Yes, No') || '';
+      col.options = optsRaw.split(',').map(o => o.trim()).filter(Boolean);
+      if(!col.options.length) col.options = ['Option 1'];
+    }
+    const def = customDefs.find(d => d.id === config.id);
+    def.columns.push(col);
+    saveCustomDefs();
+    renderTrackerView();
+  });
+
+  document.getElementById('copyFromBtn').addEventListener('click', () => {
+    const config = getTrackerConfig(activeTrackerId);
+    if(!config || !config.isCustom) return;
+    const sourceId = document.getElementById('copyFromSelect').value;
+    const source = getTrackerConfig(sourceId);
+    if(!source) return;
+    if(config.columns.length || getRows(config.id).length){
+      if(!confirm(`This replaces "${config.label}"'s current columns and rows with a copy of "${source.label}". Continue?`)) return;
+    }
+    const def = customDefs.find(d => d.id === config.id);
+    def.columns = source.columns.map(c => Object.assign({}, c));
+    saveCustomDefs();
+    trackerRows[config.id] = getRows(sourceId).map(r => Object.assign({}, r, {id: uid()}));
+    saveTrackerRows();
+    renderTrackerNav();
+    renderTrackerView();
+    showToast(`Copied "${source.label}" into "${config.label}"`);
+  });
+
+  document.getElementById('trackerExportBtn').addEventListener('click', () => exportContextCsv(trackerCtx));
+  bindContext(trackerCtx);
+
+  /* =========================================================
+     FIRMS DASHBOARD
+     ========================================================= */
+  const FIRMS_ROWS_KEY = 'mahlets-tracker-firms-v1';
+  const FIRMS_CONFIG = {
+    id:'firms-dashboard', label:'Active Firms',
+    columns:[
+      {key:'firm', label:'Firm', type:'text'},
+      {key:'lossState', label:'Loss State', type:'text'},
+      {key:'workArea', label:'Work Area', type:'text'},
+      {key:'matterGroup', label:'Matter Group', type:'text'},
+      {key:'caseType', label:'Case Type', type:'text'},
+      {key:'lob', label:'Line of Business', type:'text'},
+      {key:'director', label:'Director', type:'text'},
+      {key:'openMatters', label:'Open Matters', type:'number'},
+      {key:'avgCost', label:'Avg Timekeeper Cost', type:'number'}
+    ]
+  };
+  let firmsRows = loadJSON(FIRMS_ROWS_KEY, []);
+  function saveFirmsRows(){ saveJSON(FIRMS_ROWS_KEY, firmsRows); }
+
+  const firmsCtx = {
+    getConfig: () => FIRMS_CONFIG,
+    getRows: () => firmsRows,
+    saveRows: () => saveFirmsRows(),
+    els: {
+      form: document.getElementById('firmsAddForm'),
+      search: document.getElementById('firmsSearch'),
+      table: document.getElementById('firmsTable'),
+      rowCount: document.getElementById('firmsRowCount'),
+      empty: document.getElementById('firmsEmptyMsg')
+    },
+    onAfterChange: () => renderCapacityChart()
+  };
+  document.getElementById('firmsExportBtn').addEventListener('click', () => exportContextCsv(firmsCtx));
+  bindContext(firmsCtx);
+
+  function renderCapacityChart(){
+    const wrap = document.getElementById('capacityChart');
+    const rows = firmsRows.filter(r => r.firm && r.firm.trim());
+    wrap.innerHTML = '';
+    document.getElementById('capacityEmpty').style.display = rows.length ? 'none' : 'block';
+    if(!rows.length) return;
+    const sorted = rows.slice().sort((a,b) => (parseFloat(b.openMatters)||0) - (parseFloat(a.openMatters)||0));
+    const max = Math.max(1, ...sorted.map(r => parseFloat(r.openMatters) || 0));
+    sorted.forEach(r => {
+      const n = parseFloat(r.openMatters) || 0;
+      const pct = Math.max(2, Math.round((n / max) * 100));
+      const row = document.createElement('div');
+      row.className = 'capacity-row';
+      row.innerHTML = `<div class="capacity-firm" title="${escapeHtml(r.firm)}">${escapeHtml(r.firm)}</div>
+        <div class="capacity-track"><div class="capacity-fill" style="width:${pct}%"></div></div>
+        <div class="capacity-num">${n} open</div>`;
+      wrap.appendChild(row);
+    });
+  }
+
+  /* =========================================================
      PWA install / offline copy
      ========================================================= */
   const installBtn = document.getElementById('installBtn');
@@ -1660,7 +2407,7 @@
     const blob = new Blob(['<!DOCTYPE html>\n' + html], {type:'text/html;charset=utf-8'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'work-dashboard.html';
+    a.href = url; a.download = 'mahlets-tracker.html';
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
     showToast('Saved a standalone copy — open it anywhere.');
@@ -1668,6 +2415,11 @@
 
   /* ---------- Init ---------- */
   renderTasks();
+  renderTrackerNav();
+  renderTrackerView();
+  renderAddFormForContext(firmsCtx);
+  renderTableForContext(firmsCtx);
+  renderCapacityChart();
   renderOverview();
   renderSheetSelector();
   renderActiveSheet();
