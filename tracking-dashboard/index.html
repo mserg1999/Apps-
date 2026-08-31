@@ -2799,7 +2799,6 @@
     }
 
     const hideResolvedLabel = document.getElementById('trackerHideResolved').closest('label');
-    const addFormWrap = trackerCtx.els.form.closest('.card') || trackerCtx.els.form;
     const importLabel = document.getElementById('trackerImportInput').closest('label');
     const flagRulesBtn = document.getElementById('trackerFlagRulesBtn');
 
@@ -2946,7 +2945,7 @@
     const def = customDefs.find(d => d.id === config.id);
     def.columns = source.columns.map(c => Object.assign({}, c));
     saveCustomDefs();
-    trackerRows[config.id] = getRows(sourceId).map(r => Object.assign({}, r, {id: uid()}));
+    trackerRows[config.id] = displayRowsForConfig(source).map(r => Object.assign({}, r, {id: uid()}));
     saveTrackerRows();
     renderTrackerNav();
     renderTrackerView();
@@ -3189,6 +3188,7 @@
     });
 
     allTrackerConfigs().forEach(config => {
+      if(FIRMS_BACKED_TRACKER_IDS.includes(config.id)) return; // already covered by the Firms Dashboard block below
       getRows(config.id).forEach(row => {
         const hay = config.columns.map(c => row[c.key]).join(' ').toLowerCase();
         if(hay.includes(needle)){
@@ -3395,6 +3395,17 @@
   renderSheetSelector();
   renderActiveSheet();
   initNotifications();
+
+  /* ---------- Flush any in-progress edit before the page closes/hides ----------
+     An open inline cell edit only commits on blur; if the tab/browser closes
+     while it's still focused, force that blur now so nothing typed is lost. */
+  function flushPendingEdit(){
+    const el = document.activeElement;
+    if(el && /^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) el.blur();
+  }
+  document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') flushPendingEdit(); });
+  window.addEventListener('pagehide', flushPendingEdit);
+  window.addEventListener('beforeunload', flushPendingEdit);
 })();
 </script>
 </body>
