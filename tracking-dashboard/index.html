@@ -696,8 +696,58 @@
 <div class="toast" id="toast"></div>
 
 <script>
-(function(){
+(async function(){
   "use strict";
+
+  /* =========================================================
+     STORAGE (IndexedDB primary — hundreds of MB+ — with a
+     localStorage fallback for browsers where it's unavailable)
+     ========================================================= */
+  const IDB_NAME = 'mahlets-tracker-db';
+  const IDB_STORE = 'kv';
+  let idbOpenPromise = null;
+  function openIdb(){
+    if(idbOpenPromise) return idbOpenPromise;
+    idbOpenPromise = new Promise((resolve, reject) => {
+      if(!('indexedDB' in window)){ reject(new Error('IndexedDB unavailable')); return; }
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = () => { req.result.createObjectStore(IDB_STORE); };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    return idbOpenPromise;
+  }
+  async function idbGet(key){
+    try{
+      const db = await openIdb();
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readonly');
+        const req = tx.objectStore(IDB_STORE).get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }catch(e){ return undefined; }
+  }
+  async function idbSet(key, value){
+    try{
+      const db = await openIdb();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(value, key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+      return true;
+    }catch(e){ return false; }
+  }
+  function persist(key, value, onFallbackFail){
+    idbSet(key, value).then(ok => {
+      if(!ok){
+        try{ localStorage.setItem(key, JSON.stringify(value)); }
+        catch(e){ if(onFallbackFail) onFallbackFail(); }
+      }
+    });
+  }
 
   /* ---------- Toast ---------- */
   const toastEl = document.getElementById('toast');
@@ -732,8 +782,7 @@
     catch(e){ return []; }
   }
   function saveTasks(){
-    try{ localStorage.setItem(TASKS_KEY, JSON.stringify(tasks)); }
-    catch(e){ showToast('⚠️ Could not save tasks (storage full?)'); }
+    persist(TASKS_KEY, tasks, () => showToast('⚠️ Could not save tasks (storage full?)'));
   }
   function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
 
@@ -1590,8 +1639,7 @@
     catch(e){ return {}; }
   }
   function saveSheets(){
-    try{ localStorage.setItem(SHEETS_KEY, JSON.stringify(sheets)); }
-    catch(e){ showToast('⚠️ Sheet is too large to save locally — it will be lost on refresh.'); }
+    persist(SHEETS_KEY, sheets, () => showToast('⚠️ Sheet is too large to save locally — it will be lost on refresh.'));
   }
 
   const sheetFileInput = document.getElementById('sheetFileInput');
@@ -1979,8 +2027,7 @@
     catch(e){ return fallback; }
   }
   function saveJSON(key, val){
-    try{ localStorage.setItem(key, JSON.stringify(val)); }
-    catch(e){ showToast('⚠️ Could not save — storage full?'); }
+    persist(key, val, () => showToast('⚠️ Could not save — storage full?'));
   }
 
   const TRACKER_ROWS_KEY = 'mahlets-tracker-rows-v1';
@@ -3108,6 +3155,28 @@
     URL.revokeObjectURL(url);
     showToast('Saved a standalone copy — open it anywhere.');
   });
+
+  /* ---------- Hydrate from IndexedDB (migrates existing localStorage data on first run) ---------- */
+  async function hydrateFromIndexedDB(){
+    const tasksIdb = await idbGet(TASKS_KEY);
+    if(tasksIdb !== undefined) tasks = tasksIdb; else idbSet(TASKS_KEY, tasks);
+
+    const sheetsIdb = await idbGet(SHEETS_KEY);
+    if(sheetsIdb !== undefined) sheets = sheetsIdb; else idbSet(SHEETS_KEY, sheets);
+
+    const trackerRowsIdb = await idbGet(TRACKER_ROWS_KEY);
+    if(trackerRowsIdb !== undefined) trackerRows = trackerRowsIdb; else idbSet(TRACKER_ROWS_KEY, trackerRows);
+
+    const customDefsIdb = await idbGet(CUSTOM_DEFS_KEY);
+    if(customDefsIdb !== undefined) customDefs = customDefsIdb; else idbSet(CUSTOM_DEFS_KEY, customDefs);
+
+    const firmsRowsIdb = await idbGet(FIRMS_ROWS_KEY);
+    if(firmsRowsIdb !== undefined) firmsRows = firmsRowsIdb; else idbSet(FIRMS_ROWS_KEY, firmsRows);
+
+    const flagRulesIdb = await idbGet(FLAG_RULES_KEY);
+    if(flagRulesIdb !== undefined) flagRules = flagRulesIdb; else idbSet(FLAG_RULES_KEY, flagRules);
+  }
+  await hydrateFromIndexedDB();
 
   /* ---------- Init ---------- */
   renderTasks();
