@@ -311,6 +311,10 @@
   table tbody tr:hover{background:#fafcff;}
   .load-more-wrap{text-align:center; margin-top:14px;}
   .stats-line{color:var(--muted); font-size:0.85rem; font-weight:600;}
+  .mini-stat-row{display:flex; flex-wrap:wrap; gap:10px; margin:10px 0 16px;}
+  .mini-stat{background:var(--neutral-tint); border:1px solid var(--border); border-radius:12px; padding:10px 16px; min-width:120px;}
+  .mini-stat-num{font-size:1.35rem; font-weight:700; color:var(--accent-dark);}
+  .mini-stat-label{color:var(--muted); font-size:0.78rem; font-weight:600; margin-top:2px;}
 
   #statsOutput{margin-top:12px; display:flex; flex-direction:column; gap:8px;}
   .stat-row{display:flex; justify-content:space-between; font-size:0.88rem; padding:6px 0; border-bottom:1px dashed var(--border);}
@@ -552,6 +556,7 @@
     <div class="card tracker-content">
       <h2 id="trackerTitle"></h2>
       <p class="sub" id="trackerDesc"></p>
+      <div class="mini-stat-row" id="trackerOverviewStats" style="display:none;"></div>
 
       <div id="trackerCustomCols" class="tracker-custom-cols" style="display:none;"></div>
       <div id="trackerCopyFrom" style="display:none; margin-bottom:14px;">
@@ -764,6 +769,8 @@
     tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
     tabPanels.forEach(p => p.classList.toggle('active', p.id === 'tab-' + tabId));
     if(tabId === 'overview') renderOverview();
+    if(tabId === 'trackers'){ renderTrackerNav(); renderTrackerView(); }
+    if(tabId === 'firms'){ renderTableForContext(firmsCtx); renderCapacityChart(); renderFirmProfileNav(); renderFirmProfileContent(); }
   }
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => activateTab(btn.dataset.tab));
@@ -2202,6 +2209,23 @@
         {key:'updated', label:'Last Updated', type:'date'},
         {key:'notes', label:'Notes', type:'textarea'}
       ]
+    },
+    {
+      id:'timekeepers', group:'Timekeepers', label:'Timekeepers',
+      desc:'Attorneys and staff you bill against, across all firms.',
+      statusKey:'status', doneValues:['Inactive'],
+      columns:[
+        {key:'name', label:'Name', type:'text'},
+        {key:'firm', label:'Firm', type:'text'},
+        {key:'level', label:'Level', type:'select', options:['Partner','Associate','Paralegal']},
+        {key:'rate', label:'Rate', type:'number'},
+        {key:'status', label:'Status', type:'select', options:['Active','Inactive']}
+      ],
+      overviewStats: rows => [
+        {label:'Total Timekeepers', value: rows.length},
+        {label:'Active', value: rows.filter(r => r.status !== 'Inactive').length},
+        {label:'Avg Rate', value: rows.length ? Math.round(rows.reduce((s,r) => s + (parseFloat(r.rate)||0), 0) / rows.length) : 0}
+      ]
     }
   ];
 
@@ -2212,14 +2236,86 @@
   function saveTrackerRows(){ saveJSON(TRACKER_ROWS_KEY, trackerRows); }
   function saveCustomDefs(){ saveJSON(CUSTOM_DEFS_KEY, customDefs); }
 
+  const FIRMS_BACKED_TRACKER_IDS = ['all-active-firms', 'casualty-firms', 'commercial-firms', 'cyber-gap-firms'];
+
+  function firmsBackedConfigs(){
+    return [
+      {
+        id:'all-active-firms', group:'Firms', label:'All Active Firms',
+        desc:'Every active firm — the same list as the Firms Dashboard tab.',
+        columns: FIRMS_CONFIG.columns,
+        overviewStats: rows => [
+          {label:'Total Active Firms', value: rows.length},
+          {label:'Casualty', value: rows.filter(r => (r.lob||'').trim().toLowerCase() === 'casualty').length},
+          {label:'Commercial', value: rows.filter(r => (r.lob||'').trim().toLowerCase() === 'commercial').length}
+        ]
+      },
+      {
+        id:'casualty-firms', group:'Firms', label:'Casualty Firms',
+        desc:'Active firms whose Line of Business is Casualty.',
+        columns: FIRMS_CONFIG.columns,
+        rowFilter: r => (r.lob||'').trim().toLowerCase() === 'casualty',
+        rowDefaults: {lob:'Casualty'},
+        overviewStats: rows => [
+          {label:'Casualty Firms', value: rows.length},
+          {label:'Total Open Matters', value: rows.reduce((s,r) => s + (parseFloat(r.openMatters)||0), 0)},
+          {label:'Avg Timekeeper Cost', value: rows.length ? Math.round(rows.reduce((s,r) => s + (parseFloat(r.avgCost)||0), 0) / rows.length) : 0}
+        ]
+      },
+      {
+        id:'commercial-firms', group:'Firms', label:'Commercial Firms',
+        desc:'Active firms whose Line of Business is Commercial.',
+        columns: FIRMS_CONFIG.columns,
+        rowFilter: r => (r.lob||'').trim().toLowerCase() === 'commercial',
+        rowDefaults: {lob:'Commercial'},
+        overviewStats: rows => [
+          {label:'Commercial Firms', value: rows.length},
+          {label:'Total Open Matters', value: rows.reduce((s,r) => s + (parseFloat(r.openMatters)||0), 0)},
+          {label:'Avg Timekeeper Cost', value: rows.length ? Math.round(rows.reduce((s,r) => s + (parseFloat(r.avgCost)||0), 0) / rows.length) : 0}
+        ]
+      },
+      {
+        id:'cyber-gap-firms', group:'Firms', label:'Firms Not Through Cyber',
+        desc:'Active firms with no "Confirmed" row in Cyber Security Reminders — updates automatically as you log reminders.',
+        isComputed: true,
+        columns: [
+          {key:'firm', label:'Firm', type:'text'},
+          {key:'lossState', label:'Loss State', type:'text'},
+          {key:'workArea', label:'Work Area', type:'text'},
+          {key:'director', label:'Director', type:'text'}
+        ],
+        overviewStats: rows => [{label:'Firms Without Cyber Clearance', value: rows.length}]
+      }
+    ];
+  }
+
   function allTrackerConfigs(){
-    return TRACKER_CONFIGS.concat(customDefs.map(d => Object.assign(
+    return TRACKER_CONFIGS.concat(firmsBackedConfigs()).concat(customDefs.map(d => Object.assign(
       {group:'Custom', desc:'Your own tracker — add columns, or pull rows in from any other tracker.', isCustom:true},
       d
     )));
   }
   function getTrackerConfig(id){ return allTrackerConfigs().find(c => c.id === id); }
   function getRows(id){ if(!trackerRows[id]) trackerRows[id] = []; return trackerRows[id]; }
+
+  function rawRowsForTrackerId(id){
+    if(FIRMS_BACKED_TRACKER_IDS.includes(id)) return firmsRows;
+    return getRows(id);
+  }
+  function computeFirmsWithoutCyberClearance(){
+    const confirmed = new Set(
+      getRows('cyber-reminders')
+        .filter(r => r.status === 'Confirmed')
+        .map(r => (r.firm||'').trim().toLowerCase())
+        .filter(Boolean)
+    );
+    return firmsRows.filter(r => r.firm && r.firm.trim() && !confirmed.has(r.firm.trim().toLowerCase()));
+  }
+  function displayRowsForConfig(config){
+    if(config.id === 'cyber-gap-firms') return computeFirmsWithoutCyberClearance();
+    const raw = rawRowsForTrackerId(config.id);
+    return config.rowFilter ? raw.filter(config.rowFilter) : raw;
+  }
 
   function rowIsOverdue(config, row){
     if(!config.dueKey || !row[config.dueKey]) return false;
@@ -2377,8 +2473,9 @@
   function renderTableForContext(ctx){
     const config = ctx.getConfig();
     const rows = ctx.getRows();
+    const baseRows = config.rowFilter ? rows.filter(config.rowFilter) : rows;
     const q = ctx.els.search.value.trim().toLowerCase();
-    let filtered = q ? rows.filter(r => config.columns.some(c => String(r[c.key]||'').toLowerCase().includes(q))) : rows.slice();
+    let filtered = q ? baseRows.filter(r => config.columns.some(c => String(r[c.key]||'').toLowerCase().includes(q))) : baseRows.slice();
 
     if(ctx.els.hideResolved && ctx.els.hideResolved.checked && config.statusKey && config.doneValues){
       filtered = filtered.filter(r => !config.doneValues.includes(r[config.statusKey]));
@@ -2395,10 +2492,11 @@
       });
     }
 
-    ctx.els.rowCount.textContent = `${filtered.length} of ${rows.length} rows`;
-    ctx.els.empty.style.display = rows.length ? 'none' : 'block';
+    ctx.els.rowCount.textContent = `${filtered.length} of ${baseRows.length} rows`;
+    ctx.els.empty.style.display = baseRows.length ? 'none' : 'block';
+    if(ctx.els.table.id === 'trackerTable') renderTrackerOverviewStats(config, baseRows);
     if(ctx.els.flagCount){
-      const flaggedCount = rows.filter(r => matchedFlagRules(config, r).length).length;
+      const flaggedCount = baseRows.filter(r => matchedFlagRules(config, r).length).length;
       ctx.els.flagCount.textContent = flaggedCount ? `🚩 ${flaggedCount} flagged` : '';
     }
 
@@ -2487,14 +2585,15 @@
     config.columns.forEach(col => {
       const field = document.createElement('div');
       field.className = 'field';
-      field.innerHTML = `<label>${escapeHtml(col.label)}</label>` + fieldInputHtml(col, '');
+      const defaultVal = (config.rowDefaults && config.rowDefaults[col.key]) || '';
+      field.innerHTML = `<label>${escapeHtml(col.label)}</label>` + fieldInputHtml(col, defaultVal);
       ctx.els.form.appendChild(field);
     });
   }
 
   function exportContextCsv(ctx){
     const config = ctx.getConfig();
-    const rows = ctx.getRows();
+    const rows = config.isComputed ? displayRowsForConfig(config) : (config.rowFilter ? ctx.getRows().filter(config.rowFilter) : ctx.getRows());
     const header = config.columns.map(c => c.label);
     const body = rows.map(r => config.columns.map(c => r[c.key] || ''));
     downloadCsv(config.label.toLowerCase().replace(/[^a-z0-9]+/g,'-') + '.csv', [header].concat(body));
@@ -2535,6 +2634,9 @@
         rows.slice(1).forEach(r => {
           const row = {id: uid()};
           config.columns.forEach(col => { row[col.key] = colIndex[col.key] != null ? (r[colIndex[col.key]] || '') : ''; });
+          if(config.rowDefaults){
+            config.columns.forEach(col => { if(!row[col.key] && config.rowDefaults[col.key]) row[col.key] = config.rowDefaults[col.key]; });
+          }
           if(!config.columns.some(col => (row[col.key]||'').toString().trim())) return;
           ctx.getRows().push(row);
           added++;
@@ -2551,10 +2653,17 @@
     if(isExcel) reader.readAsArrayBuffer(file); else reader.readAsText(file);
   }
 
+  function renderCurrentTableFor(ctx){
+    const config = ctx.getConfig();
+    if(config.isComputed) renderComputedTrackerTable(config);
+    else renderTableForContext(ctx);
+  }
+
   function bindContext(ctx){
     ctx.els.form.addEventListener('submit', (e) => {
       e.preventDefault();
       const config = ctx.getConfig();
+      if(config.isComputed) return;
       const row = {id: uid()};
       config.columns.forEach(col => {
         const el = ctx.els.form.querySelector(`[data-key="${col.key}"]`);
@@ -2568,15 +2677,15 @@
       showToast('Row added');
       renderAddFormForContext(ctx);
     });
-    ctx.els.search.addEventListener('input', () => { ctx.visibleRowCount = 150; renderTableForContext(ctx); });
+    ctx.els.search.addEventListener('input', () => { ctx.visibleRowCount = 150; renderCurrentTableFor(ctx); });
     if(ctx.els.hideResolved) ctx.els.hideResolved.addEventListener('change', () => renderTableForContext(ctx));
-    if(ctx.els.loadMore) ctx.els.loadMore.addEventListener('click', () => { ctx.visibleRowCount += 300; renderTableForContext(ctx); });
+    if(ctx.els.loadMore) ctx.els.loadMore.addEventListener('click', () => { ctx.visibleRowCount += 300; renderCurrentTableFor(ctx); });
   }
 
   const trackerCtx = {
     getConfig: () => getTrackerConfig(activeTrackerId),
-    getRows: () => getRows(activeTrackerId),
-    saveRows: () => saveTrackerRows(),
+    getRows: () => rawRowsForTrackerId(activeTrackerId),
+    saveRows: () => (FIRMS_BACKED_TRACKER_IDS.includes(activeTrackerId) ? saveFirmsRows() : saveTrackerRows()),
     sortState: {col:null, dir:1},
     els: {
       form: document.getElementById('trackerAddForm'),
@@ -2590,10 +2699,18 @@
       loadMore: document.getElementById('trackerLoadMoreBtn')
     },
     visibleRowCount: 150,
-    onAfterChange: () => { renderTrackerNav(); renderOverview(); renderFirmProfileContent(); }
+    onAfterChange: () => {
+      if(FIRMS_BACKED_TRACKER_IDS.includes(activeTrackerId)) renderTableForContext(firmsCtx);
+      renderTrackerNav();
+      renderOverview();
+      renderFirmProfileContent();
+      renderFirmProfileNav();
+      renderCapacityChart();
+      refreshFirmNamesDatalist();
+    }
   };
 
-  const TRACKER_GROUP_ORDER = ['Email & Reminders','Firm Setup','Finance','Documents','Custom'];
+  const TRACKER_GROUP_ORDER = ['Firms','Email & Reminders','Firm Setup','Finance','Documents','Timekeepers','Custom'];
 
   function renderTrackerNav(){
     const configs = allTrackerConfigs();
@@ -2606,11 +2723,12 @@
       groupEl.className = 'tracker-nav-group';
       groupEl.innerHTML = `<h4>${escapeHtml(groupName)}</h4>`;
       groupConfigs.forEach(c => {
-        const rows = getRows(c.id);
+        const rows = displayRowsForConfig(c);
         const dueCount = rows.filter(r => rowIsOverdue(c, r)).length;
+        const alertCount = c.id === 'cyber-gap-firms' ? rows.length : dueCount;
         const btn = document.createElement('button');
-        btn.className = 'tracker-nav-item' + (c.id === activeTrackerId ? ' active' : '') + (dueCount ? ' has-due' : '');
-        btn.innerHTML = `<span>${escapeHtml(c.label)}</span><span class="count-pill">${dueCount || rows.length}</span>`;
+        btn.className = 'tracker-nav-item' + (c.id === activeTrackerId ? ' active' : '') + (alertCount ? ' has-due' : '');
+        btn.innerHTML = `<span>${escapeHtml(c.label)}</span><span class="count-pill">${alertCount || rows.length}</span>`;
         btn.addEventListener('click', () => {
           activeTrackerId = c.id;
           localStorage.setItem(ACTIVE_TRACKER_KEY, activeTrackerId);
@@ -2681,12 +2799,97 @@
     }
 
     const hideResolvedLabel = document.getElementById('trackerHideResolved').closest('label');
-    hideResolvedLabel.style.display = (config.statusKey && config.doneValues) ? '' : 'none';
+    const addFormWrap = trackerCtx.els.form.closest('.card') || trackerCtx.els.form;
+    const importLabel = document.getElementById('trackerImportInput').closest('label');
+    const flagRulesBtn = document.getElementById('trackerFlagRulesBtn');
 
-    document.getElementById('trackerFlagPanel').style.display = 'none';
+    if(config.isComputed){
+      trackerCtx.els.form.style.display = 'none';
+      document.getElementById('trackerAddSubmitBtn').style.display = 'none';
+      hideResolvedLabel.style.display = 'none';
+      importLabel.style.display = 'none';
+      flagRulesBtn.style.display = 'none';
+      document.getElementById('trackerFlagPanel').style.display = 'none';
+      renderTrackerOverviewStats(config, displayRowsForConfig(config));
+      renderComputedTrackerTable(config);
+    } else {
+      trackerCtx.els.form.style.display = '';
+      document.getElementById('trackerAddSubmitBtn').style.display = '';
+      importLabel.style.display = '';
+      flagRulesBtn.style.display = '';
+      hideResolvedLabel.style.display = (config.statusKey && config.doneValues) ? '' : 'none';
+      document.getElementById('trackerFlagPanel').style.display = 'none';
+      renderTrackerOverviewStats(config, displayRowsForConfig(config));
+      renderAddFormForContext(trackerCtx);
+      renderTableForContext(trackerCtx);
+    }
+  }
 
-    renderAddFormForContext(trackerCtx);
-    renderTableForContext(trackerCtx);
+  function renderTrackerOverviewStats(config, rows){
+    const wrap = document.getElementById('trackerOverviewStats');
+    if(!config.overviewStats){ wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+    const stats = config.overviewStats(rows) || [];
+    if(!stats.length){ wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+    wrap.style.display = '';
+    wrap.innerHTML = stats.map(s => `
+      <div class="mini-stat">
+        <div class="mini-stat-num">${escapeHtml(String(s.value))}</div>
+        <div class="mini-stat-label">${escapeHtml(s.label)}</div>
+      </div>`).join('');
+  }
+
+  function renderComputedTrackerTable(config){
+    const rows = displayRowsForConfig(config);
+    document.getElementById('trackerRowCount').textContent = `${rows.length} of ${rows.length} rows`;
+    document.getElementById('trackerEmptyMsg').style.display = rows.length ? 'none' : 'block';
+    if(document.getElementById('trackerFlagCount')) document.getElementById('trackerFlagCount').textContent = '';
+    document.getElementById('trackerLoadMoreBtn').style.display = 'none';
+
+    const table = document.getElementById('trackerTable');
+    const thead = table.querySelector('thead');
+    const tbody = table.querySelector('tbody');
+    thead.innerHTML = ''; tbody.innerHTML = '';
+
+    const trh = document.createElement('tr');
+    config.columns.forEach(col => {
+      const th = document.createElement('th');
+      th.textContent = col.label;
+      trh.appendChild(th);
+    });
+    trh.appendChild(document.createElement('th'));
+    thead.appendChild(trh);
+
+    const visibleRows = rows.slice(0, trackerCtx.visibleRowCount || 150);
+    visibleRows.forEach(row => {
+      const tr = document.createElement('tr');
+      config.columns.forEach(col => {
+        const td = document.createElement('td');
+        td.textContent = row[col.key] || '';
+        tr.appendChild(td);
+      });
+      const tdActions = document.createElement('td');
+      if(config.id === 'cyber-gap-firms'){
+        const btn = document.createElement('button');
+        btn.className = 'btn-secondary';
+        btn.style.fontSize = '.75rem';
+        btn.style.padding = '.25rem .5rem';
+        btn.textContent = 'Log Cyber Reminder →';
+        btn.addEventListener('click', () => {
+          activeTrackerId = 'cyber-reminders';
+          localStorage.setItem(ACTIVE_TRACKER_KEY, activeTrackerId);
+          renderTrackerNav();
+          renderTrackerView();
+          const firmInput = trackerCtx.els.form.querySelector('[data-key="firm"]');
+          if(firmInput) firmInput.value = row.firm || '';
+        });
+        tdActions.appendChild(btn);
+      }
+      tr.appendChild(tdActions);
+      tbody.appendChild(tr);
+    });
+    if(rows.length > visibleRows.length){
+      document.getElementById('trackerLoadMoreBtn').style.display = 'inline-block';
+    }
   }
 
   function createCustomTrackerPrompt(){
@@ -2776,7 +2979,7 @@
       {key:'workArea', label:'Work Area', type:'text'},
       {key:'matterGroup', label:'Matter Group', type:'text'},
       {key:'caseType', label:'Case Type', type:'text'},
-      {key:'lob', label:'Line of Business', type:'text'},
+      {key:'lob', label:'Line of Business', type:'select', options:['Casualty','Commercial','Other']},
       {key:'director', label:'Director', type:'text'},
       {key:'openMatters', label:'Open Matters', type:'number'},
       {key:'capacityTarget', label:'Capacity Target', type:'number'},
