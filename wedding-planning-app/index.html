@@ -783,7 +783,7 @@
   }
   function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
-  const CONFETTI_EMOJI = ['💍','💐','🎉','💕','✨','🥂'];
+  const CONFETTI_EMOJI = ['💍','💐','🎉','💕','✨','🥂','👧','👦'];
   function launchConfetti(){
     for(let i=0;i<26;i++){
       const span = document.createElement('span');
@@ -799,6 +799,7 @@
   const TASK_DONE_MESSAGES = ['Nailed it! 🎉','Boom, done! ✨','One step closer to "I do"! 💍','Crushing this checklist! 💪','Look at you go! 🥂'];
   const BOOKED_MESSAGES = ['Booked! 🎉 One less thing to worry about.','It\'s official — booked! 💐','Yes! Locked that one in. ✨','Woohoo, booked! 🥂'];
   const GUEST_ATTENDING_MESSAGES = ['They\'re coming! 🎉','One more seat filled! 💌','Yay, RSVP\'d yes! ✨','The guest list grows! 🥂'];
+  const WELCOME_MESSAGES = ['Welcome back! 👧👦🎉','So happy you\'re here! 👧👦💕','Let\'s keep planning! 👧👦✨','Your flower girl and ring bearer say hi! 👧👦'];
 
   // ---------- Tabs ----------
   const tabButtons = document.querySelectorAll('.tab-btn');
@@ -1660,6 +1661,11 @@
   renderAll();
   activateTab(localStorage.getItem('wedding-planner-last-tab') || 'dashboard');
   initFirebase();
+
+  setTimeout(() => {
+    launchConfetti();
+    showToast(pickRandom(WELCOME_MESSAGES));
+  }, 500);
 })();
 </script>
 </body>
