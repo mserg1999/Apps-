@@ -327,6 +327,7 @@
   <button class="tab-btn" data-tab="dashboard">🏠 Dashboard</button>
   <button class="tab-btn" data-tab="budget">💰 Budget</button>
   <button class="tab-btn" data-tab="checklist">✅ Checklist</button>
+  <button class="tab-btn" data-tab="guests">👪 Guest List</button>
   <button class="tab-btn" data-tab="calendar">📅 Calendar</button>
   <button class="tab-btn" data-tab="photographers">📸 Photographers</button>
   <button class="tab-btn" data-tab="dress">👗 Dress</button>
@@ -458,6 +459,18 @@
     </div>
   </section>
 
+  <!-- GUEST LIST -->
+  <section class="tab-panel" id="tab-guests">
+    <div class="card">
+      <h2>👪 Guest List</h2>
+      <p class="sub">Who's coming, which side they're on, and where RSVPs stand.</p>
+      <div class="stat-row" id="guestStats"></div>
+      <div class="crud-add" id="guestsAdd"></div>
+      <div id="guestsList"></div>
+      <div class="empty-msg" id="guestsEmptyMsg" style="display:none;">No guests yet — start building your list above! 💌</div>
+    </div>
+  </section>
+
   <!-- CALENDAR -->
   <section class="tab-panel" id="tab-calendar">
     <div class="grid-2">
@@ -528,6 +541,10 @@
   const DRESS_STATUS = ['Researching','Appointment Booked','Tried On','Ordered','In Alterations','Ready','Not Selected'];
   const VENUE_TYPES = ['Venue','Caterer','Venue + Catering'];
   const EVENT_CATEGORIES = ['Photography','Dress','Venue','Catering','Ceremony','Other'];
+  const GUEST_SIDES = ["Julie's Side", "Tommy's Side", 'Both'];
+  const GUEST_CATEGORIES = ['Family','Friends','Work','Other'];
+  const GUEST_RSVP = ['Invited','Pending','Attending','Declined'];
+  const YES_NO = ['No','Yes'];
 
   const BUDGET_TEMPLATE = [
     ['Venue', 0.20], ['Catering & Bar', 0.15], ['Photography & Video', 0.12],
@@ -561,8 +578,8 @@
     return options.map(o => `<option value="${escapeHtml(o)}"${o===selected?' selected':''}>${escapeHtml(o)}</option>`).join('');
   }
   function statusClass(status){
-    if(status === 'Booked' || status === 'Ready' || status === 'Ordered') return 'good';
-    if(status === 'Not Selected' || status === 'Rejected') return 'danger';
+    if(status === 'Booked' || status === 'Ready' || status === 'Ordered' || status === 'Attending') return 'good';
+    if(status === 'Not Selected' || status === 'Rejected' || status === 'Declined') return 'danger';
     return 'warn';
   }
 
@@ -587,7 +604,7 @@
     }));
     return {
       settings: { partner1: 'Julie', partner2: 'Tommy', weddingDate: defaultWeddingDateKey(), totalBudget: DEFAULT_TOTAL_BUDGET },
-      budget, tasks, events: [], photographers: [], dress: [], venues: []
+      budget, tasks, events: [], photographers: [], dress: [], venues: [], guests: []
     };
   }
 
@@ -605,7 +622,8 @@
         events: Array.isArray(parsed.events) ? parsed.events : [],
         photographers: Array.isArray(parsed.photographers) ? parsed.photographers : [],
         dress: Array.isArray(parsed.dress) ? parsed.dress : [],
-        venues: Array.isArray(parsed.venues) ? parsed.venues : []
+        venues: Array.isArray(parsed.venues) ? parsed.venues : [],
+        guests: Array.isArray(parsed.guests) ? parsed.guests : []
       });
     }catch(e){ return defaultData(); }
   }
@@ -634,6 +652,7 @@
 
   const TASK_DONE_MESSAGES = ['Nailed it! 🎉','Boom, done! ✨','One step closer to "I do"! 💍','Crushing this checklist! 💪','Look at you go! 🥂'];
   const BOOKED_MESSAGES = ['Booked! 🎉 One less thing to worry about.','It\'s official — booked! 💐','Yes! Locked that one in. ✨','Woohoo, booked! 🥂'];
+  const GUEST_ATTENDING_MESSAGES = ['They\'re coming! 🎉','One more seat filled! 💌','Yay, RSVP\'d yes! ✨','The guest list grows! 🥂'];
 
   // ---------- Tabs ----------
   const tabButtons = document.querySelectorAll('.tab-btn');
@@ -760,17 +779,18 @@
       `).join('');
     }
 
-    function vendorSummaryRow(icon, label, count, bookedCount){
+    function vendorSummaryRow(icon, label, count, goodCount, goodLabel){
       return `<div class="agenda-row"><div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
         <div style="font-weight:800; font-size:0.88rem;">${icon} ${escapeHtml(label)}</div>
-        <div><span class="badge good">${bookedCount} booked</span> <span class="badge muted">${count} total</span></div>
+        <div><span class="badge good">${goodCount} ${goodLabel||'booked'}</span> <span class="badge muted">${count} total</span></div>
       </div></div>`;
     }
     const byLoc = loc => data.photographers.filter(p => p.location === loc);
     const vendorHtml = [
       ...PHOTOGRAPHER_LOCATIONS.slice(0,3).map(loc => vendorSummaryRow('📸', 'Photographer — ' + loc, byLoc(loc).length, byLoc(loc).filter(p=>p.status==='Booked').length)),
       vendorSummaryRow('👗', 'Dress', data.dress.length, data.dress.filter(d=>d.status==='Ordered'||d.status==='Ready').length),
-      vendorSummaryRow('🍽️', 'Venue & Catering', data.venues.length, data.venues.filter(v=>v.status==='Booked').length)
+      vendorSummaryRow('🍽️', 'Venue & Catering', data.venues.length, data.venues.filter(v=>v.status==='Booked').length),
+      vendorSummaryRow('👪', 'Guest List', data.guests.length, data.guests.filter(g=>g.rsvp==='Attending').length, 'attending')
     ].join('');
     document.getElementById('dashVendorSummary').innerHTML = vendorHtml;
   }
@@ -1023,6 +1043,7 @@
       renderAddForm();
       renderList();
       renderDashboard();
+      if(section.onChange) section.onChange();
       showToast(section.addedToast || 'Added.');
     });
 
@@ -1045,7 +1066,7 @@
       const totalCount = section.data.length;
       emptyEl.style.display = totalCount ? 'none' : 'block';
       listEl.innerHTML = groups.map(g => {
-        if(!g.items.length && section.groupBy) return `<div class="crud-group-title">${section.groupIcon||''} ${escapeHtml(g.group)}</div><div class="empty-msg">No candidates yet — go find someone amazing! 🌟</div>`;
+        if(!g.items.length && section.groupBy) return `<div class="crud-group-title">${section.groupIcon||''} ${escapeHtml(g.group)}</div><div class="empty-msg">${section.groupEmptyText || 'Nothing here yet.'}</div>`;
         const header = section.groupBy ? `<div class="crud-group-title">${section.groupIcon||''} ${escapeHtml(g.group === '__other__' ? 'Other' : g.group)}</div>` : '';
         const cards = g.items.map(({entry, idx}) => {
           const title = entry[section.titleField] || section.defaultTitle;
@@ -1086,6 +1107,7 @@
         renderList();
       }
       renderDashboard();
+      if(section.onChange) section.onChange();
     });
     listEl.addEventListener('change', (e) => {
       if(e.target.tagName !== 'SELECT') return;
@@ -1096,7 +1118,11 @@
       save();
       renderList();
       renderDashboard();
-      if(field === section.statusField && ['Booked','Ready','Ordered'].includes(newValue)){
+      if(section.onChange) section.onChange();
+      if(field === section.statusField && newValue === 'Attending'){
+        launchConfetti();
+        showToast(pickRandom(GUEST_ATTENDING_MESSAGES));
+      } else if(field === section.statusField && ['Booked','Ready','Ordered'].includes(newValue)){
         launchConfetti();
         showToast(pickRandom(BOOKED_MESSAGES));
       }
@@ -1109,17 +1135,19 @@
           save();
           renderList();
           renderDashboard();
+          if(section.onChange) section.onChange();
         }
       }
     });
 
-    return { renderList, renderAddForm, setData: (arr) => { section.data = arr; } };
+    return { renderList, renderAddForm, setData: (arr) => { section.data = arr; }, refresh: () => { if(section.onChange) section.onChange(); } };
   }
 
   const photographerSection = buildCrud({
     addElId: 'photographersAdd', listElId: 'photographersList', emptyElId: 'photographersEmptyMsg',
     data: data.photographers, titleField: 'name', defaultTitle: 'New Photographer',
     statusField: 'status', groupBy: 'location', groupOrder: PHOTOGRAPHER_LOCATIONS.slice(0,3), groupIcon: '📍',
+    groupEmptyText: 'No candidates yet — go find someone amazing! 🌟',
     addLabel: 'Add Photographer', addedToast: 'Photographer added 📸',
     fields: [
       {key:'name', label:'Photographer / Studio', type:'text', placeholder:'e.g. Highland Light Photography'},
@@ -1163,6 +1191,40 @@
       {key:'notes', label:'Notes', type:'textarea', full:true, placeholder:'Tour notes, minimums, availability…'}
     ]
   });
+
+  function renderGuestStats(){
+    const guests = data.guests;
+    const total = guests.length;
+    const attending = guests.filter(g => g.rsvp === 'Attending');
+    const declined = guests.filter(g => g.rsvp === 'Declined').length;
+    const pending = guests.filter(g => g.rsvp === 'Pending' || g.rsvp === 'Invited').length;
+    const headcount = attending.length + attending.filter(g => g.plusOne === 'Yes').length;
+    document.getElementById('guestStats').innerHTML = `
+      <div class="stat-box"><div class="num">${total}</div><div class="lbl">On the List</div></div>
+      <div class="stat-box"><div class="num">${attending.length}</div><div class="lbl">Attending</div></div>
+      <div class="stat-box"><div class="num">${pending}</div><div class="lbl">Awaiting RSVP</div></div>
+      <div class="stat-box"><div class="num">${headcount}</div><div class="lbl">Headcount (+1s)</div></div>
+    `;
+  }
+
+  const guestSection = buildCrud({
+    addElId: 'guestsAdd', listElId: 'guestsList', emptyElId: 'guestsEmptyMsg',
+    data: data.guests, titleField: 'name', defaultTitle: 'New Guest',
+    statusField: 'rsvp', groupBy: 'side', groupOrder: GUEST_SIDES, groupIcon: '👪',
+    groupEmptyText: 'No one here yet — add a guest above! 💌',
+    addLabel: 'Add Guest', addedToast: 'Guest added to the list 💌',
+    onChange: renderGuestStats,
+    fields: [
+      {key:'name', label:'Guest Name', type:'text', placeholder:'e.g. Aunt Carol'},
+      {key:'side', label:'Side', type:'select', options: GUEST_SIDES, default: 'Both'},
+      {key:'category', label:'Category', type:'select', options: GUEST_CATEGORIES, default: 'Friends'},
+      {key:'plusOne', label:'Plus One', type:'select', options: YES_NO, default: 'No'},
+      {key:'rsvp', label:'RSVP', type:'select', options: GUEST_RSVP, default: 'Invited'},
+      {key:'mealChoice', label:'Meal Choice', type:'text', placeholder:'e.g. Chicken, Fish, Vegetarian'},
+      {key:'notes', label:'Notes', type:'textarea', full:true, placeholder:'Dietary needs, hotel block, plus-one\'s name…'}
+    ]
+  });
+  renderGuestStats();
 
   // ---------- Calendar ----------
   let viewYear, viewMonth, selectedDateKey = null;
@@ -1415,12 +1477,16 @@
     photographerSection.setData(data.photographers);
     dressSection.setData(data.dress);
     venueSection.setData(data.venues);
+    guestSection.setData(data.guests);
     photographerSection.renderAddForm();
     dressSection.renderAddForm();
     venueSection.renderAddForm();
+    guestSection.renderAddForm();
     photographerSection.renderList();
     dressSection.renderList();
     venueSection.renderList();
+    guestSection.renderList();
+    renderGuestStats();
   }
 
   renderAll();
