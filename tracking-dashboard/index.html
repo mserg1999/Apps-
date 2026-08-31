@@ -580,6 +580,7 @@
       <div class="tracker-table-wrap">
         <table class="tracker-table" id="trackerTable"><thead></thead><tbody></tbody></table>
       </div>
+      <div class="load-more-wrap"><button class="pill grey" id="trackerLoadMoreBtn" style="display:none;">Show more rows</button></div>
       <div class="empty-msg" id="trackerEmptyMsg" style="display:none;">No rows yet — add one above.</div>
     </div>
   </div>
@@ -613,6 +614,7 @@
     <div class="tracker-table-wrap">
       <table class="tracker-table" id="firmsTable"><thead></thead><tbody></tbody></table>
     </div>
+    <div class="load-more-wrap"><button class="pill grey" id="firmsLoadMoreBtn" style="display:none;">Show more rows</button></div>
     <div class="empty-msg" id="firmsEmptyMsg" style="display:none;">No firms yet — add one above.</div>
   </div>
 
@@ -2353,6 +2355,12 @@
       ctx.els.flagCount.textContent = flaggedCount ? `🚩 ${flaggedCount} flagged` : '';
     }
 
+    if(!ctx.visibleRowCount) ctx.visibleRowCount = 150;
+    const visibleRows = filtered.slice(0, ctx.visibleRowCount);
+    if(ctx.els.loadMore){
+      ctx.els.loadMore.style.display = filtered.length > ctx.visibleRowCount ? 'inline-block' : 'none';
+    }
+
     const thead = ctx.els.table.querySelector('thead');
     const tbody = ctx.els.table.querySelector('tbody');
     thead.innerHTML = ''; tbody.innerHTML = '';
@@ -2372,7 +2380,7 @@
     trh.appendChild(document.createElement('th'));
     thead.appendChild(trh);
 
-    filtered.forEach(row => {
+    visibleRows.forEach(row => {
       const tr = document.createElement('tr');
       const flags = matchedFlagRules(config, row);
       const classes = [];
@@ -2513,8 +2521,9 @@
       showToast('Row added');
       renderAddFormForContext(ctx);
     });
-    ctx.els.search.addEventListener('input', () => renderTableForContext(ctx));
+    ctx.els.search.addEventListener('input', () => { ctx.visibleRowCount = 150; renderTableForContext(ctx); });
     if(ctx.els.hideResolved) ctx.els.hideResolved.addEventListener('change', () => renderTableForContext(ctx));
+    if(ctx.els.loadMore) ctx.els.loadMore.addEventListener('click', () => { ctx.visibleRowCount += 300; renderTableForContext(ctx); });
   }
 
   const trackerCtx = {
@@ -2530,8 +2539,10 @@
       empty: document.getElementById('trackerEmptyMsg'),
       hideResolved: document.getElementById('trackerHideResolved'),
       flagPanel: document.getElementById('trackerFlagPanel'),
-      flagCount: document.getElementById('trackerFlagCount')
+      flagCount: document.getElementById('trackerFlagCount'),
+      loadMore: document.getElementById('trackerLoadMoreBtn')
     },
+    visibleRowCount: 150,
     onAfterChange: () => { renderTrackerNav(); renderOverview(); renderFirmProfileContent(); }
   };
 
@@ -2558,6 +2569,7 @@
           localStorage.setItem(ACTIVE_TRACKER_KEY, activeTrackerId);
           document.getElementById('trackerSearch').value = '';
           trackerCtx.sortState = {col:null, dir:1};
+          trackerCtx.visibleRowCount = 150;
           renderTrackerNav();
           renderTrackerView();
         });
@@ -2738,8 +2750,10 @@
       rowCount: document.getElementById('firmsRowCount'),
       empty: document.getElementById('firmsEmptyMsg'),
       flagPanel: document.getElementById('firmsFlagPanel'),
-      flagCount: document.getElementById('firmsFlagCount')
+      flagCount: document.getElementById('firmsFlagCount'),
+      loadMore: document.getElementById('firmsLoadMoreBtn')
     },
+    visibleRowCount: 150,
     onAfterChange: () => { renderCapacityChart(); refreshFirmNamesDatalist(); renderFirmProfileNav(); renderFirmProfileContent(); }
   };
   document.getElementById('firmsExportBtn').addEventListener('click', () => exportContextCsv(firmsCtx));
@@ -2934,6 +2948,7 @@
             activeTrackerId = config.id;
             localStorage.setItem(ACTIVE_TRACKER_KEY, activeTrackerId);
             trackerCtx.sortState = {col:null, dir:1};
+            trackerCtx.visibleRowCount = 150;
             renderTrackerNav();
             renderTrackerView();
             document.getElementById('trackerSearch').value = q;
