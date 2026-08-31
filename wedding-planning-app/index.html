@@ -13,6 +13,8 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <style>
   :root{
     --bg:#fbf3f0;
@@ -310,6 +312,9 @@
   }
 
   .hint{color:var(--muted); font-size:0.85rem; margin:4px 0 0;}
+  .hint.sync-ok{color:var(--good); font-weight:700;}
+  .hint.sync-warn{color:var(--danger); font-weight:700;}
+  .hint.sync-off{color:var(--muted); font-weight:700;}
   .inline-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;}
   .settings-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;}
   @media (max-width:820px){ .settings-grid{grid-template-columns:1fr;} }
@@ -380,8 +385,24 @@
     </div>
 
     <div class="card">
+      <h2>🔗 Sync Across Devices</h2>
+      <p class="sub">When live sync is set up, everyone on this list sees the same plan in real time.</p>
+      <div class="settings-grid" style="grid-template-columns:1fr 2fr;">
+        <div>
+          <label>Who's using this device?</label>
+          <select id="whoAmI"></select>
+        </div>
+        <div>
+          <label>Status</label>
+          <p class="hint" id="syncStatus" style="margin-top:9px;">Checking sync status…</p>
+        </div>
+      </div>
+      <p class="hint" id="lastUpdatedLine"></p>
+    </div>
+
+    <div class="card">
       <h2>App Data</h2>
-      <p class="sub">Everything is saved on this device only. Export a backup now and then, or move your plan to another device.</p>
+      <p class="sub">Everything is saved on this device only unless live sync is set up above. Export a backup now and then, or move your plan to another device.</p>
       <div class="inline-actions">
         <button class="pill green" id="exportDataBtn">⬇️ Export Backup (.json)</button>
         <button class="pill grey" id="importDataBtn">⬆️ Import Backup</button>
@@ -604,8 +625,23 @@
     }));
     return {
       settings: { partner1: 'Julie', partner2: 'Tommy', weddingDate: defaultWeddingDateKey(), totalBudget: DEFAULT_TOTAL_BUDGET },
-      budget, tasks, events: [], photographers: [], dress: [], venues: [], guests: []
+      budget, tasks, events: [], photographers: [], dress: [], venues: [], guests: [],
+      meta: { lastEditedBy: '', lastEditedAt: 0 }
     };
+  }
+
+  function normalizeData(parsed){
+    const d = defaultData();
+    return Object.assign(d, parsed, {
+      settings: Object.assign(d.settings, parsed.settings || {}),
+      budget: Array.isArray(parsed.budget) ? parsed.budget : d.budget,
+      tasks: Array.isArray(parsed.tasks) ? parsed.tasks : d.tasks,
+      events: Array.isArray(parsed.events) ? parsed.events : [],
+      photographers: Array.isArray(parsed.photographers) ? parsed.photographers : [],
+      dress: Array.isArray(parsed.dress) ? parsed.dress : [],
+      venues: Array.isArray(parsed.venues) ? parsed.venues : [],
+      guests: Array.isArray(parsed.guests) ? parsed.guests : []
+    });
   }
 
   let data = load();
@@ -613,21 +649,117 @@
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
       if(!raw) return defaultData();
-      const parsed = JSON.parse(raw);
-      const d = defaultData();
-      return Object.assign(d, parsed, {
-        settings: Object.assign(d.settings, parsed.settings || {}),
-        budget: Array.isArray(parsed.budget) ? parsed.budget : d.budget,
-        tasks: Array.isArray(parsed.tasks) ? parsed.tasks : d.tasks,
-        events: Array.isArray(parsed.events) ? parsed.events : [],
-        photographers: Array.isArray(parsed.photographers) ? parsed.photographers : [],
-        dress: Array.isArray(parsed.dress) ? parsed.dress : [],
-        venues: Array.isArray(parsed.venues) ? parsed.venues : [],
-        guests: Array.isArray(parsed.guests) ? parsed.guests : []
-      });
+      return normalizeData(JSON.parse(raw));
     }catch(e){ return defaultData(); }
   }
-  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+  function save(){
+    if(!applyingRemoteUpdate){
+      data.meta = { lastEditedBy: getWhoAmI(), lastEditedAt: Date.now() };
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    renderSyncInfo();
+    if(!applyingRemoteUpdate) pushSharedPlan();
+  }
+
+  // ---------- Live sync (Firebase Firestore) ----------
+  // To turn this on: create a free Firebase project, enable Firestore, and
+  // paste your project's config below in place of the REPLACE_ME values.
+  const firebaseConfig = {
+    apiKey: "REPLACE_ME",
+    authDomain: "REPLACE_ME.firebaseapp.com",
+    projectId: "REPLACE_ME",
+    storageBucket: "REPLACE_ME.appspot.com",
+    messagingSenderId: "REPLACE_ME",
+    appId: "REPLACE_ME"
+  };
+  const WHOAMI_KEY = 'wedding-planner-whoami';
+  let db = null;
+  let sharedDocRef = null;
+  let firestoreReady = false;
+  let applyingRemoteUpdate = false;
+
+  const syncStatusEl = document.getElementById('syncStatus');
+  const lastUpdatedLine = document.getElementById('lastUpdatedLine');
+  const whoAmISelect = document.getElementById('whoAmI');
+
+  function getWhoAmI(){ return whoAmISelect.value || 'Guest'; }
+  function renderWhoAmIOptions(){
+    const names = [data.settings.partner1, data.settings.partner2, 'Mahlet', 'Guest']
+      .map(n => (n || '').trim()).filter((n, i, arr) => n && arr.indexOf(n) === i);
+    const saved = localStorage.getItem(WHOAMI_KEY) || '';
+    whoAmISelect.innerHTML = optionsHtml(names, names.includes(saved) ? saved : names[0]);
+  }
+  whoAmISelect.addEventListener('change', () => {
+    localStorage.setItem(WHOAMI_KEY, whoAmISelect.value);
+  });
+
+  function relativeTime(ts){
+    if(!ts) return '';
+    const diffSec = Math.round((Date.now() - ts) / 1000);
+    if(diffSec < 60) return 'just now';
+    const diffMin = Math.round(diffSec / 60);
+    if(diffMin < 60) return `${diffMin} minute${diffMin===1?'':'s'} ago`;
+    const diffHr = Math.round(diffMin / 60);
+    if(diffHr < 24) return `${diffHr} hour${diffHr===1?'':'s'} ago`;
+    const diffDay = Math.round(diffHr / 24);
+    return `${diffDay} day${diffDay===1?'':'s'} ago`;
+  }
+  function renderSyncInfo(){
+    const meta = data.meta || {};
+    lastUpdatedLine.textContent = meta.lastEditedBy
+      ? `Last updated by ${meta.lastEditedBy} · ${relativeTime(meta.lastEditedAt)}`
+      : 'No edits yet.';
+  }
+
+  function setSyncStatus(text, mode){
+    syncStatusEl.textContent = text;
+    syncStatusEl.className = 'hint sync-' + (mode || 'off');
+  }
+
+  function pushSharedPlan(){
+    if(!firestoreReady) return;
+    sharedDocRef.set(Object.assign({}, data, { updatedAt: firebase.firestore.FieldValue.serverTimestamp() }))
+      .then(() => setSyncStatus('🔄 Synced — everyone on the list sees this plan.', 'ok'))
+      .catch(() => setSyncStatus('⚠️ Could not sync your latest change — check your connection.', 'warn'));
+  }
+
+  function handleRemoteSnapshot(doc){
+    setSyncStatus('🔄 Synced — everyone on the list sees this plan.', 'ok');
+    if(!doc.exists) return;
+    const remote = Object.assign({}, doc.data());
+    delete remote.updatedAt;
+    applyingRemoteUpdate = true;
+    data = normalizeData(remote);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    renderAll();
+    applyingRemoteUpdate = false;
+  }
+
+  function initFirebase(){
+    if(!firebaseConfig.apiKey || firebaseConfig.apiKey === 'REPLACE_ME'){
+      setSyncStatus('📴 Live sync isn\'t set up yet — this plan is local to this device only.', 'off');
+      return;
+    }
+    try{
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      db.enablePersistence().catch(() => {});
+      sharedDocRef = db.collection('wedding-planner').doc('shared-plan');
+      firestoreReady = true;
+      setSyncStatus('🔄 Connecting…', 'off');
+      sharedDocRef.get().then(doc => {
+        if(!doc.exists){
+          pushSharedPlan();
+        }
+      }).catch(() => {}).finally(() => {
+        sharedDocRef.onSnapshot(handleRemoteSnapshot, () => {
+          setSyncStatus('⚠️ Sync connection lost — showing your last known plan.', 'warn');
+        });
+      });
+    }catch(e){
+      setSyncStatus('⚠️ Live sync failed to start — this plan is local to this device only.', 'warn');
+    }
+  }
 
   const toast = document.getElementById('toast');
   function showToast(msg){
@@ -694,6 +826,7 @@
     const p2 = data.settings.partner2 || 'Partner Two';
     h1.textContent = `${p1} & ${p2}`;
     document.getElementById('headerSub').textContent = `Let's plan the best day of your lives, ${p1} & ${p2}! 💕`;
+    renderWhoAmIOptions();
 
     const countdownLine = document.getElementById('countdownLine');
     if(!data.settings.weddingDate){
@@ -1383,7 +1516,7 @@
       try{
         const parsed = JSON.parse(reader.result);
         if(!confirm('Import this backup? It will replace all current data.')) return;
-        data = Object.assign(defaultData(), parsed);
+        data = normalizeData(parsed);
         save();
         renderAll();
         showToast('Backup imported ✅');
@@ -1487,10 +1620,12 @@
     venueSection.renderList();
     guestSection.renderList();
     renderGuestStats();
+    renderSyncInfo();
   }
 
   renderAll();
   activateTab(localStorage.getItem('wedding-planner-last-tab') || 'dashboard');
+  initFirebase();
 })();
 </script>
 </body>
