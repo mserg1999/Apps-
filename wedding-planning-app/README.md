@@ -10,6 +10,7 @@ A personal wedding planning app covering everything from vendor research to the 
 - **Calendar** — a month view showing task due dates and appointments together; click any day to see its agenda and add appointments (dress fittings, venue tours, photographer meetings, etc.).
 - **Photographers** — tracks candidates and bookings grouped by location: **Scotland**, **Washington DC**, and **California** (plus "Other"), with contact info, quoted price, status, and portfolio links.
 - **Dress Shopping** — boutique appointments, the dress/item tried, price, and status (researching through ready for pickup).
+- **Tux & Suits** — rental or purchase fittings for the groom and wedding party, with shop, who it's for, style/color, price, and status.
 - **Venue & Catering** — reception venues and caterers for the **DMV area** (DC / Maryland / Virginia), with capacity, estimated cost, cuisine/style, and status.
 - **Installable app** — add it to your home screen or desktop with its own icon and window, and it keeps working offline once installed (via a service worker).
 - **Guest List** — grouped by side (Julie's / Tommy's / Both), with RSVP status, plus-ones, meal choice, and live headcount stats.

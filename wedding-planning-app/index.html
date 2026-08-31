@@ -336,6 +336,7 @@
   <button class="tab-btn" data-tab="calendar">📅 Calendar</button>
   <button class="tab-btn" data-tab="photographers">📸 Photographers</button>
   <button class="tab-btn" data-tab="dress">👗 Dress</button>
+  <button class="tab-btn" data-tab="tux">🤵 Tux</button>
   <button class="tab-btn" data-tab="venue">🍽️ Venue &amp; Catering</button>
 </nav>
 
@@ -536,6 +537,17 @@
     </div>
   </section>
 
+  <!-- TUX -->
+  <section class="tab-panel" id="tab-tux">
+    <div class="card">
+      <h2>🤵 Tux &amp; Suits</h2>
+      <p class="sub">Rental or purchase appointments for the groom and wedding party.</p>
+      <div class="crud-add" id="tuxAdd"></div>
+      <div id="tuxList"></div>
+      <div class="empty-msg" id="tuxEmptyMsg" style="display:none;">No fittings yet — time to book a tux appointment! 🤵</div>
+    </div>
+  </section>
+
   <!-- VENUE & CATERING -->
   <section class="tab-panel" id="tab-venue">
     <div class="card">
@@ -560,6 +572,7 @@
   const PHOTOGRAPHER_LOCATIONS = ['Scotland','Washington DC','California','Other'];
   const VENDOR_STATUS = ['Researching','Contacted','Tour/Consult Scheduled','Quote Received','Booked','Not Selected'];
   const DRESS_STATUS = ['Researching','Appointment Booked','Tried On','Ordered','In Alterations','Ready','Not Selected'];
+  const TUX_STATUS = ['Researching','Appointment Booked','Measured','Ordered','In Alterations','Ready','Returned','Not Selected'];
   const VENUE_TYPES = ['Venue','Caterer','Venue + Catering'];
   const EVENT_CATEGORIES = ['Photography','Dress','Venue','Catering','Ceremony','Other'];
   const GUEST_SIDES = ["Julie's Side", "Tommy's Side", 'Both'];
@@ -625,7 +638,7 @@
     }));
     return {
       settings: { partner1: 'Julie', partner2: 'Tommy', weddingDate: defaultWeddingDateKey(), totalBudget: DEFAULT_TOTAL_BUDGET },
-      budget, tasks, events: [], photographers: [], dress: [], venues: [], guests: [],
+      budget, tasks, events: [], photographers: [], dress: [], tux: [], venues: [], guests: [],
       meta: { lastEditedBy: '', lastEditedAt: 0 }
     };
   }
@@ -639,6 +652,7 @@
       events: Array.isArray(parsed.events) ? parsed.events : [],
       photographers: Array.isArray(parsed.photographers) ? parsed.photographers : [],
       dress: Array.isArray(parsed.dress) ? parsed.dress : [],
+      tux: Array.isArray(parsed.tux) ? parsed.tux : [],
       venues: Array.isArray(parsed.venues) ? parsed.venues : [],
       guests: Array.isArray(parsed.guests) ? parsed.guests : []
     });
@@ -922,6 +936,7 @@
     const vendorHtml = [
       ...PHOTOGRAPHER_LOCATIONS.slice(0,3).map(loc => vendorSummaryRow('📸', 'Photographer — ' + loc, byLoc(loc).length, byLoc(loc).filter(p=>p.status==='Booked').length)),
       vendorSummaryRow('👗', 'Dress', data.dress.length, data.dress.filter(d=>d.status==='Ordered'||d.status==='Ready').length),
+      vendorSummaryRow('🤵', 'Tux', data.tux.length, data.tux.filter(t=>t.status==='Ordered'||t.status==='Ready').length),
       vendorSummaryRow('🍽️', 'Venue & Catering', data.venues.length, data.venues.filter(v=>v.status==='Booked').length),
       vendorSummaryRow('👪', 'Guest List', data.guests.length, data.guests.filter(g=>g.rsvp==='Attending').length, 'attending')
     ].join('');
@@ -1308,6 +1323,22 @@
     ]
   });
 
+  const tuxSection = buildCrud({
+    addElId: 'tuxAdd', listElId: 'tuxList', emptyElId: 'tuxEmptyMsg',
+    data: data.tux, titleField: 'shop', defaultTitle: 'New Shop',
+    statusField: 'status',
+    addLabel: 'Add Fitting', addedToast: 'Fitting added 🤵',
+    fields: [
+      {key:'shop', label:'Tux Shop / Rental', type:'text', placeholder:'e.g. Men\'s Wearhouse'},
+      {key:'wearer', label:'Who\'s it for?', type:'text', placeholder:'e.g. Tommy (Groom), Best Man Sam'},
+      {key:'appointmentDate', label:'Fitting Date', type:'date'},
+      {key:'style', label:'Style / Color', type:'text', placeholder:'e.g. Charcoal grey, notch lapel'},
+      {key:'price', label:'Price ($)', type:'number'},
+      {key:'status', label:'Status', type:'select', options: TUX_STATUS, default:'Researching'},
+      {key:'notes', label:'Notes', type:'textarea', full:true, placeholder:'Measurements, pickup date, alterations…'}
+    ]
+  });
+
   const venueSection = buildCrud({
     addElId: 'venueAdd', listElId: 'venueList', emptyElId: 'venueEmptyMsg',
     data: data.venues, titleField: 'name', defaultTitle: 'New Venue / Caterer',
@@ -1609,14 +1640,17 @@
     renderAgenda();
     photographerSection.setData(data.photographers);
     dressSection.setData(data.dress);
+    tuxSection.setData(data.tux);
     venueSection.setData(data.venues);
     guestSection.setData(data.guests);
     photographerSection.renderAddForm();
     dressSection.renderAddForm();
+    tuxSection.renderAddForm();
     venueSection.renderAddForm();
     guestSection.renderAddForm();
     photographerSection.renderList();
     dressSection.renderList();
+    tuxSection.renderList();
     venueSection.renderList();
     guestSection.renderList();
     renderGuestStats();
