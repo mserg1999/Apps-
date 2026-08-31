@@ -11,7 +11,15 @@ Everything — tasks, tracker rows, firm records, and imported data sheets — i
 - **Live Task Status** — four big boxes (Not Started/In Progress/Blocked/Done) showing a live count and a peek at the actual tasks in each state.
 - "Coming Up" list of your nearest due dates, with overdue items flagged.
 - **Reminders Due Soon** — a rollup pulling anything due within 7 days (or overdue) from the Cyber Security, Engagement Letter, and LBA Escalation trackers.
+- **Browser notifications** — an opt-in toggle on this card; once enabled, you get a real notification (not just something you have to check for) once a day for any task or cyber/EL/LBA reminder that's due today or overdue.
 - Quick summary of which data sheets you've loaded.
+
+**Search everything**
+- A search box in the top bar looks across every task and every row in every Firm Tracker at once. Click a result to jump straight to it — the right tab opens, the right tracker is selected, and its own search box is filled in so the match is easy to spot.
+
+**Backup & restore**
+- **Backup Data** downloads one JSON file with everything — tasks, every tracker's rows, custom tracker definitions, and firm records — since it's all local-only with no server, this is your copy for safekeeping or moving to another browser/computer.
+- **Restore Data** loads a backup file back in (after a confirmation, since it replaces everything currently in the app).
 
 **Tasks tab**
 - Add/edit/delete tasks: title, notes, status (Not started / In progress / Blocked / Done), priority (Low/Medium/High/Urgent), due date, and free-form tags.
@@ -37,11 +45,12 @@ A sidebar of purpose-built trackers, grouped by category — click one to see it
 - *Documents* — SharePoint Folder Tracker (which firms have a folder, and what's in it).
 - *Custom* — click **+ New Custom Tracker** to build your own from scratch (name it, add columns of any type — text/number/date/dropdown), or use **Copy rows & columns in** to fork any existing tracker's current data as a starting point ("a blank tracker to pull in from other trackers").
 
-Every tracker supports search, CSV export, and add/edit/delete rows.
+Every tracker supports: search, **click a column header to sort by it**, CSV export, **CSV import** (matches your file's header row to each tracker's columns by name, so you can bulk-load existing spreadsheets instead of typing row by row), a **firm name autocomplete** wherever a "Firm" field appears (suggests names already in your Active Firms list, so the same firm doesn't end up spelled differently in different trackers), and add/edit/delete rows. Trackers with a status column (like the reminder trackers) also get a **"Hide resolved"** checkbox to keep old completed rows out of view without deleting them.
 
 **Firms Dashboard tab**
 - **Capacity by Firm** — a true utilization percentage per firm: set a "Capacity Target" (how many open matters that firm is expected to handle) and the bar shows open matters ÷ target, color- and label-coded (✓ Has room / ● Near capacity / ⚠ Over capacity, over 100% possible). Firms without a target set yet fall back to a bar relative to your busiest firm, so the chart is useful immediately even before you've filled in targets.
 - **Active Firms** table — loss state, work area, matter group, case type, line of business, director, open matter count, capacity target, and average timekeeper cost, all editable in place.
+- **Firm Profile** — a sidebar grouped by loss state, then firm name. Click any firm to see everything about them in one place: their Active Firms record plus every matching row from every Firm Tracker (cyber/EL/LBA reminders, onboarding stage, rates, SharePoint status, and so on), instead of hunting across 13 separate trackers.
 
 **Data Sheets tab**
 - Upload a `.csv`, `.xlsx`, or `.xls` file — parsed entirely in your browser (via the bundled SheetJS library). A workbook with multiple sheets prompts you to pick which one(s) to import.
@@ -77,6 +86,7 @@ This repo already has a `netlify.toml` pointed at a different app (`chess-availa
 
 - Board-view drag-and-drop uses the browser's native HTML5 drag API, which doesn't work on touch screens (phones/tablets) — use List view there instead, where checking the box marks a task done (status changes for other states still require the Edit form on touch devices).
 - The `.ics` calendar importer reads `SUMMARY` and `DTSTART` only (no recurrence rules, reminders, or attendees) and takes just the date, dropping any time-of-day.
+- Browser notifications only fire while this tab is open in your browser (checked every few minutes) — there's no background push service, so if the tab/browser is fully closed, nothing will notify you until you reopen it (at which point it checks immediately).
 
 ## Data & security notes
 

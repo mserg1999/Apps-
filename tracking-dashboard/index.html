@@ -85,6 +85,17 @@
   .tab-btn:hover{background:var(--neutral-tint);}
   .tab-btn.active{background:var(--accent); color:#fff;}
   .topbar-actions{display:flex; gap:8px; flex-wrap:wrap;}
+  .global-search-wrap{position:relative;}
+  .global-search-wrap input{width:200px;}
+  .global-search-results{
+    position:absolute; top:calc(100% + 6px); left:0; width:360px; max-height:70vh; overflow-y:auto;
+    background:var(--panel); border-radius:12px; box-shadow:var(--shadow); padding:8px; z-index:70;
+  }
+  .global-search-item{padding:8px 10px; border-radius:8px; cursor:pointer;}
+  .global-search-item:hover{background:var(--neutral-tint);}
+  .gsi-source{color:var(--accent-dark); font-size:0.68rem; font-weight:800; text-transform:uppercase; letter-spacing:0.03em;}
+  .gsi-text{font-weight:600; font-size:0.85rem; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .global-search-empty{padding:10px; color:var(--muted); font-size:0.85rem; text-align:center;}
 
   main{max-width:1200px; margin:0 auto; padding:22px 18px;}
   .tab-panel{display:none;}
@@ -316,6 +327,10 @@
   .tracker-layout{display:grid; grid-template-columns:230px 1fr; gap:20px; align-items:start;}
   @media (max-width:800px){ .tracker-layout{grid-template-columns:1fr;} }
   .tracker-nav{background:var(--panel); border-radius:var(--radius); box-shadow:var(--shadow); padding:12px; position:sticky; top:78px;}
+  .nested-nav{background:var(--neutral-tint); border-radius:12px; padding:12px; max-height:420px; overflow-y:auto;}
+  .firm-profile-summary{color:var(--muted); font-size:0.85rem; margin:0 0 14px;}
+  .firm-profile-group{margin-bottom:16px;}
+  .firm-profile-group-title{font-weight:800; margin-bottom:6px; display:flex; align-items:center; gap:8px;}
   .tracker-nav-group{margin-bottom:14px;}
   .tracker-nav-group:last-child{margin-bottom:0;}
   .tracker-nav-group h4{margin:0 0 6px; padding:0 8px; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted);}
@@ -343,7 +358,7 @@
   .tracker-table-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:12px; margin-top:14px;}
   table.tracker-table{width:100%; border-collapse:collapse; font-size:0.85rem;}
   table.tracker-table th, table.tracker-table td{padding:9px 12px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap;}
-  table.tracker-table th{background:var(--neutral-tint); font-weight:700;}
+  table.tracker-table th{background:var(--neutral-tint); font-weight:700; cursor:pointer; user-select:none;}
   table.tracker-table tbody tr:hover{background:#fbfaff;}
   table.tracker-table tbody tr.row-overdue{background:var(--danger-bg);}
   table.tracker-table td.cell-editable{cursor:pointer;}
@@ -386,6 +401,8 @@
 </head>
 <body>
 
+<datalist id="firmNamesList"></datalist>
+
 <header class="topbar">
   <div class="brand">📊 Mahlet's Tracker</div>
   <nav class="tabs">
@@ -395,8 +412,14 @@
     <button class="tab-btn" data-tab="firms">Firms Dashboard</button>
     <button class="tab-btn" data-tab="sheets">Data Sheets</button>
   </nav>
+  <div class="global-search-wrap" id="globalSearchWrap">
+    <input id="globalSearchInput" placeholder="🔍 Search everything...">
+    <div class="global-search-results" id="globalSearchResults" style="display:none;"></div>
+  </div>
   <div class="topbar-actions">
     <button id="installBtn" class="pill ghost" style="display:none;">📲 Install</button>
+    <button id="backupDataBtn" class="pill ghost" title="Download all data (tasks, trackers, firms, sheets) as one file">⬇ Backup Data</button>
+    <label class="pill ghost file-label" title="Restore all data from a backup file">⬆ Restore Data<input type="file" id="restoreDataInput" accept=".json" hidden></label>
     <button id="downloadAppBtn" class="pill ghost">💾 Offline Copy</button>
   </div>
 </header>
@@ -434,6 +457,10 @@
       <p class="sub">Cyber security, engagement letter, and LBA escalation reminders — due within 7 days or overdue.</p>
       <ul class="summary-list" id="remindersDueList"></ul>
       <div class="empty-msg" id="remindersDueEmpty">Nothing due soon across your reminder trackers. 🎉</div>
+      <div class="reminder-controls" style="margin-top:14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <button class="pill grey" id="toggleNotifBtn">🔔 Enable Notifications</button>
+        <span class="hint" id="notifStatus" style="margin:0;"></span>
+      </div>
     </div>
   </div>
 </section>
@@ -539,8 +566,10 @@
 
       <div class="toolbar">
         <input id="trackerSearch" placeholder="🔍 Search this tracker...">
+        <label class="pill grey" style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="trackerHideResolved"> Hide resolved</label>
         <span class="stats-line" id="trackerRowCount"></span>
         <button class="pill grey" id="trackerExportBtn">⬇ Export CSV</button>
+        <label class="pill grey file-label">⬆ Import CSV<input type="file" id="trackerImportInput" accept=".csv" hidden></label>
       </div>
       <div class="tracker-table-wrap">
         <table class="tracker-table" id="trackerTable"><thead></thead><tbody></tbody></table>
@@ -570,11 +599,21 @@
       <input id="firmsSearch" placeholder="🔍 Search firms...">
       <span class="stats-line" id="firmsRowCount"></span>
       <button class="pill grey" id="firmsExportBtn">⬇ Export CSV</button>
+      <label class="pill grey file-label">⬆ Import CSV<input type="file" id="firmsImportInput" accept=".csv" hidden></label>
     </div>
     <div class="tracker-table-wrap">
       <table class="tracker-table" id="firmsTable"><thead></thead><tbody></tbody></table>
     </div>
     <div class="empty-msg" id="firmsEmptyMsg" style="display:none;">No firms yet — add one above.</div>
+  </div>
+
+  <div class="card">
+    <h2>🔍 Firm Profile</h2>
+    <p class="sub">Pick a firm — grouped by loss state — to see everything about them pulled from every tracker in one place.</p>
+    <div class="tracker-layout">
+      <nav class="nested-nav" id="firmProfileNav"></nav>
+      <div id="firmProfileContent"><div class="empty-msg">Select a firm on the left to see its full profile.</div></div>
+    </div>
   </div>
 </section>
 
@@ -660,14 +699,13 @@
   /* ---------- Tabs ---------- */
   const tabBtns = document.querySelectorAll('.tab-btn');
   const tabPanels = document.querySelectorAll('.tab-panel');
+  function activateTab(tabId){
+    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+    tabPanels.forEach(p => p.classList.toggle('active', p.id === 'tab-' + tabId));
+    if(tabId === 'overview') renderOverview();
+  }
   tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      tabBtns.forEach(b => b.classList.remove('active'));
-      tabPanels.forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-      if(btn.dataset.tab === 'overview') renderOverview();
-    });
+    btn.addEventListener('click', () => activateTab(btn.dataset.tab));
   });
 
   /* =========================================================
@@ -1430,6 +1468,101 @@
     emptyEl.style.display = due.length ? 'none' : 'block';
   }
 
+  /* ---------- Browser notifications for due reminders ---------- */
+  const NOTIF_SETTINGS_KEY = 'mahlets-tracker-notif-settings-v1';
+  const NOTIFIED_KEY = 'mahlets-tracker-notified-v1';
+  const notificationsSupported = typeof Notification !== 'undefined';
+  let notifSettings = { enabled: false };
+  let notifiedSet = new Set();
+
+  function saveNotifSettings(){ try{ localStorage.setItem(NOTIF_SETTINGS_KEY, JSON.stringify(notifSettings)); }catch(e){} }
+  function saveNotifiedSet(){ try{ localStorage.setItem(NOTIFIED_KEY, JSON.stringify(Array.from(notifiedSet))); }catch(e){} }
+
+  function renderNotifStatus(){
+    const btn = document.getElementById('toggleNotifBtn');
+    const status = document.getElementById('notifStatus');
+    if(!btn || !status) return;
+    if(!notificationsSupported){
+      status.textContent = "This browser doesn't support notifications.";
+      btn.disabled = true;
+      return;
+    }
+    if(Notification.permission === 'denied'){
+      status.textContent = 'Notifications are blocked for this page — allow them in your browser\'s site settings to turn this on.';
+      btn.textContent = '🔔 Enable Notifications';
+      return;
+    }
+    if(notifSettings.enabled && Notification.permission === 'granted'){
+      status.textContent = 'On — you\'ll get a nudge for anything due today or overdue (checked every few minutes while this tab is open).';
+      btn.textContent = '🔕 Disable Notifications';
+    } else {
+      status.textContent = 'Off.';
+      btn.textContent = '🔔 Enable Notifications';
+    }
+  }
+  function fireDueNotification(title, body){
+    try{ new Notification(title, {body}); }
+    catch(e){ showToast(`${title}: ${body}`); }
+  }
+
+  function checkDueNotifications(){
+    if(!notificationsSupported || !notifSettings.enabled || Notification.permission !== 'granted') return;
+    const today = todayStr();
+
+    tasks.forEach(t => {
+      if(t.status === 'done' || !t.dueDate || t.dueDate > today) return;
+      const key = `task-${t.id}-${today}`;
+      if(notifiedSet.has(key)) return;
+      fireDueNotification(t.dueDate < today ? '⚠ Task Overdue' : '📅 Task Due Today', t.title);
+      notifiedSet.add(key);
+    });
+
+    REMINDER_TRACKER_IDS.forEach(id => {
+      const config = getTrackerConfig(id);
+      if(!config || !config.dueKey) return;
+      getRows(id).forEach(row => {
+        if(config.statusKey && config.doneValues && config.doneValues.includes(row[config.statusKey])) return;
+        const due = row[config.dueKey];
+        if(!due || due > today) return;
+        const key = `${id}-${row.id}-${today}`;
+        if(notifiedSet.has(key)) return;
+        const label = row.firm || row.contact || '(no firm)';
+        fireDueNotification(due < today ? `⚠ ${config.label} Overdue` : `📅 ${config.label} Due Today`, label);
+        notifiedSet.add(key);
+      });
+    });
+
+    saveNotifiedSet();
+  }
+
+  function initNotifications(){
+    notifSettings = loadJSON(NOTIF_SETTINGS_KEY, {enabled:false});
+    notifiedSet = new Set(loadJSON(NOTIFIED_KEY, []));
+    const btn = document.getElementById('toggleNotifBtn');
+    if(!btn) return;
+    btn.addEventListener('click', () => {
+      if(!notificationsSupported) return;
+      if(notifSettings.enabled){
+        notifSettings.enabled = false;
+        saveNotifSettings();
+        renderNotifStatus();
+        return;
+      }
+      Notification.requestPermission().then(perm => {
+        notifSettings.enabled = (perm === 'granted');
+        saveNotifSettings();
+        renderNotifStatus();
+        if(perm === 'granted'){
+          showToast('Notifications are on');
+          checkDueNotifications();
+        }
+      });
+    });
+    renderNotifStatus();
+    checkDueNotifications();
+    setInterval(checkDueNotifications, 5 * 60 * 1000);
+  }
+
   /* =========================================================
      DATA SHEETS
      ========================================================= */
@@ -2046,7 +2179,14 @@
     if(col.type === 'textarea') return `<textarea data-key="${col.key}" rows="1">${escapeHtml(value)}</textarea>`;
     if(col.type === 'date') return `<input type="date" data-key="${col.key}" value="${escapeHtml(value)}">`;
     if(col.type === 'number') return `<input type="number" data-key="${col.key}" value="${escapeHtml(value)}" step="any">`;
-    return `<input type="text" data-key="${col.key}" value="${escapeHtml(value)}">`;
+    const firmList = col.key === 'firm' ? ' list="firmNamesList"' : '';
+    return `<input type="text" data-key="${col.key}" value="${escapeHtml(value)}"${firmList}>`;
+  }
+  function refreshFirmNamesDatalist(){
+    const list = document.getElementById('firmNamesList');
+    if(!list) return;
+    const names = Array.from(new Set(firmsRows.map(r => (r.firm || '').trim()).filter(Boolean))).sort();
+    list.innerHTML = names.map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
   }
   function renderCellDisplay(td, col, value){
     if(col.type === 'select' && (value === 'Yes' || value === 'No')){
@@ -2062,7 +2202,22 @@
     const config = ctx.getConfig();
     const rows = ctx.getRows();
     const q = ctx.els.search.value.trim().toLowerCase();
-    const filtered = q ? rows.filter(r => config.columns.some(c => String(r[c.key]||'').toLowerCase().includes(q))) : rows;
+    let filtered = q ? rows.filter(r => config.columns.some(c => String(r[c.key]||'').toLowerCase().includes(q))) : rows.slice();
+
+    if(ctx.els.hideResolved && ctx.els.hideResolved.checked && config.statusKey && config.doneValues){
+      filtered = filtered.filter(r => !config.doneValues.includes(r[config.statusKey]));
+    }
+
+    if(!ctx.sortState) ctx.sortState = {col:null, dir:1};
+    if(ctx.sortState.col){
+      const sortCol = ctx.sortState.col;
+      const allNumeric = filtered.every(r => r[sortCol] === '' || r[sortCol] == null || !isNaN(parseFloat(r[sortCol])));
+      filtered = filtered.slice().sort((a,b) => {
+        let av = a[sortCol], bv = b[sortCol];
+        if(allNumeric){ av = parseFloat(av) || 0; bv = parseFloat(bv) || 0; return (av-bv) * ctx.sortState.dir; }
+        return String(av||'').localeCompare(String(bv||'')) * ctx.sortState.dir;
+      });
+    }
 
     ctx.els.rowCount.textContent = `${filtered.length} of ${rows.length} rows`;
     ctx.els.empty.style.display = rows.length ? 'none' : 'block';
@@ -2072,7 +2227,17 @@
     thead.innerHTML = ''; tbody.innerHTML = '';
 
     const trh = document.createElement('tr');
-    config.columns.forEach(col => { const th = document.createElement('th'); th.textContent = col.label; trh.appendChild(th); });
+    config.columns.forEach(col => {
+      const th = document.createElement('th');
+      th.textContent = col.label;
+      if(ctx.sortState.col === col.key) th.innerHTML += `<span class="sort-arrow">${ctx.sortState.dir===1?'▲':'▼'}</span>`;
+      th.addEventListener('click', () => {
+        if(ctx.sortState.col === col.key) ctx.sortState.dir *= -1;
+        else { ctx.sortState.col = col.key; ctx.sortState.dir = 1; }
+        renderTableForContext(ctx);
+      });
+      trh.appendChild(th);
+    });
     trh.appendChild(document.createElement('th'));
     thead.appendChild(trh);
 
@@ -2142,6 +2307,47 @@
     downloadCsv(config.label.toLowerCase().replace(/[^a-z0-9]+/g,'-') + '.csv', [header].concat(body));
   }
 
+  function normalizeHeaderCell(s){ return String(s||'').trim().toLowerCase().replace(/[\s_-]+/g,' '); }
+
+  function importCsvIntoContext(ctx, file){
+    const config = ctx.getConfig();
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const rows = parseCsvText(reader.result);
+        if(!rows.length) throw new Error('empty file');
+        const header = rows[0].map(normalizeHeaderCell);
+        const colIndex = {};
+        config.columns.forEach(col => {
+          let idx = header.indexOf(normalizeHeaderCell(col.label));
+          if(idx < 0) idx = header.indexOf(normalizeHeaderCell(col.key));
+          if(idx >= 0) colIndex[col.key] = idx;
+        });
+        const matchedCols = Object.keys(colIndex);
+        if(!matchedCols.length){
+          showToast(`No matching columns — expected: ${config.columns.map(c=>c.label).join(', ')}`);
+          return;
+        }
+        let added = 0;
+        rows.slice(1).forEach(r => {
+          const row = {id: uid()};
+          config.columns.forEach(col => { row[col.key] = colIndex[col.key] != null ? (r[colIndex[col.key]] || '') : ''; });
+          if(!config.columns.some(col => (row[col.key]||'').toString().trim())) return;
+          ctx.getRows().push(row);
+          added++;
+        });
+        if(!added){ showToast('No rows found to import'); return; }
+        ctx.saveRows();
+        renderTableForContext(ctx);
+        if(ctx.onAfterChange) ctx.onAfterChange();
+        showToast(`Imported ${added} row${added===1?'':'s'} (matched ${matchedCols.length} of ${config.columns.length} columns)`);
+      }catch(err){
+        showToast('Could not read that CSV file');
+      }
+    };
+    reader.readAsText(file);
+  }
+
   function bindContext(ctx){
     ctx.els.form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -2160,20 +2366,23 @@
       renderAddFormForContext(ctx);
     });
     ctx.els.search.addEventListener('input', () => renderTableForContext(ctx));
+    if(ctx.els.hideResolved) ctx.els.hideResolved.addEventListener('change', () => renderTableForContext(ctx));
   }
 
   const trackerCtx = {
     getConfig: () => getTrackerConfig(activeTrackerId),
     getRows: () => getRows(activeTrackerId),
     saveRows: () => saveTrackerRows(),
+    sortState: {col:null, dir:1},
     els: {
       form: document.getElementById('trackerAddForm'),
       search: document.getElementById('trackerSearch'),
       table: document.getElementById('trackerTable'),
       rowCount: document.getElementById('trackerRowCount'),
-      empty: document.getElementById('trackerEmptyMsg')
+      empty: document.getElementById('trackerEmptyMsg'),
+      hideResolved: document.getElementById('trackerHideResolved')
     },
-    onAfterChange: () => { renderTrackerNav(); renderOverview(); }
+    onAfterChange: () => { renderTrackerNav(); renderOverview(); renderFirmProfileContent(); }
   };
 
   const TRACKER_GROUP_ORDER = ['Email & Reminders','Firm Setup','Finance','Documents','Custom'];
@@ -2198,6 +2407,7 @@
           activeTrackerId = c.id;
           localStorage.setItem(ACTIVE_TRACKER_KEY, activeTrackerId);
           document.getElementById('trackerSearch').value = '';
+          trackerCtx.sortState = {col:null, dir:1};
           renderTrackerNav();
           renderTrackerView();
         });
@@ -2260,6 +2470,9 @@
       addColBtn.style.display = 'none';
       copyFromWrap.style.display = 'none';
     }
+
+    const hideResolvedLabel = document.getElementById('trackerHideResolved').closest('label');
+    hideResolvedLabel.style.display = (config.statusKey && config.doneValues) ? '' : 'none';
 
     renderAddFormForContext(trackerCtx);
     renderTableForContext(trackerCtx);
@@ -2327,6 +2540,11 @@
   });
 
   document.getElementById('trackerExportBtn').addEventListener('click', () => exportContextCsv(trackerCtx));
+  document.getElementById('trackerImportInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(file) importCsvIntoContext(trackerCtx, file);
+    e.target.value = '';
+  });
   bindContext(trackerCtx);
 
   /* =========================================================
@@ -2362,9 +2580,14 @@
       rowCount: document.getElementById('firmsRowCount'),
       empty: document.getElementById('firmsEmptyMsg')
     },
-    onAfterChange: () => renderCapacityChart()
+    onAfterChange: () => { renderCapacityChart(); refreshFirmNamesDatalist(); renderFirmProfileNav(); renderFirmProfileContent(); }
   };
   document.getElementById('firmsExportBtn').addEventListener('click', () => exportContextCsv(firmsCtx));
+  document.getElementById('firmsImportInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(file) importCsvIntoContext(firmsCtx, file);
+    e.target.value = '';
+  });
   bindContext(firmsCtx);
 
   function capacityInfo(row, maxOpen){
@@ -2411,6 +2634,265 @@
     });
   }
 
+  /* ---------- Firm Profile (grouped by state, rolls up every tracker) ---------- */
+  let selectedProfileFirm = null;
+
+  function renderFirmProfileNav(){
+    const nav = document.getElementById('firmProfileNav');
+    const rows = firmsRows.filter(r => r.firm && r.firm.trim());
+    if(!rows.length){
+      nav.innerHTML = '<p class="hint" style="margin:0;">Add firms in Active Firms below first.</p>';
+      return;
+    }
+    const byState = {};
+    rows.forEach(r => {
+      const state = (r.lossState || '').trim() || '(No state set)';
+      (byState[state] = byState[state] || []).push(r.firm.trim());
+    });
+    const states = Object.keys(byState).sort((a,b) => {
+      if(a === '(No state set)') return 1;
+      if(b === '(No state set)') return -1;
+      return a.localeCompare(b);
+    });
+    nav.innerHTML = '';
+    states.forEach(state => {
+      const group = document.createElement('div');
+      group.className = 'tracker-nav-group';
+      group.innerHTML = `<h4>${escapeHtml(state)}</h4>`;
+      Array.from(new Set(byState[state])).sort().forEach(firmName => {
+        const btn = document.createElement('button');
+        btn.className = 'tracker-nav-item' + (firmName === selectedProfileFirm ? ' active' : '');
+        btn.innerHTML = `<span>${escapeHtml(firmName)}</span>`;
+        btn.addEventListener('click', () => {
+          selectedProfileFirm = firmName;
+          renderFirmProfileNav();
+          renderFirmProfileContent();
+        });
+        group.appendChild(btn);
+      });
+      nav.appendChild(group);
+    });
+  }
+
+  function collectFirmTrackerMatches(firmName){
+    const needle = firmName.trim().toLowerCase();
+    const matches = [];
+    TRACKER_CONFIGS.forEach(config => {
+      if(!config.columns.some(c => c.key === 'firm')) return;
+      const rows = getRows(config.id).filter(r => (r.firm||'').trim().toLowerCase() === needle);
+      if(rows.length) matches.push({config, rows});
+    });
+    return matches;
+  }
+
+  function rowSummaryLine(config, row){
+    const parts = [];
+    config.columns.forEach(c => {
+      if(c.key === 'firm') return;
+      const v = row[c.key];
+      if(v == null || String(v).trim() === '') return;
+      parts.push(`${c.label}: ${c.type === 'date' ? fmtDate(v) : v}`);
+    });
+    return parts.join(' · ') || '(no details entered)';
+  }
+
+  function renderFirmProfileContent(){
+    const wrap = document.getElementById('firmProfileContent');
+    if(!selectedProfileFirm){
+      wrap.innerHTML = '<div class="empty-msg">Select a firm on the left to see its full profile.</div>';
+      return;
+    }
+    const needle = selectedProfileFirm.trim().toLowerCase();
+    const firmRow = firmsRows.find(r => (r.firm||'').trim().toLowerCase() === needle);
+    let html = `<h3 style="margin:0 0 4px;">${escapeHtml(selectedProfileFirm)}</h3>`;
+    if(firmRow){
+      const maxOpen = Math.max(1, ...firmsRows.map(r => parseFloat(r.openMatters) || 0));
+      const info = capacityInfo(firmRow, maxOpen);
+      const bits = [firmRow.lossState, firmRow.workArea, firmRow.director].filter(Boolean);
+      html += `<p class="firm-profile-summary">${bits.map(escapeHtml).join(' · ')}${bits.length?' · ':''}${info.pct}% capacity (${info.open} open matters)</p>`;
+    }
+    const matches = collectFirmTrackerMatches(selectedProfileFirm);
+    if(!matches.length){
+      html += '<div class="empty-msg">No rows found for this firm in any tracker yet.</div>';
+    } else {
+      matches.forEach(({config, rows}) => {
+        html += `<div class="firm-profile-group"><div class="firm-profile-group-title">${escapeHtml(config.label)} <span class="count-pill" style="background:var(--accent-bg); color:var(--accent-dark);">${rows.length}</span></div>`;
+        html += '<ul class="summary-list" style="margin:0;">';
+        rows.forEach(row => {
+          const overdue = rowIsOverdue(config, row);
+          html += `<li${overdue ? ' style="box-shadow:inset 0 0 0 1.5px var(--danger);"' : ''}><div style="font-size:0.82rem;">${escapeHtml(rowSummaryLine(config, row))}</div></li>`;
+        });
+        html += '</ul></div>';
+      });
+    }
+    wrap.innerHTML = html;
+  }
+
+  /* =========================================================
+     GLOBAL SEARCH
+     ========================================================= */
+  const globalSearchInput = document.getElementById('globalSearchInput');
+  const globalSearchResults = document.getElementById('globalSearchResults');
+
+  function firstNonEmptyValue(row, excludeKeys){
+    for(const k in row){
+      if(excludeKeys.includes(k)) continue;
+      if(row[k] != null && String(row[k]).trim()) return String(row[k]);
+    }
+    return '(row)';
+  }
+
+  function runGlobalSearch(q){
+    const needle = q.trim().toLowerCase();
+    if(!needle) return [];
+    const results = [];
+
+    tasks.forEach(t => {
+      const hay = (t.title + ' ' + (t.description||'') + ' ' + (t.tags||[]).join(' ')).toLowerCase();
+      if(hay.includes(needle)){
+        results.push({ source: 'Tasks', text: t.title, action: () => {
+          activateTab('tasks');
+          taskSearchInput.value = q;
+          renderTasks();
+        }});
+      }
+    });
+
+    allTrackerConfigs().forEach(config => {
+      getRows(config.id).forEach(row => {
+        const hay = config.columns.map(c => row[c.key]).join(' ').toLowerCase();
+        if(hay.includes(needle)){
+          const label = row.firm || row.contact || firstNonEmptyValue(row, ['id']);
+          results.push({ source: config.label, text: label, action: () => {
+            activateTab('trackers');
+            activeTrackerId = config.id;
+            localStorage.setItem(ACTIVE_TRACKER_KEY, activeTrackerId);
+            trackerCtx.sortState = {col:null, dir:1};
+            renderTrackerNav();
+            renderTrackerView();
+            document.getElementById('trackerSearch').value = q;
+            renderTableForContext(trackerCtx);
+          }});
+        }
+      });
+    });
+
+    firmsRows.forEach(row => {
+      const hay = FIRMS_CONFIG.columns.map(c => row[c.key]).join(' ').toLowerCase();
+      if(hay.includes(needle)){
+        results.push({ source: 'Firms Dashboard', text: row.firm || '(firm)', action: () => {
+          activateTab('firms');
+          document.getElementById('firmsSearch').value = q;
+          renderTableForContext(firmsCtx);
+        }});
+      }
+    });
+
+    return results.slice(0, 25);
+  }
+
+  function renderGlobalSearchResults(){
+    const q = globalSearchInput.value;
+    if(!q.trim()){ globalSearchResults.style.display = 'none'; return; }
+    const results = runGlobalSearch(q);
+    globalSearchResults.innerHTML = '';
+    if(!results.length){
+      globalSearchResults.innerHTML = '<div class="global-search-empty">No matches anywhere.</div>';
+    } else {
+      results.forEach(r => {
+        const item = document.createElement('div');
+        item.className = 'global-search-item';
+        item.innerHTML = `<div class="gsi-source">${escapeHtml(r.source)}</div><div class="gsi-text">${escapeHtml(r.text)}</div>`;
+        item.addEventListener('click', () => {
+          r.action();
+          globalSearchResults.style.display = 'none';
+          globalSearchInput.value = '';
+        });
+        globalSearchResults.appendChild(item);
+      });
+    }
+    globalSearchResults.style.display = '';
+  }
+  globalSearchInput.addEventListener('input', renderGlobalSearchResults);
+  globalSearchInput.addEventListener('focus', () => { if(globalSearchInput.value.trim()) renderGlobalSearchResults(); });
+  document.addEventListener('click', (e) => {
+    if(!document.getElementById('globalSearchWrap').contains(e.target)) globalSearchResults.style.display = 'none';
+  });
+
+  /* =========================================================
+     BACKUP / RESTORE ALL DATA
+     ========================================================= */
+  function collectAllData(){
+    return {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      tasks, sheets, activeSheetId,
+      trackerRows, customDefs, activeTrackerId,
+      firmsRows
+    };
+  }
+
+  document.getElementById('backupDataBtn').addEventListener('click', () => {
+    const data = collectAllData();
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `mahlets-tracker-backup-${todayStr()}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    showToast('Backup downloaded');
+  });
+
+  document.getElementById('restoreDataInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const data = JSON.parse(reader.result);
+        if(!data || typeof data !== 'object') throw new Error('bad file');
+        if(!confirm('This replaces ALL current data (tasks, trackers, firms, sheets) with this backup file. Continue?')){
+          e.target.value = '';
+          return;
+        }
+        tasks = Array.isArray(data.tasks) ? data.tasks : [];
+        sheets = data.sheets && typeof data.sheets === 'object' ? data.sheets : {};
+        activeSheetId = data.activeSheetId || '';
+        trackerRows = data.trackerRows && typeof data.trackerRows === 'object' ? data.trackerRows : {};
+        customDefs = Array.isArray(data.customDefs) ? data.customDefs : [];
+        activeTrackerId = data.activeTrackerId || TRACKER_CONFIGS[0].id;
+        firmsRows = Array.isArray(data.firmsRows) ? data.firmsRows : [];
+
+        saveTasks();
+        saveSheets();
+        localStorage.setItem(ACTIVE_SHEET_KEY, activeSheetId);
+        saveTrackerRows();
+        saveCustomDefs();
+        localStorage.setItem(ACTIVE_TRACKER_KEY, activeTrackerId);
+        saveFirmsRows();
+
+        renderTasks();
+        renderTrackerNav();
+        renderTrackerView();
+        renderAddFormForContext(firmsCtx);
+        renderTableForContext(firmsCtx);
+        renderCapacityChart();
+        selectedProfileFirm = null;
+        renderFirmProfileNav();
+        renderFirmProfileContent();
+        renderSheetSelector();
+        renderActiveSheet();
+        renderOverview();
+        if(typeof refreshFirmNamesDatalist === 'function') refreshFirmNamesDatalist();
+        showToast('Backup restored');
+      }catch(err){
+        showToast('Could not read that backup file');
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+
   /* =========================================================
      PWA install / offline copy
      ========================================================= */
@@ -2453,9 +2935,13 @@
   renderAddFormForContext(firmsCtx);
   renderTableForContext(firmsCtx);
   renderCapacityChart();
+  refreshFirmNamesDatalist();
+  renderFirmProfileNav();
+  renderFirmProfileContent();
   renderOverview();
   renderSheetSelector();
   renderActiveSheet();
+  initNotifications();
 })();
 </script>
 </body>
