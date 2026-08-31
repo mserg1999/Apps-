@@ -59,7 +59,10 @@
     color:var(--muted);
     font-size:1.02rem;
   }
-  .rings-row{font-size:1.5rem; margin-top:6px;}
+  .rings-row{font-size:1.6rem; margin-top:6px; animation:bob 2.6s ease-in-out infinite; position:relative; display:inline-block;}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg);} 50%{transform:translateY(-5px) rotate(4deg);}}
+  .rings-row .sparkle{position:absolute; top:-8px; right:-14px; font-size:0.9rem; animation:twinkle 1.8s ease-in-out infinite;}
+  @keyframes twinkle{0%,100%{opacity:0.3; transform:scale(0.8);} 50%{opacity:1; transform:scale(1.15);}}
 
   .wrap{max-width:1100px; margin:0 auto; padding:0 16px;}
 
@@ -86,7 +89,7 @@
     transition:transform .12s ease, background .15s ease, color .15s ease;
     white-space:nowrap;
   }
-  .tab-btn:hover{transform:translateY(-1px);}
+  .tab-btn:hover{transform:translateY(-2px) scale(1.03);}
   .tab-btn.active{background:var(--accent); color:#fff;}
 
   .tab-panel{display:none; margin-top:24px;}
@@ -149,7 +152,9 @@
     padding:14px 16px;
     text-align:center;
     box-shadow:inset 0 0 0 1px #f1e2e0;
+    transition:transform .15s ease, box-shadow .15s ease;
   }
+  .stat-box:hover{transform:translateY(-3px); box-shadow:inset 0 0 0 1px #f1e2e0, var(--shadow);}
   .stat-box .num{font-size:1.4rem; font-weight:800; color:var(--accent-dark); font-family:'Playfair Display',serif;}
   .stat-box .lbl{font-size:0.75rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.3px;}
 
@@ -286,6 +291,24 @@
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 
+  .confetti-piece{
+    position:fixed; top:-30px; pointer-events:none; font-size:1.4rem; z-index:60;
+    animation:confetti-fall linear forwards;
+  }
+  @keyframes confetti-fall{
+    to{ transform:translateY(105vh) rotate(360deg); opacity:0.2; }
+  }
+  .celebrate-banner{
+    background:linear-gradient(135deg, var(--accent-light), #fff0ea);
+    border-radius:12px;
+    padding:14px 16px;
+    text-align:center;
+    font-weight:800;
+    color:var(--accent-dark);
+    margin-bottom:14px;
+    box-shadow:inset 0 0 0 1px var(--accent-light);
+  }
+
   .hint{color:var(--muted); font-size:0.85rem; margin:4px 0 0;}
   .inline-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;}
   .settings-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;}
@@ -296,8 +319,8 @@
 
 <header>
   <h1>Our Wedding Planner</h1>
-  <p>Vendors, budget, checklist and calendar — all in one place.</p>
-  <div class="rings-row">💍</div>
+  <p id="headerSub">Vendors, budget, checklist and calendar — all in one place.</p>
+  <div class="rings-row">💍<span class="sparkle">✨</span></div>
 </header>
 
 <nav class="tabs" id="tabNav">
@@ -345,6 +368,7 @@
         <h2>Checklist Progress</h2>
         <div class="stat-row" id="dashTaskStats" style="grid-template-columns:1fr 1fr;"></div>
         <div class="progress-track"><div class="progress-fill" id="dashTaskBar"></div></div>
+        <div id="dashCelebrateBanner"></div>
         <h3 style="font-size:0.95rem; margin:16px 0 8px;">Coming Up</h3>
         <div id="dashUpcoming"></div>
       </div>
@@ -430,7 +454,7 @@
         </div>
       </div>
       <div id="taskList"></div>
-      <div class="empty-msg" id="taskEmptyMsg" style="display:none;">No tasks match this filter yet.</div>
+      <div class="empty-msg" id="taskEmptyMsg" style="display:none;">Nothing here — clear the filters, or add your first task above! ✨</div>
     </div>
   </section>
 
@@ -463,7 +487,7 @@
       <p class="sub">Track candidates and bookings across Scotland, Washington DC, and California.</p>
       <div class="crud-add" id="photographersAdd"></div>
       <div id="photographersList"></div>
-      <div class="empty-msg" id="photographersEmptyMsg" style="display:none;">No photographers added yet.</div>
+      <div class="empty-msg" id="photographersEmptyMsg" style="display:none;">No photographers yet — start with your favorite Scotland, DC, or California pick above! 📸</div>
     </div>
   </section>
 
@@ -474,7 +498,7 @@
       <p class="sub">Boutique appointments, dresses tried, and where things stand.</p>
       <div class="crud-add" id="dressAdd"></div>
       <div id="dressList"></div>
-      <div class="empty-msg" id="dressEmptyMsg" style="display:none;">No appointments added yet.</div>
+      <div class="empty-msg" id="dressEmptyMsg" style="display:none;">No appointments yet — time to go say yes to the dress! 👗</div>
     </div>
   </section>
 
@@ -485,7 +509,7 @@
       <p class="sub">Reception venues and caterers around the DMV (DC / Maryland / Virginia).</p>
       <div class="crud-add" id="venueAdd"></div>
       <div id="venueList"></div>
-      <div class="empty-msg" id="venueEmptyMsg" style="display:none;">No venues or caterers added yet.</div>
+      <div class="empty-msg" id="venueEmptyMsg" style="display:none;">Nothing yet — add a DMV venue or caterer to start comparing! 🍽️</div>
     </div>
   </section>
 
@@ -562,7 +586,7 @@
       id: uid(), title, category, dueDate: dateKey(addDays(today, offset)), priority, done: false, notes: ''
     }));
     return {
-      settings: { partner1: 'Partner One', partner2: 'Partner Two', weddingDate: defaultWeddingDateKey(), totalBudget: DEFAULT_TOTAL_BUDGET },
+      settings: { partner1: 'Julie', partner2: 'Tommy', weddingDate: defaultWeddingDateKey(), totalBudget: DEFAULT_TOTAL_BUDGET },
       budget, tasks, events: [], photographers: [], dress: [], venues: []
     };
   }
@@ -593,6 +617,23 @@
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 2000);
   }
+  function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+  const CONFETTI_EMOJI = ['💍','💐','🎉','💕','✨','🥂'];
+  function launchConfetti(){
+    for(let i=0;i<26;i++){
+      const span = document.createElement('span');
+      span.className = 'confetti-piece';
+      span.textContent = pickRandom(CONFETTI_EMOJI);
+      span.style.left = Math.random()*100 + 'vw';
+      span.style.animationDuration = (2 + Math.random()*1.5) + 's';
+      document.body.appendChild(span);
+      setTimeout(() => span.remove(), 3800);
+    }
+  }
+
+  const TASK_DONE_MESSAGES = ['Nailed it! 🎉','Boom, done! ✨','One step closer to "I do"! 💍','Crushing this checklist! 💪','Look at you go! 🥂'];
+  const BOOKED_MESSAGES = ['Booked! 🎉 One less thing to worry about.','It\'s official — booked! 💐','Yes! Locked that one in. ✨','Woohoo, booked! 🥂'];
 
   // ---------- Tabs ----------
   const tabButtons = document.querySelectorAll('.tab-btn');
@@ -633,20 +674,28 @@
     const p1 = data.settings.partner1 || 'Partner One';
     const p2 = data.settings.partner2 || 'Partner Two';
     h1.textContent = `${p1} & ${p2}`;
+    document.getElementById('headerSub').textContent = `Let's plan the best day of your lives, ${p1} & ${p2}! 💕`;
+
     const countdownLine = document.getElementById('countdownLine');
     if(!data.settings.weddingDate){
-      countdownLine.textContent = 'Set your wedding date above to start the countdown.';
+      countdownLine.textContent = 'Set your wedding date above to start the countdown! ⏳';
       return;
     }
     const wedding = parseDateKey(data.settings.weddingDate);
     const today = parseDateKey(todayKey());
     const diffDays = Math.round((wedding - today) / 86400000);
-    if(diffDays > 0){
-      countdownLine.textContent = `💍 ${diffDays} day${diffDays===1?'':'s'} until ${fmtNiceDate(data.settings.weddingDate)}!`;
+    if(diffDays > 30){
+      countdownLine.textContent = `💍 ${diffDays} days until ${fmtNiceDate(data.settings.weddingDate)} — plenty of time to make it perfect!`;
+    } else if(diffDays > 7){
+      countdownLine.textContent = `✨ Only ${diffDays} days to go! The countdown is officially on.`;
+    } else if(diffDays > 1){
+      countdownLine.textContent = `🎉 ${diffDays} days left — it's so close you can almost smell the flowers!`;
+    } else if(diffDays === 1){
+      countdownLine.textContent = `🥂 Tomorrow's the day! Try to get some sleep tonight.`;
     } else if(diffDays === 0){
-      countdownLine.textContent = `💍 Today is the big day!`;
+      countdownLine.textContent = `💍 Today is THE day — congratulations!! 🎉`;
     } else {
-      countdownLine.textContent = `🎉 Married since ${fmtNiceDate(data.settings.weddingDate)}!`;
+      countdownLine.textContent = `🎉 Happily married since ${fmtNiceDate(data.settings.weddingDate)}!`;
     }
   }
 
@@ -688,6 +737,9 @@
       <div class="stat-box"><div class="num">${taskPct}%</div><div class="lbl">Complete</div></div>
     `;
     document.getElementById('dashTaskBar').style.width = taskPct + '%';
+    document.getElementById('dashCelebrateBanner').innerHTML = (totalCount && taskPct === 100)
+      ? '<div class="celebrate-banner">🏆 Checklist complete! You two are absolute wedding-planning legends.</div>'
+      : '';
 
     const upcomingItems = [];
     data.tasks.filter(t => !t.done && t.dueDate).forEach(t => upcomingItems.push({date:t.dueDate, label:t.title, tag:t.category, kind:'task'}));
@@ -696,7 +748,7 @@
     const upcoming = upcomingItems.filter(i => i.date >= todayK).sort((a,b) => a.date.localeCompare(b.date)).slice(0,5);
     const dashUpcoming = document.getElementById('dashUpcoming');
     if(!upcoming.length){
-      dashUpcoming.innerHTML = '<div class="empty-msg">Nothing coming up yet.</div>';
+      dashUpcoming.innerHTML = '<div class="empty-msg">All clear for now — enjoy the calm before the confetti! ✨</div>';
     } else {
       dashUpcoming.innerHTML = upcoming.map(i => `
         <div class="agenda-row">
@@ -893,7 +945,13 @@
       save();
       renderTasks();
       renderDashboard();
-      showToast(data.tasks[idx].done ? 'Marked done 🎉' : 'Reopened task');
+      if(data.tasks[idx].done){
+        launchConfetti();
+        const allDone = data.tasks.length && data.tasks.every(t => t.done);
+        showToast(allDone ? '🏆 Every task done — you two are wedding-planning champions!' : pickRandom(TASK_DONE_MESSAGES));
+      } else {
+        showToast('Reopened — no worries, you\'ve got this.');
+      }
       return;
     }
     const field = e.target.dataset.field;
@@ -987,7 +1045,7 @@
       const totalCount = section.data.length;
       emptyEl.style.display = totalCount ? 'none' : 'block';
       listEl.innerHTML = groups.map(g => {
-        if(!g.items.length && section.groupBy) return `<div class="crud-group-title">${section.groupIcon||''} ${escapeHtml(g.group)}</div><div class="empty-msg">Nothing here yet.</div>`;
+        if(!g.items.length && section.groupBy) return `<div class="crud-group-title">${section.groupIcon||''} ${escapeHtml(g.group)}</div><div class="empty-msg">No candidates yet — go find someone amazing! 🌟</div>`;
         const header = section.groupBy ? `<div class="crud-group-title">${section.groupIcon||''} ${escapeHtml(g.group === '__other__' ? 'Other' : g.group)}</div>` : '';
         const cards = g.items.map(({entry, idx}) => {
           const title = entry[section.titleField] || section.defaultTitle;
@@ -1033,10 +1091,15 @@
       if(e.target.tagName !== 'SELECT') return;
       const idx = Number(e.target.closest('.crud-card').dataset.idx);
       const field = e.target.dataset.field;
-      section.data[idx][field] = e.target.value;
+      const newValue = e.target.value;
+      section.data[idx][field] = newValue;
       save();
       renderList();
       renderDashboard();
+      if(field === section.statusField && ['Booked','Ready','Ordered'].includes(newValue)){
+        launchConfetti();
+        showToast(pickRandom(BOOKED_MESSAGES));
+      }
     });
     listEl.addEventListener('click', (e) => {
       if(e.target.dataset.action === 'delete'){
@@ -1178,7 +1241,7 @@
         </div>`).join('');
     }
     if(!tasksToday.length && !eventsToday.length){
-      html += '<div class="empty-msg">Nothing scheduled for this day yet.</div>';
+      html += '<div class="empty-msg">A free day! Add an appointment below, or just enjoy the breathing room. 🌸</div>';
     }
     html += `
       <h3 style="font-size:0.9rem; margin:18px 0 8px;">Add an Appointment</h3>
@@ -1199,6 +1262,10 @@
         renderAgenda();
         renderTasks();
         renderDashboard();
+        if(cb.checked){
+          launchConfetti();
+          showToast(pickRandom(TASK_DONE_MESSAGES));
+        }
       });
     });
     body.querySelectorAll('[data-kind="event-delete"]').forEach(btn => {
