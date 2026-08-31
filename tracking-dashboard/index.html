@@ -361,6 +361,9 @@
   table.tracker-table th{background:var(--neutral-tint); font-weight:700; cursor:pointer; user-select:none;}
   table.tracker-table tbody tr:hover{background:#fbfaff;}
   table.tracker-table tbody tr.row-overdue{background:var(--danger-bg);}
+  table.tracker-table tbody tr.row-flagged{box-shadow:inset 4px 0 0 var(--warning);}
+  .row-flag-badge{cursor:help; margin-right:6px;}
+  .flag-rule-form{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
   table.tracker-table td.cell-editable{cursor:pointer;}
   table.tracker-table td.cell-editable:hover{box-shadow:inset 0 0 0 1.5px var(--accent-soft);}
   table.tracker-table input, table.tracker-table select{font-size:0.82rem; padding:6px 8px;}
@@ -567,10 +570,13 @@
       <div class="toolbar">
         <input id="trackerSearch" placeholder="🔍 Search this tracker...">
         <label class="pill grey" style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="trackerHideResolved"> Hide resolved</label>
+        <button class="pill grey" id="trackerFlagRulesBtn">🚩 Flag Rules</button>
         <span class="stats-line" id="trackerRowCount"></span>
+        <span class="stats-line" id="trackerFlagCount"></span>
         <button class="pill grey" id="trackerExportBtn">⬇ Export CSV</button>
-        <label class="pill grey file-label">⬆ Import CSV<input type="file" id="trackerImportInput" accept=".csv" hidden></label>
+        <label class="pill grey file-label">⬆ Import CSV/Excel<input type="file" id="trackerImportInput" accept=".csv,.xlsx,.xls" hidden></label>
       </div>
+      <div class="import-panel" id="trackerFlagPanel" style="display:none;"></div>
       <div class="tracker-table-wrap">
         <table class="tracker-table" id="trackerTable"><thead></thead><tbody></tbody></table>
       </div>
@@ -597,10 +603,13 @@
     </div>
     <div class="toolbar">
       <input id="firmsSearch" placeholder="🔍 Search firms...">
+      <button class="pill grey" id="firmsFlagRulesBtn">🚩 Flag Rules</button>
       <span class="stats-line" id="firmsRowCount"></span>
+      <span class="stats-line" id="firmsFlagCount"></span>
       <button class="pill grey" id="firmsExportBtn">⬇ Export CSV</button>
-      <label class="pill grey file-label">⬆ Import CSV<input type="file" id="firmsImportInput" accept=".csv" hidden></label>
+      <label class="pill grey file-label">⬆ Import CSV/Excel<input type="file" id="firmsImportInput" accept=".csv,.xlsx,.xls" hidden></label>
     </div>
+    <div class="import-panel" id="firmsFlagPanel" style="display:none;"></div>
     <div class="tracker-table-wrap">
       <table class="tracker-table" id="firmsTable"><thead></thead><tbody></tbody></table>
     </div>
@@ -2169,6 +2178,124 @@
     return row[config.dueKey] < todayStr();
   }
 
+  /* ---------- Flag Rules (user-defined conditional flags, per tracker) ---------- */
+  const FLAG_RULES_KEY = 'mahlets-tracker-flag-rules-v1';
+  let flagRules = loadJSON(FLAG_RULES_KEY, {});
+  function saveFlagRules(){ saveJSON(FLAG_RULES_KEY, flagRules); }
+  function getFlagRules(trackerId){ return flagRules[trackerId] || []; }
+
+  const FLAG_CONDITIONS_COMMON = [['empty','Is empty'], ['not_empty','Is not empty']];
+  const FLAG_CONDITIONS_BY_TYPE = {
+    text: [['equals','Equals'], ['contains','Contains']],
+    textarea: [['equals','Equals'], ['contains','Contains']],
+    select: [['equals','Equals']],
+    number: [['equals','Equals'], ['gt','Greater than'], ['lt','Less than']],
+    date: [['equals','Equals'], ['before','Before'], ['after','After']]
+  };
+  function conditionsForColType(type){
+    return FLAG_CONDITIONS_COMMON.concat(FLAG_CONDITIONS_BY_TYPE[type] || FLAG_CONDITIONS_BY_TYPE.text);
+  }
+  function flagRuleNeedsValue(op){ return op !== 'empty' && op !== 'not_empty'; }
+
+  function rowMatchesFlagRule(row, rule){
+    const raw = row[rule.column] == null ? '' : String(row[rule.column]).trim();
+    const rv = String(rule.value || '').trim();
+    switch(rule.op){
+      case 'empty': return raw === '';
+      case 'not_empty': return raw !== '';
+      case 'equals': return raw.toLowerCase() === rv.toLowerCase();
+      case 'contains': return raw.toLowerCase().includes(rv.toLowerCase());
+      case 'gt': return raw !== '' && parseFloat(raw) > parseFloat(rv);
+      case 'lt': return raw !== '' && parseFloat(raw) < parseFloat(rv);
+      case 'before': return raw !== '' && raw < rv;
+      case 'after': return raw !== '' && raw > rv;
+      default: return false;
+    }
+  }
+  function matchedFlagRules(config, row){
+    return getFlagRules(config.id).filter(rule => rowMatchesFlagRule(row, rule));
+  }
+  function describeFlagRule(config, rule){
+    const col = config.columns.find(c => c.key === rule.column);
+    const label = col ? col.label : rule.column;
+    const opText = {
+      empty: 'is empty', not_empty: 'is not empty', equals: `equals "${rule.value}"`,
+      contains: `contains "${rule.value}"`, gt: `> ${rule.value}`, lt: `< ${rule.value}`,
+      before: `before ${rule.value}`, after: `after ${rule.value}`
+    }[rule.op] || rule.op;
+    return `${label} ${opText}`;
+  }
+
+  function renderFlagPanel(ctx){
+    const config = ctx.getConfig();
+    const panel = ctx.els.flagPanel;
+    if(!panel) return;
+    const rules = getFlagRules(config.id);
+    let html = '';
+    if(rules.length){
+      html += '<div class="tracker-custom-cols" style="margin-bottom:12px;">';
+      rules.forEach((rule, i) => {
+        html += `<span class="custom-col-chip">🚩 ${escapeHtml(describeFlagRule(config, rule))} <button data-idx="${i}" class="flag-rule-remove" title="Remove rule">✕</button></span>`;
+      });
+      html += '</div>';
+    } else {
+      html += '<p class="hint" style="margin:0 0 12px;">No flag rules yet — rows matching a rule you add here get a 🚩 marker, including rows brought in by CSV/Excel import.</p>';
+    }
+    html += `
+      <div class="flag-rule-form">
+        <select class="flag-col-select"></select>
+        <select class="flag-op-select"></select>
+        <input type="text" class="flag-value-input" placeholder="Value" style="display:none;">
+        <button class="pill green flag-add-btn">+ Add Rule</button>
+      </div>`;
+    panel.innerHTML = html;
+
+    const colSelect = panel.querySelector('.flag-col-select');
+    const opSelect = panel.querySelector('.flag-op-select');
+    const valueInput = panel.querySelector('.flag-value-input');
+    config.columns.forEach(col => {
+      const opt = document.createElement('option');
+      opt.value = col.key; opt.textContent = col.label;
+      colSelect.appendChild(opt);
+    });
+    function refreshOps(){
+      const col = config.columns.find(c => c.key === colSelect.value);
+      opSelect.innerHTML = '';
+      conditionsForColType(col ? col.type : 'text').forEach(([val, label]) => {
+        const opt = document.createElement('option');
+        opt.value = val; opt.textContent = label;
+        opSelect.appendChild(opt);
+      });
+      valueInput.style.display = flagRuleNeedsValue(opSelect.value) ? '' : 'none';
+    }
+    colSelect.addEventListener('change', refreshOps);
+    opSelect.addEventListener('change', () => { valueInput.style.display = flagRuleNeedsValue(opSelect.value) ? '' : 'none'; });
+    refreshOps();
+
+    panel.querySelectorAll('.flag-rule-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx, 10);
+        const current = getFlagRules(config.id).slice();
+        current.splice(idx, 1);
+        flagRules[config.id] = current;
+        saveFlagRules();
+        renderFlagPanel(ctx);
+        renderTableForContext(ctx);
+      });
+    });
+    panel.querySelector('.flag-add-btn').addEventListener('click', () => {
+      const op = opSelect.value;
+      const needsValue = flagRuleNeedsValue(op);
+      if(needsValue && !valueInput.value.trim()){ showToast('Enter a value for this rule'); return; }
+      const rule = { column: colSelect.value, op, value: needsValue ? valueInput.value.trim() : '' };
+      flagRules[config.id] = getFlagRules(config.id).concat([rule]);
+      saveFlagRules();
+      renderFlagPanel(ctx);
+      renderTableForContext(ctx);
+      showToast('Flag rule added');
+    });
+  }
+
   function fieldInputHtml(col, value){
     value = value == null ? '' : value;
     if(col.type === 'select'){
@@ -2221,6 +2348,10 @@
 
     ctx.els.rowCount.textContent = `${filtered.length} of ${rows.length} rows`;
     ctx.els.empty.style.display = rows.length ? 'none' : 'block';
+    if(ctx.els.flagCount){
+      const flaggedCount = rows.filter(r => matchedFlagRules(config, r).length).length;
+      ctx.els.flagCount.textContent = flaggedCount ? `🚩 ${flaggedCount} flagged` : '';
+    }
 
     const thead = ctx.els.table.querySelector('thead');
     const tbody = ctx.els.table.querySelector('tbody');
@@ -2243,7 +2374,11 @@
 
     filtered.forEach(row => {
       const tr = document.createElement('tr');
-      if(rowIsOverdue(config, row)) tr.className = 'row-overdue';
+      const flags = matchedFlagRules(config, row);
+      const classes = [];
+      if(rowIsOverdue(config, row)) classes.push('row-overdue');
+      if(flags.length) classes.push('row-flagged');
+      if(classes.length) tr.className = classes.join(' ');
       config.columns.forEach(col => {
         const td = document.createElement('td');
         td.className = 'cell-editable';
@@ -2252,7 +2387,10 @@
         tr.appendChild(td);
       });
       const tdActions = document.createElement('td');
-      tdActions.innerHTML = '<div class="tracker-row-actions"><button class="icon-btn del-row-btn" title="Delete row">✕</button></div>';
+      const flagBadge = flags.length
+        ? `<span class="row-flag-badge" title="${escapeHtml(flags.map(f => describeFlagRule(config, f)).join('; '))}">🚩</span>`
+        : '';
+      tdActions.innerHTML = `<div class="tracker-row-actions">${flagBadge}<button class="icon-btn del-row-btn" title="Delete row">✕</button></div>`;
       tdActions.querySelector('.del-row-btn').addEventListener('click', () => {
         if(!confirm('Delete this row?')) return;
         const rowsArr = ctx.getRows();
@@ -2311,10 +2449,20 @@
 
   function importCsvIntoContext(ctx, file){
     const config = ctx.getConfig();
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
     const reader = new FileReader();
     reader.onload = () => {
       try{
-        const rows = parseCsvText(reader.result);
+        let rows;
+        if(isExcel){
+          const data = new Uint8Array(reader.result);
+          const wb = XLSX.read(data, {type:'array'});
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          const aoa = XLSX.utils.sheet_to_json(sheet, {header:1, defval:'', raw:false});
+          rows = aoa.map(r => r.map(v => v == null ? '' : String(v))).filter(r => r.length > 1 || r[0] !== '');
+        } else {
+          rows = parseCsvText(reader.result);
+        }
         if(!rows.length) throw new Error('empty file');
         const header = rows[0].map(normalizeHeaderCell);
         const colIndex = {};
@@ -2342,10 +2490,10 @@
         if(ctx.onAfterChange) ctx.onAfterChange();
         showToast(`Imported ${added} row${added===1?'':'s'} (matched ${matchedCols.length} of ${config.columns.length} columns)`);
       }catch(err){
-        showToast('Could not read that CSV file');
+        showToast(`Could not read that ${isExcel ? 'Excel' : 'CSV'} file`);
       }
     };
-    reader.readAsText(file);
+    if(isExcel) reader.readAsArrayBuffer(file); else reader.readAsText(file);
   }
 
   function bindContext(ctx){
@@ -2380,7 +2528,9 @@
       table: document.getElementById('trackerTable'),
       rowCount: document.getElementById('trackerRowCount'),
       empty: document.getElementById('trackerEmptyMsg'),
-      hideResolved: document.getElementById('trackerHideResolved')
+      hideResolved: document.getElementById('trackerHideResolved'),
+      flagPanel: document.getElementById('trackerFlagPanel'),
+      flagCount: document.getElementById('trackerFlagCount')
     },
     onAfterChange: () => { renderTrackerNav(); renderOverview(); renderFirmProfileContent(); }
   };
@@ -2474,6 +2624,8 @@
     const hideResolvedLabel = document.getElementById('trackerHideResolved').closest('label');
     hideResolvedLabel.style.display = (config.statusKey && config.doneValues) ? '' : 'none';
 
+    document.getElementById('trackerFlagPanel').style.display = 'none';
+
     renderAddFormForContext(trackerCtx);
     renderTableForContext(trackerCtx);
   }
@@ -2546,6 +2698,12 @@
     e.target.value = '';
   });
   bindContext(trackerCtx);
+  document.getElementById('trackerFlagRulesBtn').addEventListener('click', () => {
+    const panel = document.getElementById('trackerFlagPanel');
+    const opening = panel.style.display === 'none';
+    if(opening) renderFlagPanel(trackerCtx);
+    panel.style.display = opening ? '' : 'none';
+  });
 
   /* =========================================================
      FIRMS DASHBOARD
@@ -2578,7 +2736,9 @@
       search: document.getElementById('firmsSearch'),
       table: document.getElementById('firmsTable'),
       rowCount: document.getElementById('firmsRowCount'),
-      empty: document.getElementById('firmsEmptyMsg')
+      empty: document.getElementById('firmsEmptyMsg'),
+      flagPanel: document.getElementById('firmsFlagPanel'),
+      flagCount: document.getElementById('firmsFlagCount')
     },
     onAfterChange: () => { renderCapacityChart(); refreshFirmNamesDatalist(); renderFirmProfileNav(); renderFirmProfileContent(); }
   };
@@ -2589,6 +2749,12 @@
     e.target.value = '';
   });
   bindContext(firmsCtx);
+  document.getElementById('firmsFlagRulesBtn').addEventListener('click', () => {
+    const panel = document.getElementById('firmsFlagPanel');
+    const opening = panel.style.display === 'none';
+    if(opening) renderFlagPanel(firmsCtx);
+    panel.style.display = opening ? '' : 'none';
+  });
 
   function capacityInfo(row, maxOpen){
     const open = parseFloat(row.openMatters) || 0;
