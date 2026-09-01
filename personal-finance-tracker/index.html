@@ -42,6 +42,7 @@
     --shadow-sm: 0 4px 14px rgba(150, 120, 200, 0.12);
     --radius: 22px;
     --radius-sm: 14px;
+    --bounce: cubic-bezier(.34, 1.56, .64, 1);
   }
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
@@ -79,6 +80,8 @@
     color:var(--muted);
     font-weight:600;
   }
+  .float-emoji{display:inline-block; animation:floaty 2.6s ease-in-out infinite;}
+  @keyframes floaty{0%,100%{transform:translateY(0) rotate(-8deg);} 50%{transform:translateY(-7px) rotate(8deg);}}
   .settings-btn{
     position:absolute;
     top:26px;
@@ -94,9 +97,10 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    transition:transform .15s ease;
+    transition:transform .3s var(--bounce);
   }
-  .settings-btn:hover{transform:rotate(25deg) scale(1.05);}
+  .settings-btn:hover{transform:rotate(35deg) scale(1.15);}
+  .settings-btn:active{transform:rotate(10deg) scale(0.9);}
 
   nav.tabs{
     display:flex;
@@ -111,23 +115,27 @@
     border:none;
     background:var(--panel);
     color:var(--muted);
-    padding:10px 18px;
+    padding:12px 22px;
     border-radius:999px;
     font-weight:800;
-    font-size:0.92rem;
+    font-size:0.95rem;
     cursor:pointer;
     box-shadow:var(--shadow-sm);
-    transition:all .15s ease;
+    transition:transform .25s var(--bounce), box-shadow .25s ease, background .25s ease, color .25s ease;
     display:flex;
     align-items:center;
     gap:6px;
+    transform:scale(1) rotate(0deg);
   }
-  nav.tabs button:hover{transform:translateY(-2px);}
+  nav.tabs button:hover{transform:translateY(-3px) scale(1.08) rotate(-2deg); box-shadow:0 10px 20px rgba(150,120,200,0.22);}
+  nav.tabs button:active{transform:translateY(0) scale(0.94) rotate(0deg);}
   nav.tabs button.active{
     background:linear-gradient(120deg, var(--lavender), var(--pink));
     color:#fff;
-    box-shadow:0 8px 18px rgba(200,140,210,0.35);
+    box-shadow:0 10px 22px rgba(200,140,210,0.4);
+    transform:scale(1.08);
   }
+  nav.tabs button.active:hover{transform:translateY(-3px) scale(1.12) rotate(2deg);}
 
   main{max-width:980px; margin:0 auto; padding:0 16px;}
   .tab-section{display:none; animation:fadeIn .35s ease;}
@@ -147,7 +155,9 @@
     color:#fff;
     position:relative;
     overflow:hidden;
+    transition:transform .3s var(--bounce), box-shadow .3s ease;
   }
+  .stat-card:hover{transform:translateY(-5px) scale(1.03) rotate(-1deg); box-shadow:0 16px 30px rgba(150,120,200,0.3);}
   .stat-card::after{
     content:'';
     position:absolute;
@@ -182,11 +192,11 @@
     font-weight:800;
     cursor:pointer;
     font-size:0.92rem;
-    transition:transform .12s ease, box-shadow .12s ease;
+    transition:transform .25s var(--bounce), box-shadow .2s ease;
     box-shadow:var(--shadow-sm);
   }
-  .btn:hover{transform:translateY(-1px);}
-  .btn:active{transform:translateY(0) scale(0.98);}
+  .btn:hover{transform:translateY(-3px) scale(1.06) rotate(-1deg); box-shadow:0 10px 20px rgba(150,120,200,0.25);}
+  .btn:active{transform:translateY(0) scale(0.94) rotate(0deg);}
   .btn-primary{background:linear-gradient(120deg, var(--lavender), var(--pink)); color:#fff;}
   .btn-yellow{background:linear-gradient(120deg, var(--yellow), var(--peach)); color:#7a5a10;}
   .btn-mint{background:linear-gradient(120deg, var(--mint), var(--sky)); color:#215f47;}
@@ -318,7 +328,9 @@
     border-radius:var(--radius);
     padding:18px;
     margin-bottom:14px;
+    transition:transform .25s var(--bounce), box-shadow .25s ease;
   }
+  .goal-card:hover, .bill-card:hover{transform:translateY(-3px) scale(1.01); box-shadow:var(--shadow);}
   .goal-head{display:flex; align-items:center; gap:12px; margin-bottom:10px;}
   .goal-emoji{font-size:1.8rem;}
   .goal-title{font-weight:800; font-size:1.05rem; flex:1;}
@@ -366,7 +378,8 @@
   @keyframes popIn{from{opacity:0; transform:scale(0.92) translateY(10px);} to{opacity:1; transform:scale(1) translateY(0);}}
   .modal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
   .modal-head h2{font-size:1.3rem; color:var(--lavender-deep);}
-  .modal-close{border:none; background:var(--lavender-soft); width:34px; height:34px; border-radius:50%; font-size:1.1rem; cursor:pointer; color:var(--lavender-deep);}
+  .modal-close{border:none; background:var(--lavender-soft); width:34px; height:34px; border-radius:50%; font-size:1.1rem; cursor:pointer; color:var(--lavender-deep); transition:transform .3s var(--bounce);}
+  .modal-close:hover{transform:rotate(90deg) scale(1.15); background:var(--pink-soft); color:var(--danger-deep);}
 
   .toast-wrap{
     position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
@@ -383,10 +396,11 @@
   @keyframes toastOut{to{opacity:0; transform:translateY(-8px);}}
 
   .confetti-piece{
-    position:fixed; top:-10px; border-radius:2px; pointer-events:none; z-index:300;
+    position:fixed; top:-40px; pointer-events:none; z-index:300;
     animation:fall linear forwards;
+    line-height:1;
   }
-  @keyframes fall{to{transform:translateY(105vh) rotate(540deg); opacity:0.2;}}
+  @keyframes fall{to{transform:translateY(110vh) rotate(var(--rot, 540deg)); opacity:0.15;}}
 
   footer.app-footer{text-align:center; color:var(--muted); font-size:0.78rem; font-weight:600; padding:30px 16px 10px;}
 
@@ -399,7 +413,7 @@
 <body>
 
 <header class="app-header">
-  <h1>🌸 Bloom Budget</h1>
+  <h1><span class="float-emoji">🌸</span> Bloom Budget</h1>
   <p>Grow your savings, one pastel step at a time</p>
   <button class="settings-btn" id="settingsBtn" title="Settings" aria-label="Settings">⚙️</button>
 </header>
@@ -649,20 +663,19 @@ function toast(msg, emoji){
   setTimeout(() => el.remove(), 2800);
 }
 
+const MONEY_EMOJIS = ['💵','💰','🤑','💸','🪙','✨'];
 function confettiBurst(){
-  const colors = [PALETTE[0], PALETTE[1], PALETTE[2], PALETTE[3], PALETTE[4]];
-  for(let i = 0; i < 60; i++){
+  for(let i = 0; i < 70; i++){
     const piece = document.createElement('div');
     piece.className = 'confetti-piece';
-    const size = 6 + Math.random() * 6;
+    piece.textContent = MONEY_EMOJIS[Math.floor(Math.random()*MONEY_EMOJIS.length)];
+    const size = 18 + Math.random() * 18;
     piece.style.left = Math.random() * 100 + 'vw';
-    piece.style.width = size + 'px';
-    piece.style.height = (size * 0.4) + 'px';
-    piece.style.background = colors[Math.floor(Math.random()*colors.length)];
-    piece.style.animationDuration = (2 + Math.random() * 1.5) + 's';
-    piece.style.transform = `rotate(${Math.random()*360}deg)`;
+    piece.style.fontSize = size + 'px';
+    piece.style.animationDuration = (2.2 + Math.random() * 1.8) + 's';
+    piece.style.setProperty('--rot', (Math.random()*720 - 360) + 'deg');
     document.body.appendChild(piece);
-    setTimeout(() => piece.remove(), 4000);
+    setTimeout(() => piece.remove(), 4500);
   }
 }
 
@@ -681,8 +694,8 @@ function closeModal(){
 }
 overlay.addEventListener('click', (e) => { if(e.target === overlay) closeModal(); });
 
-function categoryOptions(list){
-  return list.map(c => `<option value="${escapeHtml(c.key)}">${c.emoji} ${escapeHtml(c.key)}</option>`).join('');
+function categorySuggestions(list){
+  return list.map(c => `<option value="${escapeHtml(c.key)}">`).join('');
 }
 
 /* ---------------- Add Transaction Modal ---------------- */
@@ -698,7 +711,8 @@ function openTxModal(presetType){
       </div>
       <div class="full">
         <label>Category</label>
-        <select id="txCategory" required></select>
+        <input type="text" id="txCategory" list="txCategoryList" placeholder="Type your own, e.g. Food, Rent..." autocomplete="off" required>
+        <datalist id="txCategoryList"></datalist>
       </div>
       <div>
         <label>Amount ($)</label>
@@ -718,9 +732,12 @@ function openTxModal(presetType){
     </form>
   `);
   let currentType = type;
-  const catSelect = document.getElementById('txCategory');
+  const catInput = document.getElementById('txCategory');
+  const catList = document.getElementById('txCategoryList');
   function refreshCats(){
-    catSelect.innerHTML = categoryOptions(currentType === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES);
+    catList.innerHTML = categorySuggestions(currentType === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES);
+    catInput.value = '';
+    catInput.placeholder = currentType === 'income' ? 'Type your own, e.g. Salary, Freelance...' : 'Type your own, e.g. Food, Rent...';
   }
   refreshCats();
   modalBox.querySelectorAll('.type-toggle button').forEach(btn => {
@@ -734,7 +751,8 @@ function openTxModal(presetType){
     e.preventDefault();
     const amount = parseFloat(document.getElementById('txAmount').value);
     if(!amount || amount <= 0) return;
-    const category = catSelect.value;
+    const category = catInput.value.trim();
+    if(!category) return;
     const date = document.getElementById('txDate').value || todayStr();
     const note = document.getElementById('txNote').value.trim();
     state.transactions.push({ id: uid(), kind: currentType, category, amount, date, note, ts: Date.now() });
@@ -897,7 +915,8 @@ function openBillModal(){
       </div>
       <div class="full">
         <label>Category</label>
-        <select id="billCategory">${categoryOptions(EXPENSE_CATEGORIES)}</select>
+        <input type="text" id="billCategory" list="billCategoryList" placeholder="Type your own, e.g. Subscriptions, WiFi..." autocomplete="off" required>
+        <datalist id="billCategoryList">${categorySuggestions(EXPENSE_CATEGORIES)}</datalist>
       </div>
       <div>
         <label>Amount ($)</label>
@@ -915,10 +934,10 @@ function openBillModal(){
   document.getElementById('billForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const name = document.getElementById('billName').value.trim();
-    const category = document.getElementById('billCategory').value;
+    const category = document.getElementById('billCategory').value.trim();
     const amount = parseFloat(document.getElementById('billAmount').value);
     const dueDay = parseInt(document.getElementById('billDueDay').value, 10);
-    if(!name || !amount || !dueDay) return;
+    if(!name || !category || !amount || !dueDay) return;
     state.bills.push({ id: uid(), name, category, amount, dueDay, lastPaid: null });
     saveState();
     closeModal();
