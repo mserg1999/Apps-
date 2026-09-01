@@ -22,10 +22,11 @@ A personal wedding planning app covering everything from vendor research to the 
 
 Installing (rather than just opening the HTML file) needs the app served over `http://` or `https://` — browsers won't let a page installed from a bare double-clicked file register a service worker or show an install prompt.
 
-1. Go to [netlify.com](https://www.netlify.com) and sign in with GitHub (free).
-2. **Add new site → Import an existing project → GitHub**, authorize it, and pick this repository.
-3. Set the base/publish directory to `wedding-planning-app/` (this repo's `netlify.toml` currently points at a different app — if you're deploying this one as its own Netlify site, set the base directory in the Netlify UI, or update `netlify.toml`).
-4. You'll get a URL like `https://your-site-name.netlify.app` in under a minute.
+1. Go to [app.netlify.com](https://app.netlify.com) and sign in with GitHub (free) — there's no separate "upload" link; Netlify pulls the code straight from this GitHub repo once you connect it.
+2. Click **Add new site → Import an existing project**, choose **GitHub**, authorize Netlify if asked, and pick the `mserg1999/Apps-` repository.
+3. On the site-settings screen, set **Base directory** to `wedding-planning-app` (this repo also has a separate chess-calendar app in it, so this tells Netlify which one to build). This folder has its own `netlify.toml`, so the publish directory is already handled.
+4. Pick the branch with these changes on it (`claude/wedding-planning-app-v6pb5h`, or whichever branch you've merged them into) and click **Deploy**.
+5. You'll get a URL like `https://your-site-name.netlify.app` in under a minute — open it once, then use "Add to Home Screen" from there.
 
 If you'd rather use GitHub Pages, flip the repo to public (Settings → General → Danger Zone → Change visibility), then Settings → Pages → Source → deploy from a branch → root. The app will be reachable at `<pages-url>/wedding-planning-app/`.
 
