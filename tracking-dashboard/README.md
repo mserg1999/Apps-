@@ -24,16 +24,18 @@ Everything — tasks, tracker rows, firm records, and imported data sheets — i
 **Tasks tab**
 - Add/edit/delete tasks: title, notes, status (Not started / In progress / Blocked / Done), priority (Low/Medium/High/Urgent), due date, and free-form tags.
 - Search, filter by status/priority, sort by due date/priority/status/newest, and hide completed tasks.
-- **List view** (a flat, sortable list with inline checkboxes) or **Board view** (a 4-column kanban-style layout — drag a card between columns to change its status).
+- **List view** (a flat, sortable list with inline checkboxes), **Board view** (a 4-column kanban-style layout — drag a card between columns to change its status), or **Week view** (see below).
+- **Weekday quick-picker** — instead of opening the date field's calendar, click a Mon/Tue/Wed/Thu/Fri chip right in the task form to set the due date to that day of the current week (or whichever week you're looking at in Week view) with one click.
+- **Week view** — a Monday-through-Friday board for one week at a time, with **← Prev / Next →** to move between weeks (so "next week" is one click away) and a **This Week** button to jump back to today's week. Each day shows its own tasks with a checkbox to mark them done right there, a per-day progress count (`2/3 done`), and a week-wide progress bar across the top — so every day starts as its own fresh set of tasks and you can see the whole week's progress at a glance.
 - Overdue tasks are highlighted automatically based on today's date.
-- **Recurring tasks** — set a task to repeat daily/weekly/monthly; marking it done automatically creates the next occurrence with the due date advanced.
+- **Recurring tasks** — set a task to repeat daily/weekly/monthly; marking it done automatically creates the next occurrence with the due date advanced (a weekly task due on a Friday keeps landing on Fridays).
 - **Checklists/subtasks** — add a small checklist to any task (one item per line on the form, or add/remove/check items inline); a progress badge like `2/5` shows on the task.
 - Import tasks from:
   - This app's own CSV export (round-trips cleanly).
   - **Trello/Asana/Jira-style CSV exports** — recognizes common column names (Card Name, Summary, List, Section/Column, Due Date, Labels, Priority, etc.) and maps their status/priority values onto this app's own.
   - **A calendar `.ics` export** (Outlook/Google Calendar) — each event becomes a task due on its start date, tagged `calendar`.
 - Export tasks back out as CSV.
-- **Daily Ops Checklist** — one button seeds three daily-recurring tasks (check failed invoices, rates approval, add matter groups); click again any time without creating duplicates.
+- **Daily Ops Checklist** — one button seeds a standing set of recurring tasks: four that repeat every day (check failed invoices, rates approval, add matter groups, check open matters for specific firms) plus one that repeats every Friday (send the onboarding activity pivot to Kathleen); click again any time without creating duplicates. Edit the "specific firms" task's notes once with the actual firm names you want to watch.
 
 **Firm Trackers tab**
 
@@ -49,7 +51,9 @@ A sidebar of purpose-built trackers, grouped by category — click one to see it
 
 Most trackers show a small **overview stat row** above the table (total rows, plus a couple of relevant rollups like open matters, average rate, or active count) that updates live as you add, edit, import, or delete rows.
 
-Every tracker supports: search, **click a column header to sort by it**, CSV export, **CSV/Excel import** (matches your file's header row to each tracker's columns by name — `.csv`, `.xlsx`, and `.xls` all work — so you can bulk-load an existing spreadsheet instead of typing row by row), a **firm name autocomplete** wherever a "Firm" field appears (suggests names already in your Active Firms list, so the same firm doesn't end up spelled differently in different trackers), and add/edit/delete rows. Trackers with a status column (like the reminder trackers) also get a **"Hide resolved"** checkbox to keep old completed rows out of view without deleting them. (The auto-computed "Firms Not Through Cyber" report is read-only — no add form, import, or flag rules, since it's derived from other trackers rather than being its own dataset.)
+Every tracker supports: search, **click a column header to sort by it**, CSV export, **CSV/Excel import** (matches your file's header row to each tracker's columns by name — `.csv`, `.xlsx`, and `.xls` all work — so you can bulk-load an existing spreadsheet instead of typing row by row), **📋 Paste Data** (copy rows straight out of Excel, Outlook, or anywhere else and paste them in — no need to save a file first; same header-matching as the file import), a **firm name autocomplete** wherever a "Firm" field appears (suggests names already in your Active Firms list, so the same firm doesn't end up spelled differently in different trackers), and add/edit/delete rows. Trackers with a status column (like the reminder trackers) also get a **"Hide resolved"** checkbox to keep old completed rows out of view without deleting them. (The auto-computed "Firms Not Through Cyber" report is read-only — no add form, import, paste, or flag rules, since it's derived from other trackers rather than being its own dataset.)
+
+**Faster row entry** — in any tracker's add-row form (and the Firms Dashboard's), press **Enter** in any field, including a dropdown, to add the row — no need to click "+ Add Row" each time. After adding, the first field is refocused automatically, so you can type a firm, hit Enter, type the next one, hit Enter, and so on without touching the mouse.
 
 Tables (Firm Trackers and the Firms Dashboard) show the first 150 matching rows and a **"Show more rows"** button for the rest — a large import (thousands of rows) still loads and searches instantly, since the page only ever builds the rows currently on screen instead of all of them at once. Row counts, sorting, search, and Flag Rules all still operate over your *entire* dataset, not just what's currently shown.
 
@@ -77,18 +81,23 @@ Tables (Firm Trackers and the Firms Dashboard) show the first 150 matching rows 
 
 Open `index.html` directly in a browser to use every dashboard feature immediately — no build step, dependencies, or server needed. The only things that require real hosting (`http://`/`https://`, not a bare double-clicked file) are installability and the service worker's offline cache.
 
-## Deploying it
+## Deploying it (so it's always reachable at one link, no zip needed)
 
-This repo already has a `netlify.toml` pointed at a different app (`chess-availability-calendar/`), so deploy this dashboard as its own Netlify site rather than editing that file:
+The repo root has a `netlify.toml` pointed at a different app (`chess-availability-calendar/`) — this dashboard has its own `tracking-dashboard/netlify.toml`, so Netlify picks up the right settings automatically once you point it at the right folder:
 
-1. Go to [netlify.com](https://www.netlify.com) and sign in with GitHub (free).
+1. Go to [netlify.com](https://www.netlify.com) and sign in (the free "Starter" plan is enough — sign in with GitHub if you want the simplest connection).
 2. **Add new site → Import an existing project → GitHub**, authorize it, and pick this repository.
 3. Before deploying, open **Site settings → Build & deploy → Build settings** and set:
    - **Base directory:** `tracking-dashboard`
-   - **Publish directory:** `tracking-dashboard` (or `.` relative to the base directory, depending on how Netlify's UI presents it)
    - **Build command:** leave blank — this is a static site with no build step.
-4. Deploy. You'll get a URL like `https://your-site-name.netlify.app` in under a minute.
-5. Open that URL and use your browser's "Install app" option (or the in-app **Install** button) to add it to your home screen/desktop.
+   - **Publish directory:** leave as-is — `tracking-dashboard/netlify.toml` sets it to the base directory automatically.
+4. Deploy. You'll get a URL like `https://your-site-name.netlify.app` in under a minute — that's now your permanent link. Bookmark/favorite *that URL*, not the zip file, so it works from any device without downloading anything.
+5. Open that URL and use your browser's "Install app" option (or the in-app **Install** button) to add it to your home screen/desktop like a real app.
+6. Whenever you (or Claude) push a code update to this branch, go to the Netlify site's **Deploys** tab and click **Trigger deploy → Deploy site** to publish the update (or connect auto-deploy on push in Site settings → Build & deploy → Continuous deployment).
+
+**Security note:** this is an *unlisted* link, not a *login-gated* one — Netlify's free plan doesn't support a real password/login wall (that needs a paid plan or a different host with an access-control layer, e.g. Cloudflare Access). Nobody stumbles onto the URL since it isn't published or linked anywhere; treat it like you would any bookmarked-but-unlisted work link. This is a reasonable tradeoff specifically *because* no real data ever leaves your browser (see "Data & security notes" below) — worst case, someone with the link only reaches a blank, empty version of the app, never anything you've entered.
+
+**One-time data move:** browser storage is tied to the exact URL, so opening the Netlify link for the first time starts with an empty tracker — it's a different "address" than the `file://...` copy you've been using, even though it's the same app. To bring your existing data over, open your current `index.html` one last time, click **Backup Data** (top right) to download the JSON file, then open the new Netlify URL and click **Restore Data** and pick that file. After that, keep using the Netlify link going forward and your data stays there.
 
 ## Known limitations
 

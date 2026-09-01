@@ -35,6 +35,7 @@
     --radius:14px;
   }
   *{box-sizing:border-box;}
+  html{font-size:18px;}
   body{
     margin:0;
     font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
@@ -42,6 +43,7 @@
     color:var(--ink);
     min-height:100vh;
     padding-bottom:60px;
+    line-height:1.5;
   }
   header.topbar{
     background:var(--panel);
@@ -76,8 +78,8 @@
     color:var(--muted);
     font-family:inherit;
     font-weight:700;
-    font-size:0.92rem;
-    padding:9px 16px;
+    font-size:1rem;
+    padding:12px 20px;
     border-radius:999px;
     cursor:pointer;
     transition:background .15s ease, color .15s ease;
@@ -97,14 +99,14 @@
   .gsi-text{font-weight:600; font-size:0.85rem; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .global-search-empty{padding:10px; color:var(--muted); font-size:0.85rem; text-align:center;}
 
-  main{max-width:1200px; margin:0 auto; padding:22px 18px;}
+  main{max-width:1320px; margin:0 auto; padding:26px 22px;}
   .tab-panel{display:none;}
   .tab-panel.active{display:block;}
 
   .container{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:20px;
+    gap:26px;
     align-items:start;
   }
   @media (max-width:880px){ .container{grid-template-columns:1fr;} }
@@ -113,48 +115,48 @@
     background:var(--panel);
     border-radius:var(--radius);
     box-shadow:var(--shadow);
-    padding:20px 22px;
-    margin-bottom:20px;
+    padding:26px 28px;
+    margin-bottom:26px;
   }
   .card h2{
-    margin:0 0 4px;
-    font-size:1.1rem;
+    margin:0 0 6px;
+    font-size:1.25rem;
     color:var(--ink);
   }
-  .card .sub{color:var(--muted); font-size:0.88rem; margin:0 0 14px;}
+  .card .sub{color:var(--muted); font-size:0.95rem; margin:0 0 18px;}
 
   .stat-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(160px,1fr));
-    gap:14px;
-    margin-bottom:20px;
+    grid-template-columns:repeat(auto-fit, minmax(180px,1fr));
+    gap:18px;
+    margin-bottom:26px;
   }
   .stat-card{
     background:var(--panel);
     border-radius:var(--radius);
     box-shadow:var(--shadow);
-    padding:18px 20px;
+    padding:22px 24px;
     border-left:5px solid var(--accent);
   }
   .stat-card.warn{border-left-color:var(--warning);}
   .stat-card.danger{border-left-color:var(--danger);}
   .stat-card.ok{border-left-color:var(--success);}
-  .stat-num{font-size:1.9rem; font-weight:800;}
+  .stat-num{font-size:2.15rem; font-weight:800;}
 
-  .section-title{margin:0 0 12px; font-size:1.1rem; color:var(--ink); font-weight:800;}
+  .section-title{margin:0 0 16px; font-size:1.25rem; color:var(--ink); font-weight:800;}
   .status-board{
     display:grid;
     grid-template-columns:repeat(4, 1fr);
-    gap:16px;
-    margin-bottom:24px;
+    gap:20px;
+    margin-bottom:30px;
   }
   @media (max-width:1000px){ .status-board{grid-template-columns:repeat(2,1fr);} }
   @media (max-width:560px){ .status-board{grid-template-columns:1fr;} }
   .status-box{
     border-radius:var(--radius);
     box-shadow:var(--shadow);
-    padding:20px;
-    min-height:230px;
+    padding:24px;
+    min-height:250px;
     display:flex;
     flex-direction:column;
   }
@@ -162,28 +164,28 @@
   .status-box.tone-in-progress{background:var(--warning-bg);}
   .status-box.tone-blocked{background:var(--danger-bg);}
   .status-box.tone-done{background:var(--success-bg);}
-  .status-box-head{display:flex; align-items:baseline; gap:10px; margin-bottom:14px;}
-  .status-box-count{font-size:2.6rem; font-weight:800; line-height:1;}
+  .status-box-head{display:flex; align-items:baseline; gap:10px; margin-bottom:16px;}
+  .status-box-count{font-size:2.9rem; font-weight:800; line-height:1;}
   .status-box.tone-not-started .status-box-count{color:var(--accent-dark);}
   .status-box.tone-in-progress .status-box-count{color:var(--warning);}
   .status-box.tone-blocked .status-box-count{color:var(--danger);}
   .status-box.tone-done .status-box-count{color:var(--success);}
-  .status-box-label{font-weight:700; font-size:0.95rem; color:var(--ink);}
-  .status-box-list{list-style:none; margin:0; padding:0; flex:1; overflow-y:auto; max-height:190px; display:flex; flex-direction:column; gap:6px;}
-  .status-box-list li{background:rgba(255,255,255,0.55); border-radius:8px; padding:8px 10px; font-size:0.82rem; font-weight:600; color:var(--ink);}
-  .status-box-list .sb-due{display:block; font-weight:600; font-size:0.72rem; color:var(--muted); margin-top:2px;}
-  .status-box-more{font-size:0.78rem; color:var(--muted); font-weight:700; margin-top:8px;}
-  .status-box-empty{color:var(--muted); font-size:0.85rem; text-align:center; margin:auto 0;}
-  .stat-label{color:var(--muted); font-size:0.85rem; font-weight:600;}
+  .status-box-label{font-weight:700; font-size:1.02rem; color:var(--ink);}
+  .status-box-list{list-style:none; margin:0; padding:0; flex:1; overflow-y:auto; max-height:210px; display:flex; flex-direction:column; gap:8px;}
+  .status-box-list li{background:rgba(255,255,255,0.55); border-radius:8px; padding:10px 12px; font-size:0.88rem; font-weight:600; color:var(--ink);}
+  .status-box-list .sb-due{display:block; font-weight:600; font-size:0.78rem; color:var(--muted); margin-top:3px;}
+  .status-box-more{font-size:0.84rem; color:var(--muted); font-weight:700; margin-top:10px;}
+  .status-box-empty{color:var(--muted); font-size:0.92rem; text-align:center; margin:auto 0;}
+  .stat-label{color:var(--muted); font-size:0.92rem; font-weight:600;}
 
   button.pill{
     border:none;
     border-radius:999px;
-    padding:9px 16px;
+    padding:12px 20px;
     font-weight:700;
     cursor:pointer;
     font-family:inherit;
-    font-size:0.85rem;
+    font-size:0.95rem;
     transition:transform .12s ease, opacity .12s ease;
     white-space:nowrap;
   }
@@ -192,13 +194,13 @@
   .pill.grey{background:var(--neutral-tint); color:var(--ink);}
   .pill.red{background:var(--danger-bg); color:var(--danger);}
   .pill.ghost{background:transparent; border:1.5px solid var(--border); color:var(--ink);}
-  .pill.small{padding:5px 12px; font-size:0.75rem;}
+  .pill.small{padding:7px 14px; font-size:0.82rem;}
   .file-label{display:inline-flex; align-items:center; cursor:pointer;}
 
   input, select, textarea{
     font-family:inherit;
-    font-size:0.88rem;
-    padding:9px 12px;
+    font-size:0.95rem;
+    padding:11px 14px;
     border-radius:10px;
     border:1.5px solid var(--border);
     background:#fbfcfe;
@@ -207,40 +209,70 @@
   input:focus, select:focus, textarea:focus{outline:none; border-color:var(--accent);}
   textarea{width:100%; resize:vertical; font-family:inherit;}
 
-  .task-form{display:flex; flex-direction:column; gap:10px;}
+  .task-form{display:flex; flex-direction:column; gap:12px;}
   .task-form input#taskTitle{width:100%;}
-  .form-row{display:flex; gap:10px; flex-wrap:wrap;}
+  .form-row{display:flex; gap:12px; flex-wrap:wrap;}
   .form-row > *{flex:1; min-width:140px;}
-  .form-actions{display:flex; gap:10px;}
+  .form-actions{display:flex; gap:12px;}
 
   .toolbar{
     display:flex;
-    gap:10px;
+    gap:12px;
     flex-wrap:wrap;
     align-items:center;
-    margin-bottom:16px;
+    margin-bottom:20px;
   }
   .toolbar input#taskSearch, .toolbar input#sheetSearch{flex:1; min-width:160px;}
-  .toolbar label{display:flex; align-items:center; gap:6px; font-size:0.85rem; color:var(--muted); font-weight:600;}
+  .toolbar label{display:flex; align-items:center; gap:6px; font-size:0.92rem; color:var(--muted); font-weight:600;}
   .view-toggle{display:flex; gap:4px; background:var(--neutral-tint); border-radius:999px; padding:3px;}
   .view-toggle button{background:transparent; color:var(--muted);}
   .view-toggle button.active{background:var(--panel); color:var(--ink); box-shadow:0 2px 6px rgba(15,23,42,0.12);}
 
+  .weekday-picker{display:flex; gap:4px; flex:1 1 100%; order:99;}
+  .weekday-chip{
+    flex:1; border:1.5px solid var(--border); background:var(--panel); color:var(--muted);
+    font-family:inherit; font-weight:700; font-size:0.8rem; padding:8px 4px; border-radius:8px; cursor:pointer;
+  }
+  .weekday-chip:hover{background:var(--neutral-tint);}
+  .weekday-chip.active{background:var(--accent); color:#fff; border-color:var(--accent);}
+
+  .week-nav{display:flex; align-items:center; gap:12px; margin-bottom:18px;}
+  .week-nav-label{font-weight:800; font-size:1.08rem; flex:1;}
+  .week-progress-wrap{margin-bottom:20px;}
+  .week-progress-bar{background:var(--neutral-tint); border-radius:999px; height:14px; overflow:hidden; margin-top:6px;}
+  .week-progress-fill{background:var(--success); height:100%; border-radius:999px; transition:width .2s ease;}
+  .week-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:16px;}
+  @media (max-width:1000px){ .week-grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:640px){ .week-grid{grid-template-columns:1fr;} }
+  .week-day-col{background:var(--neutral-tint); border-radius:14px; padding:16px;}
+  .week-day-col.is-today{box-shadow:inset 0 0 0 2px var(--accent);}
+  .week-day-head{display:flex; flex-direction:column; gap:2px; margin-bottom:12px;}
+  .week-day-name{font-weight:800; font-size:1rem; color:var(--ink);}
+  .week-day-date{font-size:0.8rem; color:var(--muted);}
+  .week-day-progress{font-size:0.8rem; font-weight:700; color:var(--muted); margin-bottom:10px;}
+  .week-day-progress.all-done{color:var(--success);}
+  .week-task-card{background:var(--panel); border-radius:10px; padding:10px 12px; margin-bottom:8px; box-shadow:0 2px 8px rgba(15,23,42,0.06); display:flex; gap:10px; align-items:flex-start;}
+  .week-task-card.overdue{box-shadow:inset 0 0 0 1.5px var(--danger);}
+  .week-task-card.done .task-title{text-decoration:line-through; color:var(--muted);}
+  .week-task-card input[type=checkbox]{margin-top:3px; width:18px; height:18px; cursor:pointer;}
+  .week-task-card .task-title{font-size:0.9rem;}
+  .week-day-empty{color:var(--muted); font-size:0.82rem; text-align:center; padding:14px 0;}
+
   .task-row{
     display:flex;
     align-items:flex-start;
-    gap:12px;
-    padding:12px 10px;
+    gap:14px;
+    padding:16px 14px;
     border-radius:10px;
     border-bottom:1px solid var(--border);
   }
   .task-row:last-child{border-bottom:none;}
   .task-row.overdue{background:var(--danger-bg);}
   .task-row.done .task-title{text-decoration:line-through; color:var(--muted);}
-  .task-row input[type="checkbox"]{margin-top:3px; width:18px; height:18px; cursor:pointer;}
+  .task-row input[type="checkbox"]{margin-top:3px; width:20px; height:20px; cursor:pointer;}
   .task-main{flex:1; min-width:0;}
-  .task-title{font-weight:700; font-size:0.95rem;}
-  .task-desc{color:var(--muted); font-size:0.82rem; margin-top:2px; white-space:pre-wrap;}
+  .task-title{font-weight:700; font-size:1.02rem;}
+  .task-desc{color:var(--muted); font-size:0.88rem; margin-top:3px; white-space:pre-wrap;}
   .task-meta{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; align-items:center;}
   .badge{
     display:inline-block;
@@ -305,16 +337,16 @@
 
   .table-scroll{overflow-x:auto; border:1px solid var(--border); border-radius:12px;}
   table{border-collapse:collapse; width:100%; font-size:0.85rem;}
-  table th, table td{padding:9px 12px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap;}
+  table th, table td{padding:14px 16px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; font-size:0.95rem;}
   table th{background:var(--neutral-tint); cursor:pointer; user-select:none; position:sticky; top:0;}
   table th .sort-arrow{color:var(--accent); margin-left:4px;}
   table tbody tr:hover{background:#fafcff;}
-  .load-more-wrap{text-align:center; margin-top:14px;}
-  .stats-line{color:var(--muted); font-size:0.85rem; font-weight:600;}
-  .mini-stat-row{display:flex; flex-wrap:wrap; gap:10px; margin:10px 0 16px;}
-  .mini-stat{background:var(--neutral-tint); border:1px solid var(--border); border-radius:12px; padding:10px 16px; min-width:120px;}
-  .mini-stat-num{font-size:1.35rem; font-weight:700; color:var(--accent-dark);}
-  .mini-stat-label{color:var(--muted); font-size:0.78rem; font-weight:600; margin-top:2px;}
+  .load-more-wrap{text-align:center; margin-top:18px;}
+  .stats-line{color:var(--muted); font-size:0.92rem; font-weight:600;}
+  .mini-stat-row{display:flex; flex-wrap:wrap; gap:14px; margin:14px 0 22px;}
+  .mini-stat{background:var(--neutral-tint); border:1px solid var(--border); border-radius:12px; padding:14px 20px; min-width:140px;}
+  .mini-stat-num{font-size:1.6rem; font-weight:700; color:var(--accent-dark);}
+  .mini-stat-label{color:var(--muted); font-size:0.85rem; font-weight:600; margin-top:3px;}
 
   #statsOutput{margin-top:12px; display:flex; flex-direction:column; gap:8px;}
   .stat-row{display:flex; justify-content:space-between; font-size:0.88rem; padding:6px 0; border-bottom:1px dashed var(--border);}
@@ -328,35 +360,35 @@
   .top-value-count{color:var(--muted); font-size:0.78rem; flex-shrink:0; width:28px; text-align:right;}
 
   /* ---------- Firm Trackers ---------- */
-  .tracker-layout{display:grid; grid-template-columns:230px 1fr; gap:20px; align-items:start;}
+  .tracker-layout{display:grid; grid-template-columns:250px 1fr; gap:26px; align-items:start;}
   @media (max-width:800px){ .tracker-layout{grid-template-columns:1fr;} }
-  .tracker-nav{background:var(--panel); border-radius:var(--radius); box-shadow:var(--shadow); padding:12px; position:sticky; top:78px;}
-  .nested-nav{background:var(--neutral-tint); border-radius:12px; padding:12px; max-height:420px; overflow-y:auto;}
-  .firm-profile-summary{color:var(--muted); font-size:0.85rem; margin:0 0 14px;}
-  .firm-profile-group{margin-bottom:16px;}
-  .firm-profile-group-title{font-weight:800; margin-bottom:6px; display:flex; align-items:center; gap:8px;}
-  .tracker-nav-group{margin-bottom:14px;}
+  .tracker-nav{background:var(--panel); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; position:sticky; top:78px;}
+  .nested-nav{background:var(--neutral-tint); border-radius:12px; padding:14px; max-height:420px; overflow-y:auto;}
+  .firm-profile-summary{color:var(--muted); font-size:0.92rem; margin:0 0 16px;}
+  .firm-profile-group{margin-bottom:20px;}
+  .firm-profile-group-title{font-weight:800; margin-bottom:8px; display:flex; align-items:center; gap:8px;}
+  .tracker-nav-group{margin-bottom:18px;}
   .tracker-nav-group:last-child{margin-bottom:0;}
-  .tracker-nav-group h4{margin:0 0 6px; padding:0 8px; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted);}
+  .tracker-nav-group h4{margin:0 0 8px; padding:0 10px; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted);}
   .tracker-nav-item{
     display:flex; justify-content:space-between; align-items:center;
     width:100%; text-align:left; border:none; background:transparent;
-    font-family:inherit; font-size:0.85rem; font-weight:600; color:var(--ink);
-    padding:8px 10px; border-radius:8px; cursor:pointer; margin-bottom:2px;
+    font-family:inherit; font-size:0.92rem; font-weight:600; color:var(--ink);
+    padding:11px 12px; border-radius:8px; cursor:pointer; margin-bottom:4px;
   }
   .tracker-nav-item:hover{background:var(--neutral-tint);}
   .tracker-nav-item.active{background:var(--accent-bg); color:var(--accent-dark);}
   .tracker-nav-item .count-pill{
-    background:rgba(0,0,0,0.06); color:inherit; font-size:0.68rem; font-weight:700;
-    padding:1px 7px; border-radius:999px;
+    background:rgba(0,0,0,0.06); color:inherit; font-size:0.75rem; font-weight:700;
+    padding:2px 9px; border-radius:999px;
   }
   .tracker-nav-item.active .count-pill{background:rgba(79,70,229,0.16);}
   .tracker-nav-item.has-due .count-pill{background:var(--danger-bg); color:var(--danger);}
 
-  .tracker-content h2{margin:0 0 2px;}
-  .tracker-add-form{display:flex; flex-wrap:wrap; gap:10px; margin-bottom:6px;}
-  .tracker-add-form .field{display:flex; flex-direction:column; gap:4px; flex:1; min-width:150px;}
-  .tracker-add-form .field label{font-size:0.72rem; font-weight:700; color:var(--muted);}
+  .tracker-content h2{margin:0 0 3px;}
+  .tracker-add-form{display:flex; flex-wrap:wrap; gap:12px; margin-bottom:8px;}
+  .tracker-add-form .field{display:flex; flex-direction:column; gap:5px; flex:1; min-width:160px;}
+  .tracker-add-form .field label{font-size:0.78rem; font-weight:700; color:var(--muted);}
   .tracker-add-form .field-actions{display:flex; align-items:flex-end;}
 
   .tracker-table-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:12px; margin-top:14px;}
@@ -493,6 +525,7 @@
           <option value="urgent">Urgent</option>
         </select>
         <input type="date" id="taskDue">
+        <div class="weekday-picker" id="weekdayPicker"></div>
         <input id="taskTags" placeholder="tags, comma, separated" maxlength="200">
         <select id="taskRepeat">
           <option value="">No repeat</option>
@@ -536,6 +569,7 @@
       <div class="view-toggle">
         <button class="pill small active" id="viewListBtn">List</button>
         <button class="pill small" id="viewBoardBtn">Board</button>
+        <button class="pill small" id="viewWeekBtn">Week</button>
       </div>
       <button class="pill grey" id="exportTasksBtn">⬇ Export CSV</button>
       <label class="pill grey file-label">⬆ Import CSV<input type="file" id="importTasksInput" accept=".csv" hidden></label>
@@ -545,6 +579,7 @@
     <p class="hint" id="boardHint" style="display:none;">Drag a card between columns to change its status.</p>
     <div id="taskListView"></div>
     <div id="taskBoardView" style="display:none;"></div>
+    <div id="taskWeekView" style="display:none;"></div>
     <div class="empty-msg" id="tasksEmptyMsg" style="display:none;">No tasks match your filters.</div>
   </div>
 </section>
@@ -580,8 +615,10 @@
         <span class="stats-line" id="trackerFlagCount"></span>
         <button class="pill grey" id="trackerExportBtn">⬇ Export CSV</button>
         <label class="pill grey file-label">⬆ Import CSV/Excel<input type="file" id="trackerImportInput" accept=".csv,.xlsx,.xls" hidden></label>
+        <button class="pill grey" id="trackerPasteBtn">📋 Paste Data</button>
       </div>
       <div class="import-panel" id="trackerFlagPanel" style="display:none;"></div>
+      <div class="import-panel" id="trackerPastePanel" style="display:none;"></div>
       <div class="tracker-table-wrap">
         <table class="tracker-table" id="trackerTable"><thead></thead><tbody></tbody></table>
       </div>
@@ -614,8 +651,10 @@
       <span class="stats-line" id="firmsFlagCount"></span>
       <button class="pill grey" id="firmsExportBtn">⬇ Export CSV</button>
       <label class="pill grey file-label">⬆ Import CSV/Excel<input type="file" id="firmsImportInput" accept=".csv,.xlsx,.xls" hidden></label>
+      <button class="pill grey" id="firmsPasteBtn">📋 Paste Data</button>
     </div>
     <div class="import-panel" id="firmsFlagPanel" style="display:none;"></div>
+    <div class="import-panel" id="firmsPastePanel" style="display:none;"></div>
     <div class="tracker-table-wrap">
       <table class="tracker-table" id="firmsTable"><thead></thead><tbody></tbody></table>
     </div>
@@ -783,6 +822,7 @@
   let tasks = loadTasks();
   let editingId = null;
   let taskView = 'list';
+  let weekViewOffset = 0;
 
   function loadTasks(){
     try{ return JSON.parse(localStorage.getItem(TASKS_KEY) || '[]'); }
@@ -992,8 +1032,10 @@
   const hideDoneInput = document.getElementById('hideDone');
   const viewListBtn = document.getElementById('viewListBtn');
   const viewBoardBtn = document.getElementById('viewBoardBtn');
+  const viewWeekBtn = document.getElementById('viewWeekBtn');
   const taskListView = document.getElementById('taskListView');
   const taskBoardView = document.getElementById('taskBoardView');
+  const taskWeekView = document.getElementById('taskWeekView');
   const tasksEmptyMsg = document.getElementById('tasksEmptyMsg');
 
   [taskSearchInput, filterStatusInput, filterPriorityInput, sortByInput, hideDoneInput].forEach(el => {
@@ -1001,8 +1043,21 @@
     el.addEventListener('change', renderTasks);
   });
   const boardHint = document.getElementById('boardHint');
-  viewListBtn.addEventListener('click', () => { taskView='list'; viewListBtn.classList.add('active'); viewBoardBtn.classList.remove('active'); taskListView.style.display=''; taskBoardView.style.display='none'; boardHint.style.display='none'; renderTasks(); });
-  viewBoardBtn.addEventListener('click', () => { taskView='board'; viewBoardBtn.classList.add('active'); viewListBtn.classList.remove('active'); taskListView.style.display='none'; taskBoardView.style.display=''; boardHint.style.display='block'; renderTasks(); });
+  function setTaskView(view){
+    taskView = view;
+    [viewListBtn, viewBoardBtn, viewWeekBtn].forEach(b => b.classList.remove('active'));
+    taskListView.style.display = 'none';
+    taskBoardView.style.display = 'none';
+    taskWeekView.style.display = 'none';
+    boardHint.style.display = 'none';
+    if(view === 'list'){ viewListBtn.classList.add('active'); taskListView.style.display=''; }
+    else if(view === 'board'){ viewBoardBtn.classList.add('active'); taskBoardView.style.display=''; boardHint.style.display='block'; }
+    else { viewWeekBtn.classList.add('active'); taskWeekView.style.display=''; }
+    renderTasks();
+  }
+  viewListBtn.addEventListener('click', () => setTaskView('list'));
+  viewBoardBtn.addEventListener('click', () => setTaskView('board'));
+  viewWeekBtn.addEventListener('click', () => setTaskView('week'));
 
   function getFilteredTasks(){
     const q = taskSearchInput.value.trim().toLowerCase();
@@ -1098,8 +1153,116 @@
     }
   }
 
+  const WEEKDAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+  const WEEKDAY_SHORT = ['Mon','Tue','Wed','Thu','Fri'];
+
+  function getWeekMondayDates(offset){
+    const now = new Date();
+    const day = now.getDay();
+    const diffToMonday = (day === 0 ? -6 : 1 - day);
+    const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMonday + offset*7);
+    const dates = [];
+    for(let i=0; i<5; i++){
+      const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate()+i);
+      dates.push(d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'));
+    }
+    return dates;
+  }
+
+  function renderWeekdayPicker(){
+    const wrap = document.getElementById('weekdayPicker');
+    if(!wrap) return;
+    const dates = getWeekMondayDates(weekViewOffset);
+    wrap.innerHTML = '';
+    dates.forEach((dateStr, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'weekday-chip' + (taskDueInput.value === dateStr ? ' active' : '');
+      btn.textContent = WEEKDAY_SHORT[i];
+      btn.title = fmtDate(dateStr);
+      btn.addEventListener('click', () => {
+        taskDueInput.value = (taskDueInput.value === dateStr) ? '' : dateStr;
+        renderWeekdayPicker();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function renderWeekView(){
+    const view = taskWeekView;
+    const dates = getWeekMondayDates(weekViewOffset);
+    const today = todayStr();
+    const weekTasks = tasks.filter(t => dates.includes(t.dueDate));
+    const doneCount = weekTasks.filter(t => t.status === 'done').length;
+    const pct = weekTasks.length ? Math.round((doneCount/weekTasks.length)*100) : 0;
+
+    let label;
+    if(weekViewOffset === 0) label = 'This week';
+    else if(weekViewOffset === 1) label = 'Next week';
+    else if(weekViewOffset === -1) label = 'Last week';
+    else label = weekViewOffset > 0 ? `${weekViewOffset} weeks ahead` : `${Math.abs(weekViewOffset)} weeks ago`;
+    label += ` — ${fmtDate(dates[0])} to ${fmtDate(dates[4])}`;
+
+    view.innerHTML = `
+      <div class="week-nav">
+        <button class="pill grey small" id="weekPrevBtn">← Prev</button>
+        <div class="week-nav-label">${escapeHtml(label)}</div>
+        ${weekViewOffset !== 0 ? '<button class="pill grey small" id="weekTodayBtn">This Week</button>' : ''}
+        <button class="pill grey small" id="weekNextBtn">Next →</button>
+      </div>
+      <div class="week-progress-wrap">
+        <div class="stats-line">${doneCount} of ${weekTasks.length} task${weekTasks.length===1?'':'s'} done this week (${pct}%)</div>
+        <div class="week-progress-bar"><div class="week-progress-fill" style="width:${pct}%;"></div></div>
+      </div>
+      <div class="week-grid">${dates.map((dateStr, i) => {
+        const dayTasks = weekTasks.filter(t => t.dueDate === dateStr);
+        const dayDone = dayTasks.filter(t => t.status === 'done').length;
+        const isToday = dateStr === today;
+        return `<div class="week-day-col${isToday ? ' is-today' : ''}" data-date="${dateStr}">
+          <div class="week-day-head">
+            <span class="week-day-name">${WEEKDAY_NAMES[i]}${isToday ? ' · Today' : ''}</span>
+            <span class="week-day-date">${fmtDate(dateStr)}</span>
+          </div>
+          <div class="week-day-progress${dayTasks.length && dayDone===dayTasks.length ? ' all-done' : ''}">${dayTasks.length ? `${dayDone}/${dayTasks.length} done` : 'Nothing due'}</div>
+          <div class="week-day-tasks"></div>
+        </div>`;
+      }).join('')}</div>`;
+
+    dates.forEach(dateStr => {
+      const col = view.querySelector(`.week-day-col[data-date="${dateStr}"] .week-day-tasks`);
+      const dayTasks = weekTasks.filter(t => t.dueDate === dateStr).sort((a,b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
+      if(!dayTasks.length){ col.innerHTML = '<div class="week-day-empty">Nothing due</div>'; return; }
+      dayTasks.forEach(t => {
+        const card = document.createElement('div');
+        card.className = 'week-task-card' + (isOverdue(t) ? ' overdue' : '') + (t.status==='done' ? ' done' : '');
+        card.innerHTML = `
+          <input type="checkbox" ${t.status==='done'?'checked':''} title="Mark done">
+          <div class="task-main">
+            <div class="task-title">${escapeHtml(t.title)}</div>
+            <div class="task-meta">${subtaskBadgeHtml(t)}</div>
+          </div>`;
+        card.querySelector('input[type=checkbox]').addEventListener('change', (e) => {
+          setTaskStatus(t.id, e.target.checked ? 'done' : 'not-started');
+        });
+        col.appendChild(card);
+      });
+    });
+
+    document.getElementById('weekPrevBtn').addEventListener('click', () => { weekViewOffset--; renderWeekView(); renderWeekdayPicker(); });
+    document.getElementById('weekNextBtn').addEventListener('click', () => { weekViewOffset++; renderWeekView(); renderWeekdayPicker(); });
+    const todayBtn = document.getElementById('weekTodayBtn');
+    if(todayBtn) todayBtn.addEventListener('click', () => { weekViewOffset = 0; renderWeekView(); renderWeekdayPicker(); });
+  }
+
   function renderTasks(){
     const list = getFilteredTasks();
+    renderWeekdayPicker();
+
+    if(taskView === 'week'){
+      tasksEmptyMsg.style.display = 'none';
+      renderWeekView();
+      return;
+    }
     tasksEmptyMsg.style.display = list.length ? 'none' : 'block';
 
     if(taskView === 'list'){
@@ -1384,7 +1547,11 @@
     reader.readAsText(file);
   });
 
-  const DAILY_CHECKLIST_ITEMS = ['Check failed invoices', 'Rates approval', 'Add matter groups'];
+  const DAILY_CHECKLIST_ITEMS = ['Check failed invoices', 'Rates approval', 'Add matter groups', 'Check open matters for specific firms'];
+  const DAILY_CHECKLIST_NOTES = {
+    'Check open matters for specific firms': 'Edit this note with the firm names to watch — e.g. check the Firms Dashboard capacity chart for anyone near/over their target.'
+  };
+  const FRIDAY_CHECKLIST_ITEMS = ['Send onboarding activity pivot to Kathleen'];
   document.getElementById('seedDailyChecklistBtn').addEventListener('click', () => {
     const existingTitles = new Set(tasks.map(t => t.title.trim().toLowerCase()));
     let added = 0;
@@ -1393,7 +1560,7 @@
       tasks.push({
         id: uid(),
         title,
-        description: '',
+        description: DAILY_CHECKLIST_NOTES[title] || '',
         status: 'not-started',
         priority: 'medium',
         dueDate: todayStr(),
@@ -1405,11 +1572,29 @@
       });
       added++;
     });
-    if(!added){ showToast('Daily checklist is already loaded'); return; }
+    const fridayDate = getWeekMondayDates(0)[4];
+    FRIDAY_CHECKLIST_ITEMS.forEach(title => {
+      if(existingTitles.has(title.toLowerCase())) return;
+      tasks.push({
+        id: uid(),
+        title,
+        description: 'Pull the onboarding activity pivot and send it to Kathleen.',
+        status: 'not-started',
+        priority: 'medium',
+        dueDate: fridayDate,
+        tags: ['daily-ops', 'weekly-friday'],
+        repeat: 'weekly',
+        subtasks: [],
+        createdAt: new Date().toISOString(),
+        completedAt: null
+      });
+      added++;
+    });
+    if(!added){ showToast('Ops checklist is already loaded'); return; }
     saveTasks();
     renderTasks();
     renderOverview();
-    showToast(`Added ${added} daily task${added===1?'':'s'} — they'll repeat automatically each day`);
+    showToast(`Added ${added} recurring task${added===1?'':'s'} — the daily ones repeat every day, the Friday one repeats every week`);
   });
 
   /* =========================================================
@@ -2601,8 +2786,46 @@
 
   function normalizeHeaderCell(s){ return String(s||'').trim().toLowerCase().replace(/[\s_-]+/g,' '); }
 
-  function importCsvIntoContext(ctx, file){
+  function buildRowsFromParsedTable(config, rows){
+    const header = rows[0].map(normalizeHeaderCell);
+    const colIndex = {};
+    config.columns.forEach(col => {
+      let idx = header.indexOf(normalizeHeaderCell(col.label));
+      if(idx < 0) idx = header.indexOf(normalizeHeaderCell(col.key));
+      if(idx >= 0) colIndex[col.key] = idx;
+    });
+    const matchedCols = Object.keys(colIndex);
+    const newRows = [];
+    if(matchedCols.length){
+      rows.slice(1).forEach(r => {
+        const row = {id: uid()};
+        config.columns.forEach(col => { row[col.key] = colIndex[col.key] != null ? (r[colIndex[col.key]] || '') : ''; });
+        if(config.rowDefaults){
+          config.columns.forEach(col => { if(!row[col.key] && config.rowDefaults[col.key]) row[col.key] = config.rowDefaults[col.key]; });
+        }
+        if(!config.columns.some(col => (row[col.key]||'').toString().trim())) return;
+        newRows.push(row);
+      });
+    }
+    return {matchedCols, newRows};
+  }
+
+  function importRowsIntoContext(ctx, rows){
     const config = ctx.getConfig();
+    const {matchedCols, newRows} = buildRowsFromParsedTable(config, rows);
+    if(!matchedCols.length){
+      showToast(`No matching columns — expected: ${config.columns.map(c=>c.label).join(', ')}`);
+      return;
+    }
+    if(!newRows.length){ showToast('No rows found to import'); return; }
+    newRows.forEach(row => ctx.getRows().push(row));
+    ctx.saveRows();
+    renderTableForContext(ctx);
+    if(ctx.onAfterChange) ctx.onAfterChange();
+    showToast(`Imported ${newRows.length} row${newRows.length===1?'':'s'} (matched ${matchedCols.length} of ${config.columns.length} columns)`);
+  }
+
+  function importCsvIntoContext(ctx, file){
     const isExcel = /\.(xlsx|xls)$/i.test(file.name);
     const reader = new FileReader();
     reader.onload = () => {
@@ -2618,39 +2841,41 @@
           rows = parseCsvText(reader.result);
         }
         if(!rows.length) throw new Error('empty file');
-        const header = rows[0].map(normalizeHeaderCell);
-        const colIndex = {};
-        config.columns.forEach(col => {
-          let idx = header.indexOf(normalizeHeaderCell(col.label));
-          if(idx < 0) idx = header.indexOf(normalizeHeaderCell(col.key));
-          if(idx >= 0) colIndex[col.key] = idx;
-        });
-        const matchedCols = Object.keys(colIndex);
-        if(!matchedCols.length){
-          showToast(`No matching columns — expected: ${config.columns.map(c=>c.label).join(', ')}`);
-          return;
-        }
-        let added = 0;
-        rows.slice(1).forEach(r => {
-          const row = {id: uid()};
-          config.columns.forEach(col => { row[col.key] = colIndex[col.key] != null ? (r[colIndex[col.key]] || '') : ''; });
-          if(config.rowDefaults){
-            config.columns.forEach(col => { if(!row[col.key] && config.rowDefaults[col.key]) row[col.key] = config.rowDefaults[col.key]; });
-          }
-          if(!config.columns.some(col => (row[col.key]||'').toString().trim())) return;
-          ctx.getRows().push(row);
-          added++;
-        });
-        if(!added){ showToast('No rows found to import'); return; }
-        ctx.saveRows();
-        renderTableForContext(ctx);
-        if(ctx.onAfterChange) ctx.onAfterChange();
-        showToast(`Imported ${added} row${added===1?'':'s'} (matched ${matchedCols.length} of ${config.columns.length} columns)`);
+        importRowsIntoContext(ctx, rows);
       }catch(err){
         showToast(`Could not read that ${isExcel ? 'Excel' : 'CSV'} file`);
       }
     };
     if(isExcel) reader.readAsArrayBuffer(file); else reader.readAsText(file);
+  }
+
+  function importPastedTextIntoContext(ctx, text){
+    if(!text.trim()){ showToast('Paste some data first'); return; }
+    const delimiter = text.split('\n')[0].includes('\t') ? '\t' : ',';
+    const rows = parseCsvText(text, delimiter);
+    if(!rows.length){ showToast('Could not parse that data'); return; }
+    importRowsIntoContext(ctx, rows);
+  }
+
+  function renderPastePanel(ctx){
+    const panel = ctx.els.pastePanel;
+    const config = ctx.getConfig();
+    panel.innerHTML = `
+      <p class="hint" style="margin:0 0 8px;">Copy rows (with a header row) from Excel, Outlook, or anywhere else, then paste them below. Expected columns: ${escapeHtml(config.columns.map(c=>c.label).join(', '))}</p>
+      <textarea class="tracker-paste-textarea" rows="6" placeholder="Paste tab- or comma-separated data here..."></textarea>
+      <div class="form-actions" style="margin-top:10px;">
+        <button type="button" class="pill green paste-import-btn">Import Pasted Data</button>
+        <button type="button" class="pill grey paste-cancel-btn">Cancel</button>
+      </div>`;
+    panel.querySelector('.paste-cancel-btn').addEventListener('click', () => {
+      panel.style.display = 'none';
+      panel.querySelector('textarea').value = '';
+    });
+    panel.querySelector('.paste-import-btn').addEventListener('click', () => {
+      importPastedTextIntoContext(ctx, panel.querySelector('textarea').value);
+      panel.style.display = 'none';
+      panel.querySelector('textarea').value = '';
+    });
   }
 
   function renderCurrentTableFor(ctx){
@@ -2676,6 +2901,16 @@
       if(ctx.onAfterChange) ctx.onAfterChange();
       showToast('Row added');
       renderAddFormForContext(ctx);
+      const firstField = ctx.els.form.querySelector('input, select, textarea');
+      if(firstField) firstField.focus();
+    });
+    // Enter submits the add-row form from any field (including dropdowns) --
+    // so a firm can be typed in fast, back-to-back, without reaching for the mouse.
+    ctx.els.form.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' && e.target.tagName !== 'TEXTAREA'){
+        e.preventDefault();
+        ctx.els.form.requestSubmit();
+      }
     });
     ctx.els.search.addEventListener('input', () => { ctx.visibleRowCount = 150; renderCurrentTableFor(ctx); });
     if(ctx.els.hideResolved) ctx.els.hideResolved.addEventListener('change', () => renderTableForContext(ctx));
@@ -2696,7 +2931,8 @@
       hideResolved: document.getElementById('trackerHideResolved'),
       flagPanel: document.getElementById('trackerFlagPanel'),
       flagCount: document.getElementById('trackerFlagCount'),
-      loadMore: document.getElementById('trackerLoadMoreBtn')
+      loadMore: document.getElementById('trackerLoadMoreBtn'),
+      pastePanel: document.getElementById('trackerPastePanel')
     },
     visibleRowCount: 150,
     onAfterChange: () => {
@@ -2801,6 +3037,7 @@
     const hideResolvedLabel = document.getElementById('trackerHideResolved').closest('label');
     const importLabel = document.getElementById('trackerImportInput').closest('label');
     const flagRulesBtn = document.getElementById('trackerFlagRulesBtn');
+    const pasteBtn = document.getElementById('trackerPasteBtn');
 
     if(config.isComputed){
       trackerCtx.els.form.style.display = 'none';
@@ -2808,7 +3045,9 @@
       hideResolvedLabel.style.display = 'none';
       importLabel.style.display = 'none';
       flagRulesBtn.style.display = 'none';
+      pasteBtn.style.display = 'none';
       document.getElementById('trackerFlagPanel').style.display = 'none';
+      document.getElementById('trackerPastePanel').style.display = 'none';
       renderTrackerOverviewStats(config, displayRowsForConfig(config));
       renderComputedTrackerTable(config);
     } else {
@@ -2816,8 +3055,10 @@
       document.getElementById('trackerAddSubmitBtn').style.display = '';
       importLabel.style.display = '';
       flagRulesBtn.style.display = '';
+      pasteBtn.style.display = '';
       hideResolvedLabel.style.display = (config.statusKey && config.doneValues) ? '' : 'none';
       document.getElementById('trackerFlagPanel').style.display = 'none';
+      document.getElementById('trackerPastePanel').style.display = 'none';
       renderTrackerOverviewStats(config, displayRowsForConfig(config));
       renderAddFormForContext(trackerCtx);
       renderTableForContext(trackerCtx);
@@ -2965,6 +3206,12 @@
     if(opening) renderFlagPanel(trackerCtx);
     panel.style.display = opening ? '' : 'none';
   });
+  document.getElementById('trackerPasteBtn').addEventListener('click', () => {
+    const panel = trackerCtx.els.pastePanel;
+    const opening = panel.style.display === 'none';
+    if(opening) renderPastePanel(trackerCtx);
+    panel.style.display = opening ? '' : 'none';
+  });
 
   /* =========================================================
      FIRMS DASHBOARD
@@ -3000,7 +3247,8 @@
       empty: document.getElementById('firmsEmptyMsg'),
       flagPanel: document.getElementById('firmsFlagPanel'),
       flagCount: document.getElementById('firmsFlagCount'),
-      loadMore: document.getElementById('firmsLoadMoreBtn')
+      loadMore: document.getElementById('firmsLoadMoreBtn'),
+      pastePanel: document.getElementById('firmsPastePanel')
     },
     visibleRowCount: 150,
     onAfterChange: () => { renderCapacityChart(); refreshFirmNamesDatalist(); renderFirmProfileNav(); renderFirmProfileContent(); }
@@ -3016,6 +3264,12 @@
     const panel = document.getElementById('firmsFlagPanel');
     const opening = panel.style.display === 'none';
     if(opening) renderFlagPanel(firmsCtx);
+    panel.style.display = opening ? '' : 'none';
+  });
+  document.getElementById('firmsPasteBtn').addEventListener('click', () => {
+    const panel = firmsCtx.els.pastePanel;
+    const opening = panel.style.display === 'none';
+    if(opening) renderPastePanel(firmsCtx);
     panel.style.display = opening ? '' : 'none';
   });
 
