@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wedding Planner</title>
-<meta name="theme-color" content="#b5546a">
+<meta name="theme-color" content="#0a1622">
 <meta name="description" content="Personal wedding planning app: photographers, dress shopping, DMV venue &amp; catering, calendar, checklist and budget.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Wedding Planner">
@@ -17,20 +17,24 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <style>
   :root{
-    --bg:#fbf3f0;
-    --panel:#ffffff;
-    --accent:#b5546a;
-    --accent-dark:#8a3b52;
-    --accent-light:#f4c2c2;
-    --ink:#3a2530;
-    --muted:#8a7078;
-    --danger:#c0392b;
-    --good:#3f8f5f;
-    --good-bg:#e4f3ea;
-    --warn:#b5791f;
-    --warn-bg:#fbeed8;
-    --danger-bg:#f8e2df;
-    --shadow:0 10px 30px rgba(58,37,48,0.12);
+    --bg:#0a1622;
+    --panel:#12243b;
+    --surface:#1a3550;
+    --border:#2c4a68;
+    --border-soft:#1e3550;
+    --accent:#2f6f4e;
+    --accent-dark:#163523;
+    --accent-bright:#6fd19f;
+    --accent-light:#2a5c40;
+    --ink:#e8eef5;
+    --muted:#93a8c0;
+    --danger:#ef7a70;
+    --danger-bg:rgba(239,122,112,0.16);
+    --good:#6fd19f;
+    --good-bg:rgba(111,209,159,0.16);
+    --warn:#eab364;
+    --warn-bg:rgba(234,179,100,0.16);
+    --shadow:0 10px 30px rgba(0,0,0,0.5);
     --radius:16px;
   }
   *{box-sizing:border-box;}
@@ -38,8 +42,8 @@
     margin:0;
     font-family:'Nunito', system-ui, sans-serif;
     background:
-      radial-gradient(circle at 8% 8%, #fff8f5 0%, transparent 40%),
-      radial-gradient(circle at 92% 15%, #f6e9ec 0%, transparent 40%),
+      radial-gradient(circle at 8% 8%, #142c22 0%, transparent 40%),
+      radial-gradient(circle at 92% 15%, #122239 0%, transparent 40%),
       var(--bg);
     color:var(--ink);
     min-height:100vh;
@@ -53,7 +57,7 @@
   header h1{
     font-size:clamp(1.7rem, 4.2vw, 2.7rem);
     margin:0 0 6px;
-    color:var(--accent-dark);
+    color:var(--accent-bright);
     letter-spacing:0.3px;
   }
   header p{
@@ -93,6 +97,20 @@
   }
   .tab-btn:hover{transform:translateY(-2px) scale(1.03);}
   .tab-btn.active{background:var(--accent); color:#fff;}
+  .tab-btn-add{
+    border:2px dashed var(--border);
+    background:transparent;
+    border-radius:999px;
+    padding:10px 18px;
+    font-weight:800;
+    font-size:0.9rem;
+    cursor:pointer;
+    color:var(--muted);
+    font-family:inherit;
+    white-space:nowrap;
+    transition:transform .12s ease, border-color .15s ease, color .15s ease;
+  }
+  .tab-btn-add:hover{transform:translateY(-2px) scale(1.03); border-color:var(--accent-bright); color:var(--accent-bright);}
 
   .tab-panel{display:none; margin-top:24px;}
   .tab-panel.active{display:block;}
@@ -107,7 +125,7 @@
   .card h2{
     margin:0 0 4px;
     font-size:1.3rem;
-    color:var(--accent-dark);
+    color:var(--accent-bright);
   }
   .card .sub{color:var(--muted); font-size:0.9rem; margin:0 0 16px;}
 
@@ -121,14 +139,14 @@
     width:100%;
     padding:9px 12px;
     border-radius:10px;
-    border:2px solid #f1e2e0;
+    border:2px solid var(--border);
     font-family:inherit;
     font-size:0.9rem;
-    background:#fffaf9;
+    background:var(--surface);
     color:var(--ink);
   }
   textarea{resize:vertical; min-height:44px;}
-  input:focus, select:focus, textarea:focus{outline:none; border-color:var(--accent-light);}
+  input:focus, select:focus, textarea:focus{outline:none; border-color:var(--accent-bright);}
 
   button.pill{
     border:none;
@@ -142,25 +160,25 @@
   }
   button.pill:hover{transform:translateY(-1px);}
   .pill.green{background:var(--accent); color:#fff;}
-  .pill.grey{background:#f1e6e3; color:var(--ink);}
+  .pill.grey{background:var(--surface); color:var(--ink);}
   .pill.red{background:var(--danger-bg); color:var(--danger);}
   .pill.small{padding:5px 12px; font-size:0.75rem;}
 
   .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:8px;}
   @media (max-width:820px){ .stat-row{grid-template-columns:repeat(2,1fr);} }
   .stat-box{
-    background:#fffaf9;
+    background:var(--surface);
     border-radius:12px;
     padding:14px 16px;
     text-align:center;
-    box-shadow:inset 0 0 0 1px #f1e2e0;
+    box-shadow:inset 0 0 0 1px var(--border);
     transition:transform .15s ease, box-shadow .15s ease;
   }
-  .stat-box:hover{transform:translateY(-3px); box-shadow:inset 0 0 0 1px #f1e2e0, var(--shadow);}
-  .stat-box .num{font-size:1.4rem; font-weight:800; color:var(--accent-dark); font-family:'Playfair Display',serif;}
+  .stat-box:hover{transform:translateY(-3px); box-shadow:inset 0 0 0 1px var(--border), var(--shadow);}
+  .stat-box .num{font-size:1.4rem; font-weight:800; color:var(--accent-bright); font-family:'Playfair Display',serif;}
   .stat-box .lbl{font-size:0.75rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.3px;}
 
-  .progress-track{background:#f1e2e0; border-radius:999px; height:10px; overflow:hidden; margin:6px 0 2px;}
+  .progress-track{background:var(--border); border-radius:999px; height:10px; overflow:hidden; margin:6px 0 2px;}
   .progress-fill{background:var(--accent); height:100%; border-radius:999px; transition:width .3s ease;}
   .progress-fill.over{background:var(--danger);}
 
@@ -175,7 +193,7 @@
   .badge.good{background:var(--good-bg); color:var(--good);}
   .badge.warn{background:var(--warn-bg); color:var(--warn);}
   .badge.danger{background:var(--danger-bg); color:var(--danger);}
-  .badge.muted{background:#eee2e0; color:var(--muted);}
+  .badge.muted{background:var(--surface); color:var(--muted);}
 
   table.budget-table{width:100%; border-collapse:collapse; font-size:0.88rem;}
   table.budget-table th{
@@ -185,14 +203,14 @@
     letter-spacing:0.4px;
     color:var(--muted);
     padding:6px 8px;
-    border-bottom:2px solid #f1e2e0;
+    border-bottom:2px solid var(--border);
   }
-  table.budget-table td{padding:6px 8px; border-bottom:1px solid #f6ebe9; vertical-align:middle;}
+  table.budget-table td{padding:6px 8px; border-bottom:1px solid var(--border-soft); vertical-align:middle;}
   table.budget-table input{padding:6px 8px; font-size:0.85rem;}
   table.budget-table td:first-child{min-width:190px;}
   table.budget-table td:nth-child(2), table.budget-table td:nth-child(3), table.budget-table td:nth-child(4){min-width:100px;}
   table.budget-table td:last-of-type{min-width:150px;}
-  table.budget-table tfoot td{font-weight:800; border-top:2px solid #f1e2e0; border-bottom:none;}
+  table.budget-table tfoot td{font-weight:800; border-top:2px solid var(--border); border-bottom:none;}
   .variance-pos{color:var(--good); font-weight:700;}
   .variance-neg{color:var(--danger); font-weight:700;}
   .del-btn{
@@ -211,9 +229,9 @@
     gap:10px;
     padding:10px 12px;
     border-radius:10px;
-    background:#fffaf9;
+    background:var(--surface);
     margin-bottom:8px;
-    box-shadow:inset 0 0 0 1px #f1e2e0;
+    box-shadow:inset 0 0 0 1px var(--border);
   }
   .task-row input[type=checkbox]{width:20px; height:20px; margin-top:2px; accent-color:var(--accent); flex-shrink:0;}
   .task-fields{flex:1; display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:8px;}
@@ -223,10 +241,10 @@
   .empty-msg{color:var(--muted); text-align:center; padding:20px 10px; font-size:0.9rem;}
 
   .crud-add{
-    background:#fffaf9;
+    background:var(--surface);
     border-radius:12px;
     padding:16px;
-    box-shadow:inset 0 0 0 1px #f1e2e0;
+    box-shadow:inset 0 0 0 1px var(--border);
     margin-bottom:18px;
   }
   .crud-add .fields-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px 14px;}
@@ -235,7 +253,7 @@
 
   .crud-group-title{
     font-weight:800;
-    color:var(--accent-dark);
+    color:var(--accent-bright);
     margin:22px 0 10px;
     font-size:1.02rem;
     display:flex;
@@ -244,15 +262,15 @@
   }
   .crud-group-title:first-of-type{margin-top:0;}
   .crud-card{
-    background:#fffaf9;
+    background:var(--surface);
     border-radius:12px;
     padding:14px 16px;
     margin-bottom:12px;
-    box-shadow:inset 0 0 0 1px #f1e2e0;
+    box-shadow:inset 0 0 0 1px var(--border);
   }
   .crud-card-head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;}
-  .crud-card-head .title-input{font-weight:800; font-size:1rem; border:none; background:transparent; padding:2px 0; box-shadow:none;}
-  .crud-card-head .title-input:focus{outline:none; box-shadow:none; border-bottom:2px solid var(--accent-light);}
+  .crud-card-head .title-input{font-weight:800; font-size:1rem; border:none; background:transparent; padding:2px 0; box-shadow:none; color:var(--ink);}
+  .crud-card-head .title-input:focus{outline:none; box-shadow:none; border-bottom:2px solid var(--accent-bright);}
   .crud-card-fields{display:grid; grid-template-columns:repeat(3,1fr); gap:10px 14px;}
   @media (max-width:760px){ .crud-card-fields{grid-template-columns:1fr 1fr;} }
   .crud-card-fields .full{grid-column:1/-1;}
@@ -260,7 +278,7 @@
 
   .cal-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
   .cal-nav button{
-    border:none; background:var(--accent-dark); color:#fff;
+    border:none; background:var(--accent); color:#fff;
     width:34px; height:34px; border-radius:10px; font-size:1.1rem; cursor:pointer;
     transition:transform .15s ease;
   }
@@ -275,14 +293,14 @@
   }
   .day-cell.empty{background:transparent; cursor:default;}
   .day-cell:not(.empty):hover{transform:translateY(-2px) scale(1.05);}
-  .day-cell.today{outline:2px solid var(--accent-dark);}
+  .day-cell.today{outline:2px solid var(--accent-bright);}
   .day-cell.selected{background:var(--accent); color:#fff;}
   .day-cell.past{opacity:0.55;}
   .day-cell .dnum{font-size:0.9rem;}
   .day-dots{display:flex; gap:3px;}
   .dot{width:5px; height:5px; border-radius:50%;}
-  .dot.task{background:var(--accent-dark);}
-  .dot.event{background:#3f6f8f;}
+  .dot.task{background:var(--accent-bright);}
+  .dot.event{background:#7fb8e8;}
   .day-cell.selected .dot{background:#fff;}
 
   .toast{
@@ -301,12 +319,12 @@
     to{ transform:translateY(105vh) rotate(360deg); opacity:0.2; }
   }
   .celebrate-banner{
-    background:linear-gradient(135deg, var(--accent-light), #fff0ea);
+    background:linear-gradient(135deg, var(--accent-light), var(--panel));
     border-radius:12px;
     padding:14px 16px;
     text-align:center;
     font-weight:800;
-    color:var(--accent-dark);
+    color:var(--accent-bright);
     margin-bottom:14px;
     box-shadow:inset 0 0 0 1px var(--accent-light);
   }
@@ -324,7 +342,7 @@
 
 <header>
   <h1>Our Wedding Planner</h1>
-  <p id="headerSub">Vendors, budget, checklist and calendar — all in one place.</p>
+  <p id="headerSub">Lock In.</p>
   <div class="rings-row">💍<span class="sparkle">✨</span></div>
 </header>
 
@@ -338,6 +356,7 @@
   <button class="tab-btn" data-tab="dress">👗 Dress</button>
   <button class="tab-btn" data-tab="tux">🤵 Tux</button>
   <button class="tab-btn" data-tab="venue">🍽️ Venue &amp; Catering</button>
+  <button class="tab-btn-add" id="addTabBtn" type="button">➕ Add Tab</button>
 </nav>
 
 <div class="wrap">
@@ -361,6 +380,16 @@
         </div>
       </div>
       <p class="hint" id="countdownLine"></p>
+    </div>
+
+    <div class="card">
+      <h2>🔎 Web Search</h2>
+      <p class="sub">Look something up without leaving the app — opens in a new tab.</p>
+      <div class="inline-actions" style="margin-top:0;">
+        <input type="text" id="webSearchInput" placeholder="e.g. tuxedo rental near me" style="flex:1; min-width:200px;">
+        <button class="pill green" id="webSearchBtn">🔎 Search</button>
+      </div>
+      <div class="inline-actions" id="webSearchPresets"></div>
     </div>
 
     <div class="card">
@@ -429,9 +458,12 @@
       <div class="settings-grid" style="grid-template-columns:1fr;">
         <div>
           <label>Total Wedding Budget ($)</label>
-          <input type="number" id="totalBudgetInput" min="0" step="100">
+          <input type="number" id="totalBudgetInput" min="0" step="100" placeholder="e.g. 35000">
         </div>
       </div>
+      <div class="stat-row" id="budgetMetrics" style="margin-top:16px;"></div>
+      <div class="progress-track"><div class="progress-fill" id="budgetMetricsBar"></div></div>
+      <p class="hint" id="budgetMetricsNote"></p>
     </div>
     <div class="card">
       <h2>Budget Breakdown</h2>
@@ -580,14 +612,6 @@
   const GUEST_RSVP = ['Invited','Pending','Attending','Declined'];
   const YES_NO = ['No','Yes'];
 
-  const BUDGET_TEMPLATE = [
-    ['Venue', 0.20], ['Catering & Bar', 0.15], ['Photography & Video', 0.12],
-    ['Attire & Beauty', 0.08], ['Flowers & Décor', 0.08], ['Music & Entertainment', 0.08],
-    ['Invitations & Stationery', 0.03], ['Rings', 0.05], ['Transportation', 0.03],
-    ['Favors & Gifts', 0.03], ['Officiant & Ceremony', 0.02], ['Miscellaneous / Buffer', 0.13]
-  ];
-  const DEFAULT_TOTAL_BUDGET = 35000;
-
   function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
   function addDays(d, n){ const r = new Date(d); r.setDate(r.getDate()+n); return r; }
   function todayKey(){ return dateKey(new Date()); }
@@ -617,28 +641,11 @@
     return 'warn';
   }
 
-  function defaultWeddingDateKey(){ return dateKey(addDays(new Date(), 380)); }
-
   function defaultData(){
-    const today = new Date();
-    const budget = BUDGET_TEMPLATE.map(([category, pct]) => ({
-      id: uid(), category, planned: Math.round(DEFAULT_TOTAL_BUDGET * pct), actual: 0, paid: 0, notes: ''
-    }));
-    const tasks = [
-      ['Set overall wedding budget', 'Budget', 7, 'High'],
-      ['Research photographers in Scotland, DC & California', 'Photography', 30, 'High'],
-      ['Draft guest list', 'Guests', 30, 'Medium'],
-      ['Tour DMV venues & get catering quotes', 'Venue', 45, 'High'],
-      ['Start dress shopping — book boutique appointments', 'Attire', 45, 'Medium'],
-      ['Book venue & catering (DMV)', 'Venue', 90, 'High'],
-      ['Book wedding photographer', 'Photography', 100, 'High'],
-      ['Say yes to the dress', 'Attire', 120, 'Medium']
-    ].map(([title, category, offset, priority]) => ({
-      id: uid(), title, category, dueDate: dateKey(addDays(today, offset)), priority, done: false, notes: ''
-    }));
     return {
-      settings: { partner1: 'Julie', partner2: 'Tommy', weddingDate: defaultWeddingDateKey(), totalBudget: DEFAULT_TOTAL_BUDGET },
-      budget, tasks, events: [], photographers: [], dress: [], tux: [], venues: [], guests: [],
+      settings: { partner1: 'Julie', partner2: 'Tommy', weddingDate: '', totalBudget: '' },
+      budget: [], tasks: [], events: [], photographers: [], dress: [], tux: [], venues: [], guests: [],
+      customTabs: [], customTabItems: {},
       meta: { lastEditedBy: '', lastEditedAt: 0 }
     };
   }
@@ -654,7 +661,9 @@
       dress: Array.isArray(parsed.dress) ? parsed.dress : [],
       tux: Array.isArray(parsed.tux) ? parsed.tux : [],
       venues: Array.isArray(parsed.venues) ? parsed.venues : [],
-      guests: Array.isArray(parsed.guests) ? parsed.guests : []
+      guests: Array.isArray(parsed.guests) ? parsed.guests : [],
+      customTabs: Array.isArray(parsed.customTabs) ? parsed.customTabs : [],
+      customTabItems: (parsed.customTabItems && typeof parsed.customTabItems === 'object') ? parsed.customTabItems : {}
     });
   }
 
@@ -783,6 +792,29 @@
   }
   function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
+  function searchWeb(query){
+    query = (query || '').trim();
+    if(!query) return;
+    window.open('https://www.google.com/search?q=' + encodeURIComponent(query), '_blank', 'noopener');
+  }
+
+  const webSearchInput = document.getElementById('webSearchInput');
+  document.getElementById('webSearchBtn').addEventListener('click', () => searchWeb(webSearchInput.value));
+  webSearchInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){ e.preventDefault(); searchWeb(webSearchInput.value); }
+  });
+  const WEB_SEARCH_PRESETS = [
+    'Wedding photographers in Scotland', 'Wedding photographers in Washington DC', 'Wedding photographers in California',
+    'Wedding dress boutiques near me', 'Tuxedo rental near me', 'Wedding venues in the DMV area', 'Wedding caterers in the DMV area'
+  ];
+  document.getElementById('webSearchPresets').innerHTML = WEB_SEARCH_PRESETS.map(q =>
+    `<button class="pill grey small" data-preset="${escapeHtml(q)}">${escapeHtml(q)}</button>`
+  ).join('');
+  document.getElementById('webSearchPresets').addEventListener('click', (e) => {
+    const q = e.target.dataset.preset;
+    if(q) searchWeb(q);
+  });
+
   const CONFETTI_EMOJI = ['💍','💐','🎉','💕','✨','🥂','👧🏽','👦🏽','👰🏻‍♀️','🤵🏻'];
   function launchConfetti(){
     for(let i=0;i<26;i++){
@@ -802,14 +834,17 @@
   const WELCOME_MESSAGES = ['Welcome back! 👰🏻‍♀️🤵🏻🎉','So happy you\'re here! 👰🏻‍♀️🤵🏻💕','Let\'s keep planning! 👧🏽👦🏽✨','Your flower girl and ring bearer say hi! 👧🏽👦🏽'];
 
   // ---------- Tabs ----------
-  const tabButtons = document.querySelectorAll('.tab-btn');
-  const tabPanels = document.querySelectorAll('.tab-panel');
+  // Custom tabs are added/removed from the DOM at runtime, so this queries live
+  // rather than caching a NodeList taken before any custom tabs existed.
   function activateTab(name){
-    tabButtons.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
-    tabPanels.forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
     localStorage.setItem('wedding-planner-last-tab', name);
   }
-  tabButtons.forEach(b => b.addEventListener('click', () => activateTab(b.dataset.tab)));
+  document.getElementById('tabNav').addEventListener('click', (e) => {
+    const btn = e.target.closest('.tab-btn');
+    if(btn) activateTab(btn.dataset.tab);
+  });
 
   // ---------- Dashboard ----------
   const settingPartner1 = document.getElementById('settingPartner1');
@@ -840,7 +875,7 @@
     const p1 = data.settings.partner1 || 'Partner One';
     const p2 = data.settings.partner2 || 'Partner Two';
     h1.textContent = `${p1} & ${p2}`;
-    document.getElementById('headerSub').textContent = `Let's plan the best day of your lives, ${p1} & ${p2}! 💕`;
+    document.getElementById('headerSub').textContent = 'Lock In.';
     renderWhoAmIOptions();
 
     const countdownLine = document.getElementById('countdownLine');
@@ -875,26 +910,31 @@
     }, {planned:0, actual:0, paid:0});
   }
 
-  function renderDashboard(){
+  function renderBudgetMetricsInto(statsElId, barElId, noteElId){
     const totals = computeBudgetTotals();
     const totalBudget = parseNum(data.settings.totalBudget);
     const spentBasis = totals.actual || totals.planned;
     const remaining = totalBudget - spentBasis;
     const pct = totalBudget > 0 ? Math.min(100, Math.round((spentBasis / totalBudget) * 100)) : 0;
 
-    document.getElementById('dashBudgetStats').innerHTML = `
+    document.getElementById(statsElId).innerHTML = `
       <div class="stat-box"><div class="num">${fmtMoney(totalBudget)}</div><div class="lbl">Total Budget</div></div>
       <div class="stat-box"><div class="num">${fmtMoney(totals.actual)}</div><div class="lbl">Actual Cost</div></div>
       <div class="stat-box"><div class="num">${fmtMoney(totals.paid)}</div><div class="lbl">Paid So Far</div></div>
       <div class="stat-box"><div class="num">${fmtMoney(remaining)}</div><div class="lbl">Remaining</div></div>
     `;
-    const bar = document.getElementById('dashBudgetBar');
+    const bar = document.getElementById(barElId);
     bar.style.width = pct + '%';
     bar.classList.toggle('over', spentBasis > totalBudget);
-    document.getElementById('dashBudgetNote').textContent =
-      totals.actual > 0
+    document.getElementById(noteElId).textContent = !totalBudget
+      ? 'Set a total budget above, then start entering prices to see your metrics update here.'
+      : totals.actual > 0
         ? `${pct}% of your total budget spent (based on actual costs).`
         : `${pct}% of your total budget allocated so far (based on planned amounts — add actual costs as you book).`;
+  }
+
+  function renderDashboard(){
+    renderBudgetMetricsInto('dashBudgetStats', 'dashBudgetBar', 'dashBudgetNote');
 
     const doneCount = data.tasks.filter(t => t.done).length;
     const totalCount = data.tasks.length;
@@ -989,6 +1029,7 @@
         <td colspan="2"></td>
       </tr>
     `;
+    renderBudgetMetricsInto('budgetMetrics', 'budgetMetricsBar', 'budgetMetricsNote');
   }
 
   document.getElementById('budgetTbody').addEventListener('input', (e) => {
@@ -1022,6 +1063,7 @@
         <td class="${totalVariance >= 0 ? 'variance-pos' : 'variance-neg'}">${totals.actual > 0 ? fmtMoney(Math.abs(totalVariance)) + (totalVariance>=0?' under':' over') : '—'}</td>
         <td colspan="2"></td>
       `;
+      renderBudgetMetricsInto('budgetMetrics', 'budgetMetricsBar', 'budgetMetricsNote');
     }
   });
   document.getElementById('budgetTbody').addEventListener('click', (e) => {
@@ -1171,10 +1213,20 @@
         <div class="fields-grid">
           ${section.fields.map(f => `<div class="${f.full?'full':''}"><label>${escapeHtml(f.label)}</label>${fieldInput(f)}</div>`).join('')}
         </div>
-        <div class="inline-actions"><button class="pill green" data-action="add-new">+ ${escapeHtml(section.addLabel)}</button></div>
+        <div class="inline-actions">
+          <button class="pill green" data-action="add-new">+ ${escapeHtml(section.addLabel)}</button>
+          ${section.searchQuery ? '<button class="pill grey" data-action="web-search">🔎 Search the Web</button>' : ''}
+        </div>
       `;
     }
     renderAddForm();
+
+    if(section.searchQuery){
+      addEl.addEventListener('click', (e) => {
+        if(e.target.dataset.action !== 'web-search') return;
+        searchWeb(section.searchQuery(addEl));
+      });
+    }
 
     addEl.addEventListener('click', (e) => {
       if(e.target.dataset.action !== 'add-new') return;
@@ -1298,6 +1350,7 @@
     statusField: 'status', groupBy: 'location', groupOrder: PHOTOGRAPHER_LOCATIONS.slice(0,3), groupIcon: '📍',
     groupEmptyText: 'No candidates yet — go find someone amazing! 🌟',
     addLabel: 'Add Photographer', addedToast: 'Photographer added 📸',
+    searchQuery: (addEl) => `Wedding photographers in ${addEl.querySelector('[data-field="location"]').value}`,
     fields: [
       {key:'name', label:'Photographer / Studio', type:'text', placeholder:'e.g. Highland Light Photography'},
       {key:'location', label:'Location', type:'select', options: PHOTOGRAPHER_LOCATIONS, default: 'Scotland'},
@@ -1314,6 +1367,7 @@
     data: data.dress, titleField: 'boutique', defaultTitle: 'New Boutique',
     statusField: 'status',
     addLabel: 'Add Appointment', addedToast: 'Appointment added 👗',
+    searchQuery: () => 'Wedding dress boutiques near me',
     fields: [
       {key:'boutique', label:'Boutique / Store', type:'text', placeholder:'e.g. Something Blue Bridal'},
       {key:'appointmentDate', label:'Appointment Date', type:'date'},
@@ -1329,6 +1383,7 @@
     data: data.tux, titleField: 'shop', defaultTitle: 'New Shop',
     statusField: 'status',
     addLabel: 'Add Fitting', addedToast: 'Fitting added 🤵',
+    searchQuery: () => 'Tuxedo rental near me',
     fields: [
       {key:'shop', label:'Tux Shop / Rental', type:'text', placeholder:'e.g. Men\'s Wearhouse'},
       {key:'wearer', label:'Who\'s it for?', type:'text', placeholder:'e.g. Tommy (Groom), Best Man Sam'},
@@ -1345,6 +1400,7 @@
     data: data.venues, titleField: 'name', defaultTitle: 'New Venue / Caterer',
     statusField: 'status',
     addLabel: 'Add Venue / Caterer', addedToast: 'Added to venue list 🍽️',
+    searchQuery: (addEl) => `Wedding venues and caterers in ${addEl.querySelector('[data-field="location"]').value.trim() || 'the DMV area'}`,
     fields: [
       {key:'name', label:'Venue / Caterer Name', type:'text', placeholder:'e.g. Old Town Alexandria Hall'},
       {key:'type', label:'Type', type:'select', options: VENUE_TYPES, default:'Venue + Catering'},
@@ -1355,6 +1411,75 @@
       {key:'status', label:'Status', type:'select', options: VENDOR_STATUS, default:'Researching'},
       {key:'notes', label:'Notes', type:'textarea', full:true, placeholder:'Tour notes, minimums, availability…'}
     ]
+  });
+
+  // ---------- Custom Tabs ----------
+  const wrapEl = document.querySelector('.wrap');
+  const addTabBtn = document.getElementById('addTabBtn');
+
+  function renderCustomTabsUI(){
+    document.querySelectorAll('[data-custom-tab="true"]').forEach(el => el.remove());
+
+    data.customTabs.forEach(tab => {
+      addTabBtn.insertAdjacentHTML('beforebegin',
+        `<button class="tab-btn" data-tab="custom-${tab.id}" data-custom-tab="true">${escapeHtml(tab.icon)} ${escapeHtml(tab.name)}</button>`
+      );
+      wrapEl.insertAdjacentHTML('beforeend', `
+        <section class="tab-panel" id="tab-custom-${tab.id}" data-custom-tab="true">
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+              <h2 style="margin:0;">${escapeHtml(tab.icon)} ${escapeHtml(tab.name)}</h2>
+              <button class="pill red small" data-action="remove-custom-tab" data-tab-id="${tab.id}">🗑 Remove Tab</button>
+            </div>
+            <p class="sub">Your own custom list — add whatever you need to track here.</p>
+            <div class="crud-add" id="customAdd-${tab.id}"></div>
+            <div id="customList-${tab.id}"></div>
+            <div class="empty-msg" id="customEmpty-${tab.id}" style="display:none;">Nothing here yet — add your first item above!</div>
+          </div>
+        </section>
+      `);
+
+      if(!data.customTabItems[tab.id]) data.customTabItems[tab.id] = [];
+
+      buildCrud({
+        addElId: `customAdd-${tab.id}`, listElId: `customList-${tab.id}`, emptyElId: `customEmpty-${tab.id}`,
+        data: data.customTabItems[tab.id], titleField: 'name', defaultTitle: `New ${tab.name} Item`,
+        statusField: 'status',
+        addLabel: 'Add Item', addedToast: `Added to ${tab.name} 🎉`,
+        searchQuery: () => tab.name,
+        fields: [
+          {key:'name', label:'Name', type:'text', placeholder:'e.g. Item, vendor, or task name'},
+          {key:'price', label:'Price ($)', type:'number'},
+          {key:'status', label:'Status', type:'select', options: VENDOR_STATUS, default:'Researching'},
+          {key:'notes', label:'Notes', type:'textarea', full:true, placeholder:'Notes…'}
+        ]
+      });
+    });
+  }
+
+  wrapEl.addEventListener('click', (e) => {
+    if(e.target.dataset.action !== 'remove-custom-tab') return;
+    const tabId = e.target.dataset.tabId;
+    const tab = data.customTabs.find(t => t.id === tabId);
+    if(!confirm(`Remove the "${tab ? tab.name : 'this'}" tab and everything in it? This cannot be undone.`)) return;
+    data.customTabs = data.customTabs.filter(t => t.id !== tabId);
+    delete data.customTabItems[tabId];
+    save();
+    renderCustomTabsUI();
+    activateTab('dashboard');
+  });
+
+  addTabBtn.addEventListener('click', () => {
+    const name = prompt('Name this tab (e.g. "Honeymoon", "Registry", "Hair & Makeup"):');
+    if(!name || !name.trim()) return;
+    const icon = prompt('Pick an emoji icon for this tab (optional):', '📌');
+    const tab = { id: uid(), name: name.trim(), icon: (icon && icon.trim()) || '📌' };
+    data.customTabs.push(tab);
+    data.customTabItems[tab.id] = [];
+    save();
+    renderCustomTabsUI();
+    activateTab('custom-' + tab.id);
+    showToast(`"${tab.name}" tab added! 🎉`);
   });
 
   function renderGuestStats(){
@@ -1656,10 +1781,11 @@
     guestSection.renderList();
     renderGuestStats();
     renderSyncInfo();
+    renderCustomTabsUI();
+    activateTab(localStorage.getItem('wedding-planner-last-tab') || 'dashboard');
   }
 
   renderAll();
-  activateTab(localStorage.getItem('wedding-planner-last-tab') || 'dashboard');
   initFirebase();
 
   setTimeout(() => {

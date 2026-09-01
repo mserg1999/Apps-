@@ -15,7 +15,11 @@ A personal wedding planning app covering everything from vendor research to the 
 - **Installable app** — add it to your home screen or desktop with its own icon and window, and it keeps working offline once installed (via a service worker).
 - **Guest List** — grouped by side (Julie's / Tommy's / Both), with RSVP status, plus-ones, meal choice, and live headcount stats.
 - **Live sync across devices** (optional) — once a Firebase project is connected (see below), everyone on the list — e.g. Mahlet, Julie, and Tommy — sees the same plan update in real time on their own phone/device. A "Who's using this device?" picker on the Dashboard tags each change with a name, and a status line shows whether you're currently synced.
+- **Custom tabs** — click "➕ Add Tab" in the nav bar to create your own tracker (e.g. "Honeymoon", "Registry") with the same name/price/status/notes fields as the built-in vendor tabs, including its own web-search shortcut. Remove one anytime from its own card.
+- **Web search** — a search box on the Dashboard (plus contextual "🔎 Search the Web" shortcuts on Photographers, Dress, Tux, Venue, and any custom tab) opens a Google search in a new tab so you can look things up without leaving the app.
+- **Live budget metrics** — as soon as you enter a total budget and start filling in prices, both the Dashboard and the Budget tab itself show total/actual/paid/remaining and a progress bar, updating as you type.
 - **Backup & restore** — export all your data as a `.json` file at any time, and import it back (e.g. on a new device). There's also a "Save Offline Copy" button that saves the whole page as a single self-contained HTML file.
+- The app starts completely blank — no sample budget categories or checklist items — so the first thing you see is a clean slate to fill in yourselves.
 - Without live sync set up, everything is saved only to the browser's local storage on that device — nothing is sent anywhere, and refreshing the page (or reopening the installed app) won't lose your data.
 
 ## Installing it as a real app
