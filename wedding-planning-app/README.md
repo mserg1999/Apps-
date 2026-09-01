@@ -14,7 +14,7 @@ A personal wedding planning app covering everything from vendor research to the 
 - **Venue & Catering** — reception venues and caterers for the **DMV area** (DC / Maryland / Virginia), with capacity, estimated cost, cuisine/style, and status.
 - **Installable app** — add it to your home screen or desktop with its own icon and window, and it keeps working offline once installed (via a service worker).
 - **Guest List** — grouped by side (Julie's / Tommy's / Both), with RSVP status, plus-ones, meal choice, and live headcount stats.
-- **Live sync across devices** (optional) — once a Firebase project is connected (see below), everyone on the list — e.g. Mahlet, Julie, and Tommy — sees the same plan update in real time on their own phone/device. A "Who's using this device?" picker on the Dashboard tags each change with a name, and a status line shows whether you're currently synced.
+- **Live sync across devices** (optional) — once a Firebase project is connected (see below), Julie and Tommy see the same plan update in real time on their own phone/device. A "Who's using this device?" picker on the Dashboard tags each change with a name, and a status line shows whether you're currently synced.
 - **Custom tabs** — click "➕ Add Tab" in the nav bar to create your own tracker (e.g. "Honeymoon", "Registry") with the same name/price/status/notes fields as the built-in vendor tabs, including its own web-search shortcut. Remove one anytime from its own card.
 - **Web search** — a search box on the Dashboard (plus contextual "🔎 Search the Web" shortcuts on Photographers, Dress, Tux, Venue, and any custom tab) opens a Google search in a new tab so you can look things up without leaving the app.
 - **Live budget metrics** — as soon as you enter a total budget and start filling in prices, both the Dashboard and the Budget tab itself show total/actual/paid/remaining and a progress bar, updating as you type.
@@ -40,7 +40,7 @@ Once hosted, open the link once, then use your browser's "Install app" / "Add to
 
 Open `index.html` directly in a browser to use every planning feature immediately — no build step, dependencies, or server needed. The only things that require real hosting are installability and the service worker's offline cache; the app tells you which mode you're in and adjusts its instructions accordingly.
 
-## Turning on live sync (Mahlet, Julie, Tommy all seeing the same plan)
+## Turning on live sync (Julie and Tommy both seeing the same plan)
 
 By default the app is local-only — each device has its own copy of the data, and the Dashboard's Sync card says so. To make everyone see the same live plan, connect a free Firebase project:
 
@@ -61,7 +61,7 @@ By default the app is local-only — each device has its own copy of the data, a
    ```
    This keeps the plan reachable only through this app's specific collection name (no login required, same simple approach as the family chess app), rather than every collection in the project.
 6. Open `index.html`, find the `firebaseConfig` object near the top of the `<script>` block, and replace the six `"REPLACE_ME"` values with the ones from step 3.
-7. Redeploy/host the updated file. From then on, every device that opens the app — Mahlet's, Julie's, Tommy's — will sync automatically: picking a name in the "Who's using this device?" dropdown tags each change, and the Sync status line turns green when connected.
+7. Redeploy/host the updated file. From then on, every device that opens the app — Julie's, Tommy's — will sync automatically: picking a name in the "Who's using this device?" dropdown tags each change, and the Sync status line turns green when connected.
 
 Note: with `allow read, write: if true`, anyone who somehow obtained your exact Firestore project config could read or write this collection — there's no login. That's an intentional simplicity trade-off (no accounts to manage for three people), not a public listing anywhere, but worth knowing since the data includes your budget and guest list.
 

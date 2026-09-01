@@ -705,7 +705,7 @@
 
   function getWhoAmI(){ return whoAmISelect.value || 'Guest'; }
   function renderWhoAmIOptions(){
-    const names = [data.settings.partner1, data.settings.partner2, 'Mahlet', 'Guest']
+    const names = [data.settings.partner1, data.settings.partner2, 'Guest']
       .map(n => (n || '').trim()).filter((n, i, arr) => n && arr.indexOf(n) === i);
     const saved = localStorage.getItem(WHOAMI_KEY) || '';
     whoAmISelect.innerHTML = optionsHtml(names, names.includes(saved) ? saved : names[0]);
