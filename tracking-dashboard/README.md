@@ -75,11 +75,15 @@ Tables (Firm Trackers and the Firms Dashboard) show the first 150 matching rows 
 
 **Installable app**
 - Add it to your home screen or desktop with its own icon and window; it keeps working offline once installed (via a service worker).
-- **Offline Copy** button saves the whole page as a single self-contained HTML file you can keep or move around without hosting anything.
+- **Offline Copy** button saves the current page as a single self-contained HTML file (same file you already have — handy if you're using the installed/hosted version and want a portable local copy too).
 
 ## Just running it locally
 
-Open `index.html` directly in a browser to use every dashboard feature immediately — no build step, dependencies, or server needed. The only things that require real hosting (`http://`/`https://`, not a bare double-clicked file) are installability and the service worker's offline cache.
+`index.html` is fully self-contained — the Excel-parsing and charting libraries are inlined directly into the file, not loaded from the `vendor/` folder next to it. That means **this one file is the entire app**: save just `index.html` anywhere (Desktop, a USB drive, emailed to yourself, AirDropped) and double-click it to use every dashboard feature immediately, no build step, no dependencies, no server, and no other files required alongside it. (The `vendor/`, `manifest.webmanifest`, `icons/`, and `service-worker.js` files in this folder are only used for the *installable/offline-PWA* path below — they're not needed for the plain single-file case.)
+
+A single `.html` file is also the easiest thing to actually get onto a device: unlike a `.zip`, it isn't an archive, so it doesn't trip email/Drive attachment-scanning rules that flag zipped scripts, and it saves and opens normally in iOS/Android Files apps and Safari/Chrome.
+
+The only things that require real hosting (`http://`/`https://`, not a bare double-clicked file) are installability (add-to-home-screen) and the service worker's offline cache — see "Deploying it" below for that.
 
 ## Deploying it (so it's always reachable at one link, no zip needed)
 
@@ -111,4 +115,4 @@ The repo root has a `netlify.toml` pointed at a different app (`chess-availabili
 - This is a single-user, local-only tool by design — there's no login and no server, so nothing here is visible to anyone else or from any other device/browser. If you ever need the same live data on more than one device, that would require real hosting with a database, which is a different (and larger) project than this.
 - Storage is IndexedDB (typically hundreds of MB to a few GB available, tied to your disk space) rather than the much smaller `localStorage` — tested clean importing 100,000 rows into a single tracker. If a browser genuinely doesn't support IndexedDB, saves fall back to `localStorage` and you'll get a toast warning if something is too large to fit there.
 - **Everything autosaves as you go** — there's no "Save" button to remember. Every add, edit, delete, or import writes straight to IndexedDB immediately, so closing the tab, closing the browser, or shutting down your laptop normally won't lose anything already on screen. The one thing to know: if you click into a table cell to edit it, type a change, and then close the browser *while that cell is still mid-edit* (before clicking away or pressing Enter), the app now force-commits that pending edit the moment the tab is closed or hidden — so even that in-progress keystroke is captured rather than lost.
-- Excel parsing uses the bundled [SheetJS](https://sheetjs.com) `xlsx` library (vendored in `vendor/`, not loaded from a CDN, so it also works fully offline). The version available for this project has known, unpatched advisories around parsing maliciously crafted `.xlsx` files (prototype pollution / ReDoS). Only open spreadsheet files you trust; if in doubt, save as `.csv` first (this app's own CSV parser doesn't use that library).
+- Excel parsing uses the [SheetJS](https://sheetjs.com) `xlsx` library and charts use Chart.js — both inlined directly into `index.html` itself (not loaded from a CDN or an external file), so it also works fully offline as one file. The SheetJS version in use has known, unpatched advisories around parsing maliciously crafted `.xlsx` files (prototype pollution / ReDoS). Only open spreadsheet files you trust; if in doubt, save as `.csv` first (this app's own CSV parser doesn't use that library).
