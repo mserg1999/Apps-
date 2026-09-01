@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wedding Planner</title>
+<meta name="theme-color" content="#b5546a">
+<meta name="description" content="Personal wedding planning app: photographers, dress shopping, DMV venue &amp; catering, calendar, checklist and budget.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Wedding Planner">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<style>
+  :root{
+    --bg:#fbf3f0;
+    --panel:#ffffff;
+    --accent:#b5546a;
+    --accent-dark:#8a3b52;
+    --accent-light:#f4c2c2;
+    --ink:#3a2530;
+    --muted:#8a7078;
+    --danger:#c0392b;
+    --good:#3f8f5f;
+    --good-bg:#e4f3ea;
+    --warn:#b5791f;
+    --warn-bg:#fbeed8;
+    --danger-bg:#f8e2df;
+    --shadow:0 10px 30px rgba(58,37,48,0.12);
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Nunito', system-ui, sans-serif;
+    background:
+      radial-gradient(circle at 8% 8%, #fff8f5 0%, transparent 40%),
+      radial-gradient(circle at 92% 15%, #f6e9ec 0%, transparent 40%),
+      var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+  h1,h2,h3{font-family:'Playfair Display', serif;}
+  header{
+    text-align:center;
+    padding:34px 16px 10px;
+  }
+  header h1{
+    font-size:clamp(1.7rem, 4.2vw, 2.7rem);
+    margin:0 0 6px;
+    color:var(--accent-dark);
+    letter-spacing:0.3px;
+  }
+  header p{
+    margin:0;
+    color:var(--muted);
+    font-size:1.02rem;
+  }
+  .rings-row{font-size:1.6rem; margin-top:6px; animation:bob 2.6s ease-in-out infinite; position:relative; display:inline-block;}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg);} 50%{transform:translateY(-5px) rotate(4deg);}}
+  .rings-row .sparkle{position:absolute; top:-8px; right:-14px; font-size:0.9rem; animation:twinkle 1.8s ease-in-out infinite;}
+  @keyframes twinkle{0%,100%{opacity:0.3; transform:scale(0.8);} 50%{opacity:1; transform:scale(1.15);}}
+
+  .wrap{max-width:1100px; margin:0 auto; padding:0 16px;}
+
+  .tabs{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    flex-wrap:wrap;
+    margin:22px auto 0;
+    max-width:1100px;
+    padding:0 16px;
+  }
+  .tab-btn{
+    border:2px solid transparent;
+    background:var(--panel);
+    box-shadow:var(--shadow);
+    border-radius:999px;
+    padding:10px 18px;
+    font-weight:800;
+    font-size:0.9rem;
+    cursor:pointer;
+    color:var(--muted);
+    font-family:inherit;
+    transition:transform .12s ease, background .15s ease, color .15s ease;
+    white-space:nowrap;
+  }
+  .tab-btn:hover{transform:translateY(-2px) scale(1.03);}
+  .tab-btn.active{background:var(--accent); color:#fff;}
+
+  .tab-panel{display:none; margin-top:24px;}
+  .tab-panel.active{display:block;}
+
+  .card{
+    background:var(--panel);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:22px;
+    margin-bottom:20px;
+  }
+  .card h2{
+    margin:0 0 4px;
+    font-size:1.3rem;
+    color:var(--accent-dark);
+  }
+  .card .sub{color:var(--muted); font-size:0.9rem; margin:0 0 16px;}
+
+  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  @media (max-width:820px){ .grid-2{grid-template-columns:1fr;} .grid-3{grid-template-columns:1fr;} }
+
+  label{display:block; font-weight:700; font-size:0.8rem; color:var(--muted); margin:10px 0 4px;}
+  label:first-child{margin-top:0;}
+  input[type=text], input[type=number], input[type=date], input[type=url], input[type=time], select, textarea{
+    width:100%;
+    padding:9px 12px;
+    border-radius:10px;
+    border:2px solid #f1e2e0;
+    font-family:inherit;
+    font-size:0.9rem;
+    background:#fffaf9;
+    color:var(--ink);
+  }
+  textarea{resize:vertical; min-height:44px;}
+  input:focus, select:focus, textarea:focus{outline:none; border-color:var(--accent-light);}
+
+  button.pill{
+    border:none;
+    border-radius:999px;
+    padding:9px 18px;
+    font-weight:800;
+    cursor:pointer;
+    font-family:inherit;
+    font-size:0.85rem;
+    transition:transform .12s ease, opacity .12s ease;
+  }
+  button.pill:hover{transform:translateY(-1px);}
+  .pill.green{background:var(--accent); color:#fff;}
+  .pill.grey{background:#f1e6e3; color:var(--ink);}
+  .pill.red{background:var(--danger-bg); color:var(--danger);}
+  .pill.small{padding:5px 12px; font-size:0.75rem;}
+
+  .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:8px;}
+  @media (max-width:820px){ .stat-row{grid-template-columns:repeat(2,1fr);} }
+  .stat-box{
+    background:#fffaf9;
+    border-radius:12px;
+    padding:14px 16px;
+    text-align:center;
+    box-shadow:inset 0 0 0 1px #f1e2e0;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .stat-box:hover{transform:translateY(-3px); box-shadow:inset 0 0 0 1px #f1e2e0, var(--shadow);}
+  .stat-box .num{font-size:1.4rem; font-weight:800; color:var(--accent-dark); font-family:'Playfair Display',serif;}
+  .stat-box .lbl{font-size:0.75rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.3px;}
+
+  .progress-track{background:#f1e2e0; border-radius:999px; height:10px; overflow:hidden; margin:6px 0 2px;}
+  .progress-fill{background:var(--accent); height:100%; border-radius:999px; transition:width .3s ease;}
+  .progress-fill.over{background:var(--danger);}
+
+  .badge{
+    display:inline-block;
+    padding:3px 10px;
+    border-radius:999px;
+    font-size:0.72rem;
+    font-weight:800;
+    white-space:nowrap;
+  }
+  .badge.good{background:var(--good-bg); color:var(--good);}
+  .badge.warn{background:var(--warn-bg); color:var(--warn);}
+  .badge.danger{background:var(--danger-bg); color:var(--danger);}
+  .badge.muted{background:#eee2e0; color:var(--muted);}
+
+  table.budget-table{width:100%; border-collapse:collapse; font-size:0.88rem;}
+  table.budget-table th{
+    text-align:left;
+    font-size:0.72rem;
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+    color:var(--muted);
+    padding:6px 8px;
+    border-bottom:2px solid #f1e2e0;
+  }
+  table.budget-table td{padding:6px 8px; border-bottom:1px solid #f6ebe9; vertical-align:middle;}
+  table.budget-table input{padding:6px 8px; font-size:0.85rem;}
+  table.budget-table td:first-child{min-width:190px;}
+  table.budget-table td:nth-child(2), table.budget-table td:nth-child(3), table.budget-table td:nth-child(4){min-width:100px;}
+  table.budget-table td:last-of-type{min-width:150px;}
+  table.budget-table tfoot td{font-weight:800; border-top:2px solid #f1e2e0; border-bottom:none;}
+  .variance-pos{color:var(--good); font-weight:700;}
+  .variance-neg{color:var(--danger); font-weight:700;}
+  .del-btn{
+    border:none; background:none; color:var(--danger);
+    font-size:1.1rem; cursor:pointer; line-height:1; padding:2px 6px;
+  }
+  .table-scroll{overflow-x:auto;}
+
+  .filters-row{display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-bottom:14px;}
+  .filters-row > div{min-width:150px;}
+  .filters-row label{margin-top:0;}
+
+  .task-row, .agenda-row{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:10px 12px;
+    border-radius:10px;
+    background:#fffaf9;
+    margin-bottom:8px;
+    box-shadow:inset 0 0 0 1px #f1e2e0;
+  }
+  .task-row input[type=checkbox]{width:20px; height:20px; margin-top:2px; accent-color:var(--accent); flex-shrink:0;}
+  .task-fields{flex:1; display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:8px;}
+  @media (max-width:760px){ .task-fields{grid-template-columns:1fr 1fr;} }
+  .task-row.done .task-title-input{text-decoration:line-through; color:var(--muted);}
+  .due-overdue{color:var(--danger); font-weight:800;}
+  .empty-msg{color:var(--muted); text-align:center; padding:20px 10px; font-size:0.9rem;}
+
+  .crud-add{
+    background:#fffaf9;
+    border-radius:12px;
+    padding:16px;
+    box-shadow:inset 0 0 0 1px #f1e2e0;
+    margin-bottom:18px;
+  }
+  .crud-add .fields-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px 14px;}
+  @media (max-width:760px){ .crud-add .fields-grid{grid-template-columns:1fr 1fr;} }
+  .crud-add .full{grid-column:1/-1;}
+
+  .crud-group-title{
+    font-weight:800;
+    color:var(--accent-dark);
+    margin:22px 0 10px;
+    font-size:1.02rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .crud-group-title:first-of-type{margin-top:0;}
+  .crud-card{
+    background:#fffaf9;
+    border-radius:12px;
+    padding:14px 16px;
+    margin-bottom:12px;
+    box-shadow:inset 0 0 0 1px #f1e2e0;
+  }
+  .crud-card-head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;}
+  .crud-card-head .title-input{font-weight:800; font-size:1rem; border:none; background:transparent; padding:2px 0; box-shadow:none;}
+  .crud-card-head .title-input:focus{outline:none; box-shadow:none; border-bottom:2px solid var(--accent-light);}
+  .crud-card-fields{display:grid; grid-template-columns:repeat(3,1fr); gap:10px 14px;}
+  @media (max-width:760px){ .crud-card-fields{grid-template-columns:1fr 1fr;} }
+  .crud-card-fields .full{grid-column:1/-1;}
+  .field-wrap label{margin:0 0 3px;}
+
+  .cal-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+  .cal-nav button{
+    border:none; background:var(--accent-dark); color:#fff;
+    width:34px; height:34px; border-radius:10px; font-size:1.1rem; cursor:pointer;
+    transition:transform .15s ease;
+  }
+  .cal-nav button:hover{transform:scale(1.08);}
+  .cal-nav .month-label{font-weight:800; font-size:1.1rem; font-family:'Playfair Display',serif;}
+  .weekdays, .days-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+  .weekdays div{text-align:center; font-size:0.72rem; font-weight:800; color:var(--muted); padding-bottom:4px;}
+  .day-cell{
+    aspect-ratio:1/1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    border-radius:10px; cursor:pointer; font-weight:700; position:relative;
+    background:var(--accent-light); transition:transform .12s ease; user-select:none; gap:2px;
+  }
+  .day-cell.empty{background:transparent; cursor:default;}
+  .day-cell:not(.empty):hover{transform:translateY(-2px) scale(1.05);}
+  .day-cell.today{outline:2px solid var(--accent-dark);}
+  .day-cell.selected{background:var(--accent); color:#fff;}
+  .day-cell.past{opacity:0.55;}
+  .day-cell .dnum{font-size:0.9rem;}
+  .day-dots{display:flex; gap:3px;}
+  .dot{width:5px; height:5px; border-radius:50%;}
+  .dot.task{background:var(--accent-dark);}
+  .dot.event{background:#3f6f8f;}
+  .day-cell.selected .dot{background:#fff;}
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--accent-dark); color:#fff; padding:12px 22px; border-radius:999px;
+    font-weight:700; box-shadow:var(--shadow); opacity:0;
+    transition:opacity .25s ease, transform .25s ease; pointer-events:none; z-index:50;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  .confetti-piece{
+    position:fixed; top:-30px; pointer-events:none; font-size:1.4rem; z-index:60;
+    animation:confetti-fall linear forwards;
+  }
+  @keyframes confetti-fall{
+    to{ transform:translateY(105vh) rotate(360deg); opacity:0.2; }
+  }
+  .celebrate-banner{
+    background:linear-gradient(135deg, var(--accent-light), #fff0ea);
+    border-radius:12px;
+    padding:14px 16px;
+    text-align:center;
+    font-weight:800;
+    color:var(--accent-dark);
+    margin-bottom:14px;
+    box-shadow:inset 0 0 0 1px var(--accent-light);
+  }
+
+  .hint{color:var(--muted); font-size:0.85rem; margin:4px 0 0;}
+  .hint.sync-ok{color:var(--good); font-weight:700;}
+  .hint.sync-warn{color:var(--danger); font-weight:700;}
+  .hint.sync-off{color:var(--muted); font-weight:700;}
+  .inline-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;}
+  .settings-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;}
+  @media (max-width:820px){ .settings-grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Our Wedding Planner</h1>
+  <p id="headerSub">Vendors, budget, checklist and calendar — all in one place.</p>
+  <div class="rings-row">💍<span class="sparkle">✨</span></div>
+</header>
+
+<nav class="tabs" id="tabNav">
+  <button class="tab-btn" data-tab="dashboard">🏠 Dashboard</button>
+  <button class="tab-btn" data-tab="budget">💰 Budget</button>
+  <button class="tab-btn" data-tab="checklist">✅ Checklist</button>
+  <button class="tab-btn" data-tab="guests">👪 Guest List</button>
+  <button class="tab-btn" data-tab="calendar">📅 Calendar</button>
+  <button class="tab-btn" data-tab="photographers">📸 Photographers</button>
+  <button class="tab-btn" data-tab="dress">👗 Dress</button>
+  <button class="tab-btn" data-tab="tux">🤵 Tux</button>
+  <button class="tab-btn" data-tab="venue">🍽️ Venue &amp; Catering</button>
+</nav>
+
+<div class="wrap">
+
+  <!-- DASHBOARD -->
+  <section class="tab-panel" id="tab-dashboard">
+    <div class="card">
+      <h2>The Big Day</h2>
+      <div class="settings-grid">
+        <div>
+          <label>Partner 1</label>
+          <input type="text" id="settingPartner1" maxlength="40">
+        </div>
+        <div>
+          <label>Partner 2</label>
+          <input type="text" id="settingPartner2" maxlength="40">
+        </div>
+        <div>
+          <label>Wedding Date</label>
+          <input type="date" id="settingWeddingDate">
+        </div>
+      </div>
+      <p class="hint" id="countdownLine"></p>
+    </div>
+
+    <div class="card">
+      <h2>Budget Snapshot</h2>
+      <div class="stat-row" id="dashBudgetStats"></div>
+      <div class="progress-track"><div class="progress-fill" id="dashBudgetBar"></div></div>
+      <p class="hint" id="dashBudgetNote"></p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h2>Checklist Progress</h2>
+        <div class="stat-row" id="dashTaskStats" style="grid-template-columns:1fr 1fr;"></div>
+        <div class="progress-track"><div class="progress-fill" id="dashTaskBar"></div></div>
+        <div id="dashCelebrateBanner"></div>
+        <h3 style="font-size:0.95rem; margin:16px 0 8px;">Coming Up</h3>
+        <div id="dashUpcoming"></div>
+      </div>
+      <div class="card">
+        <h2>Vendor Status</h2>
+        <div id="dashVendorSummary"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🔗 Sync Across Devices</h2>
+      <p class="sub">When live sync is set up, everyone on this list sees the same plan in real time.</p>
+      <div class="settings-grid" style="grid-template-columns:1fr 2fr;">
+        <div>
+          <label>Who's using this device?</label>
+          <select id="whoAmI"></select>
+        </div>
+        <div>
+          <label>Status</label>
+          <p class="hint" id="syncStatus" style="margin-top:9px;">Checking sync status…</p>
+        </div>
+      </div>
+      <p class="hint" id="lastUpdatedLine"></p>
+    </div>
+
+    <div class="card">
+      <h2>App Data</h2>
+      <p class="sub">Everything is saved on this device only unless live sync is set up above. Export a backup now and then, or move your plan to another device.</p>
+      <div class="inline-actions">
+        <button class="pill green" id="exportDataBtn">⬇️ Export Backup (.json)</button>
+        <button class="pill grey" id="importDataBtn">⬆️ Import Backup</button>
+        <input type="file" id="importFileInput" accept="application/json" style="display:none;">
+        <button class="pill grey" id="downloadAppBtn">💾 Save Offline Copy (.html)</button>
+        <button class="pill red" id="resetDataBtn">🗑 Reset All Data</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📲 Install as an App</h2>
+      <p class="sub" id="installStatus">Checking installability…</p>
+      <div class="inline-actions">
+        <button class="pill green" id="installBtn" style="display:none;">📲 Install App</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUDGET -->
+  <section class="tab-panel" id="tab-budget">
+    <div class="card">
+      <h2>Overall Budget</h2>
+      <div class="settings-grid" style="grid-template-columns:1fr;">
+        <div>
+          <label>Total Wedding Budget ($)</label>
+          <input type="number" id="totalBudgetInput" min="0" step="100">
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Budget Breakdown</h2>
+      <p class="sub">Planned = what you budgeted. Actual = quoted/real cost. Paid = paid so far. Edit any cell directly.</p>
+      <div class="table-scroll">
+        <table class="budget-table">
+          <thead>
+            <tr><th>Category</th><th>Planned</th><th>Actual</th><th>Paid</th><th>Owed</th><th>Variance</th><th>Notes</th><th></th></tr>
+          </thead>
+          <tbody id="budgetTbody"></tbody>
+          <tfoot id="budgetTfoot"></tfoot>
+        </table>
+      </div>
+      <div class="inline-actions">
+        <button class="pill green" id="addBudgetRowBtn">+ Add Category</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHECKLIST -->
+  <section class="tab-panel" id="tab-checklist">
+    <div class="card">
+      <h2>Add a Task</h2>
+      <div class="fields-grid" id="taskAddFields" style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:10px;"></div>
+      <div class="inline-actions">
+        <button class="pill green" id="addTaskBtn">+ Add Task</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>To-Do List</h2>
+      <div class="filters-row">
+        <div>
+          <label>Category</label>
+          <select id="taskFilterCategory"><option value="">All Categories</option></select>
+        </div>
+        <div>
+          <label>Status</label>
+          <select id="taskFilterStatus">
+            <option value="">All</option>
+            <option value="open">Open</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+      </div>
+      <div id="taskList"></div>
+      <div class="empty-msg" id="taskEmptyMsg" style="display:none;">Nothing here — clear the filters, or add your first task above! ✨</div>
+    </div>
+  </section>
+
+  <!-- GUEST LIST -->
+  <section class="tab-panel" id="tab-guests">
+    <div class="card">
+      <h2>👪 Guest List</h2>
+      <p class="sub">Who's coming, which side they're on, and where RSVPs stand.</p>
+      <div class="stat-row" id="guestStats"></div>
+      <div class="crud-add" id="guestsAdd"></div>
+      <div id="guestsList"></div>
+      <div class="empty-msg" id="guestsEmptyMsg" style="display:none;">No guests yet — start building your list above! 💌</div>
+    </div>
+  </section>
+
+  <!-- CALENDAR -->
+  <section class="tab-panel" id="tab-calendar">
+    <div class="grid-2">
+      <div class="card">
+        <h2>Calendar</h2>
+        <p class="sub">🟤 dot = task due · 🔵 dot = appointment/event</p>
+        <div class="cal-nav">
+          <button id="prevMonth" aria-label="Previous month">‹</button>
+          <div class="month-label" id="monthLabel"></div>
+          <button id="nextMonth" aria-label="Next month">›</button>
+        </div>
+        <div class="weekdays"><div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div></div>
+        <div class="days-grid" id="daysGrid"></div>
+      </div>
+      <div class="card">
+        <h2 id="agendaTitle">Agenda</h2>
+        <p class="sub" id="agendaSub">Select a date to see what's happening and add appointments.</p>
+        <div id="agendaBody"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHOTOGRAPHERS -->
+  <section class="tab-panel" id="tab-photographers">
+    <div class="card">
+      <h2>📸 Photographers</h2>
+      <p class="sub">Track candidates and bookings across Scotland, Washington DC, and California.</p>
+      <div class="crud-add" id="photographersAdd"></div>
+      <div id="photographersList"></div>
+      <div class="empty-msg" id="photographersEmptyMsg" style="display:none;">No photographers yet — start with your favorite Scotland, DC, or California pick above! 📸</div>
+    </div>
+  </section>
+
+  <!-- DRESS -->
+  <section class="tab-panel" id="tab-dress">
+    <div class="card">
+      <h2>👗 Dress Shopping</h2>
+      <p class="sub">Boutique appointments, dresses tried, and where things stand.</p>
+      <div class="crud-add" id="dressAdd"></div>
+      <div id="dressList"></div>
+      <div class="empty-msg" id="dressEmptyMsg" style="display:none;">No appointments yet — time to go say yes to the dress! 👗</div>
+    </div>
+  </section>
+
+  <!-- TUX -->
+  <section class="tab-panel" id="tab-tux">
+    <div class="card">
+      <h2>🤵 Tux &amp; Suits</h2>
+      <p class="sub">Rental or purchase appointments for the groom and wedding party.</p>
+      <div class="crud-add" id="tuxAdd"></div>
+      <div id="tuxList"></div>
+      <div class="empty-msg" id="tuxEmptyMsg" style="display:none;">No fittings yet — time to book a tux appointment! 🤵</div>
+    </div>
+  </section>
+
+  <!-- VENUE & CATERING -->
+  <section class="tab-panel" id="tab-venue">
+    <div class="card">
+      <h2>🍽️ Venue &amp; Catering</h2>
+      <p class="sub">Reception venues and caterers around the DMV (DC / Maryland / Virginia).</p>
+      <div class="crud-add" id="venueAdd"></div>
+      <div id="venueList"></div>
+      <div class="empty-msg" id="venueEmptyMsg" style="display:none;">Nothing yet — add a DMV venue or caterer to start comparing! 🍽️</div>
+    </div>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'wedding-planner-data-v1';
+
+  const CHECKLIST_CATEGORIES = ['Photography','Attire','Venue','Catering','Budget','Guests','Décor & Flowers','Music','Stationery','Legal','Beauty','Transportation','Other'];
+  const PRIORITIES = ['Low','Medium','High'];
+  const PHOTOGRAPHER_LOCATIONS = ['Scotland','Washington DC','California','Other'];
+  const VENDOR_STATUS = ['Researching','Contacted','Tour/Consult Scheduled','Quote Received','Booked','Not Selected'];
+  const DRESS_STATUS = ['Researching','Appointment Booked','Tried On','Ordered','In Alterations','Ready','Not Selected'];
+  const TUX_STATUS = ['Researching','Appointment Booked','Measured','Ordered','In Alterations','Ready','Returned','Not Selected'];
+  const VENUE_TYPES = ['Venue','Caterer','Venue + Catering'];
+  const EVENT_CATEGORIES = ['Photography','Dress','Venue','Catering','Ceremony','Other'];
+  const GUEST_SIDES = ["Julie's Side", "Tommy's Side", 'Both'];
+  const GUEST_CATEGORIES = ['Family','Friends','Work','Other'];
+  const GUEST_RSVP = ['Invited','Pending','Attending','Declined'];
+  const YES_NO = ['No','Yes'];
+
+  const BUDGET_TEMPLATE = [
+    ['Venue', 0.20], ['Catering & Bar', 0.15], ['Photography & Video', 0.12],
+    ['Attire & Beauty', 0.08], ['Flowers & Décor', 0.08], ['Music & Entertainment', 0.08],
+    ['Invitations & Stationery', 0.03], ['Rings', 0.05], ['Transportation', 0.03],
+    ['Favors & Gifts', 0.03], ['Officiant & Ceremony', 0.02], ['Miscellaneous / Buffer', 0.13]
+  ];
+  const DEFAULT_TOTAL_BUDGET = 35000;
+
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+  function addDays(d, n){ const r = new Date(d); r.setDate(r.getDate()+n); return r; }
+  function todayKey(){ return dateKey(new Date()); }
+  function dateKey(d){
+    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+  function parseDateKey(key){ const [y,m,d]=key.split('-').map(Number); return new Date(y,m-1,d); }
+  function fmtNiceDate(key){
+    if(!key) return '';
+    return parseDateKey(key).toLocaleDateString(undefined,{weekday:'short', month:'short', day:'numeric', year:'numeric'});
+  }
+  function fmtMoney(n){
+    n = Number(n)||0;
+    return '$' + n.toLocaleString(undefined,{maximumFractionDigits:0});
+  }
+  function parseNum(v){ const n = parseFloat(v); return isFinite(n) ? n : 0; }
+  function escapeHtml(s){
+    return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function optionsHtml(options, selected){
+    return options.map(o => `<option value="${escapeHtml(o)}"${o===selected?' selected':''}>${escapeHtml(o)}</option>`).join('');
+  }
+  function statusClass(status){
+    if(status === 'Booked' || status === 'Ready' || status === 'Ordered' || status === 'Attending') return 'good';
+    if(status === 'Not Selected' || status === 'Rejected' || status === 'Declined') return 'danger';
+    return 'warn';
+  }
+
+  function defaultWeddingDateKey(){ return dateKey(addDays(new Date(), 380)); }
+
+  function defaultData(){
+    const today = new Date();
+    const budget = BUDGET_TEMPLATE.map(([category, pct]) => ({
+      id: uid(), category, planned: Math.round(DEFAULT_TOTAL_BUDGET * pct), actual: 0, paid: 0, notes: ''
+    }));
+    const tasks = [
+      ['Set overall wedding budget', 'Budget', 7, 'High'],
+      ['Research photographers in Scotland, DC & California', 'Photography', 30, 'High'],
+      ['Draft guest list', 'Guests', 30, 'Medium'],
+      ['Tour DMV venues & get catering quotes', 'Venue', 45, 'High'],
+      ['Start dress shopping — book boutique appointments', 'Attire', 45, 'Medium'],
+      ['Book venue & catering (DMV)', 'Venue', 90, 'High'],
+      ['Book wedding photographer', 'Photography', 100, 'High'],
+      ['Say yes to the dress', 'Attire', 120, 'Medium']
+    ].map(([title, category, offset, priority]) => ({
+      id: uid(), title, category, dueDate: dateKey(addDays(today, offset)), priority, done: false, notes: ''
+    }));
+    return {
+      settings: { partner1: 'Julie', partner2: 'Tommy', weddingDate: defaultWeddingDateKey(), totalBudget: DEFAULT_TOTAL_BUDGET },
+      budget, tasks, events: [], photographers: [], dress: [], tux: [], venues: [], guests: [],
+      meta: { lastEditedBy: '', lastEditedAt: 0 }
+    };
+  }
+
+  function normalizeData(parsed){
+    const d = defaultData();
+    return Object.assign(d, parsed, {
+      settings: Object.assign(d.settings, parsed.settings || {}),
+      budget: Array.isArray(parsed.budget) ? parsed.budget : d.budget,
+      tasks: Array.isArray(parsed.tasks) ? parsed.tasks : d.tasks,
+      events: Array.isArray(parsed.events) ? parsed.events : [],
+      photographers: Array.isArray(parsed.photographers) ? parsed.photographers : [],
+      dress: Array.isArray(parsed.dress) ? parsed.dress : [],
+      tux: Array.isArray(parsed.tux) ? parsed.tux : [],
+      venues: Array.isArray(parsed.venues) ? parsed.venues : [],
+      guests: Array.isArray(parsed.guests) ? parsed.guests : []
+    });
+  }
+
+  let data = load();
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return defaultData();
+      return normalizeData(JSON.parse(raw));
+    }catch(e){ return defaultData(); }
+  }
+  function save(){
+    if(!applyingRemoteUpdate){
+      data.meta = { lastEditedBy: getWhoAmI(), lastEditedAt: Date.now() };
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    renderSyncInfo();
+    if(!applyingRemoteUpdate) pushSharedPlan();
+  }
+
+  // ---------- Live sync (Firebase Firestore) ----------
+  // To turn this on: create a free Firebase project, enable Firestore, and
+  // paste your project's config below in place of the REPLACE_ME values.
+  const firebaseConfig = {
+    apiKey: "REPLACE_ME",
+    authDomain: "REPLACE_ME.firebaseapp.com",
+    projectId: "REPLACE_ME",
+    storageBucket: "REPLACE_ME.appspot.com",
+    messagingSenderId: "REPLACE_ME",
+    appId: "REPLACE_ME"
+  };
+  const WHOAMI_KEY = 'wedding-planner-whoami';
+  let db = null;
+  let sharedDocRef = null;
+  let firestoreReady = false;
+  let applyingRemoteUpdate = false;
+
+  const syncStatusEl = document.getElementById('syncStatus');
+  const lastUpdatedLine = document.getElementById('lastUpdatedLine');
+  const whoAmISelect = document.getElementById('whoAmI');
+
+  function getWhoAmI(){ return whoAmISelect.value || 'Guest'; }
+  function renderWhoAmIOptions(){
+    const names = [data.settings.partner1, data.settings.partner2, 'Mahlet', 'Guest']
+      .map(n => (n || '').trim()).filter((n, i, arr) => n && arr.indexOf(n) === i);
+    const saved = localStorage.getItem(WHOAMI_KEY) || '';
+    whoAmISelect.innerHTML = optionsHtml(names, names.includes(saved) ? saved : names[0]);
+  }
+  whoAmISelect.addEventListener('change', () => {
+    localStorage.setItem(WHOAMI_KEY, whoAmISelect.value);
+  });
+
+  function relativeTime(ts){
+    if(!ts) return '';
+    const diffSec = Math.round((Date.now() - ts) / 1000);
+    if(diffSec < 60) return 'just now';
+    const diffMin = Math.round(diffSec / 60);
+    if(diffMin < 60) return `${diffMin} minute${diffMin===1?'':'s'} ago`;
+    const diffHr = Math.round(diffMin / 60);
+    if(diffHr < 24) return `${diffHr} hour${diffHr===1?'':'s'} ago`;
+    const diffDay = Math.round(diffHr / 24);
+    return `${diffDay} day${diffDay===1?'':'s'} ago`;
+  }
+  function renderSyncInfo(){
+    const meta = data.meta || {};
+    lastUpdatedLine.textContent = meta.lastEditedBy
+      ? `Last updated by ${meta.lastEditedBy} · ${relativeTime(meta.lastEditedAt)}`
+      : 'No edits yet.';
+  }
+
+  function setSyncStatus(text, mode){
+    syncStatusEl.textContent = text;
+    syncStatusEl.className = 'hint sync-' + (mode || 'off');
+  }
+
+  function pushSharedPlan(){
+    if(!firestoreReady) return;
+    sharedDocRef.set(Object.assign({}, data, { updatedAt: firebase.firestore.FieldValue.serverTimestamp() }))
+      .then(() => setSyncStatus('🔄 Synced — everyone on the list sees this plan.', 'ok'))
+      .catch(() => setSyncStatus('⚠️ Could not sync your latest change — check your connection.', 'warn'));
+  }
+
+  function handleRemoteSnapshot(doc){
+    setSyncStatus('🔄 Synced — everyone on the list sees this plan.', 'ok');
+    if(!doc.exists) return;
+    const remote = Object.assign({}, doc.data());
+    delete remote.updatedAt;
+    applyingRemoteUpdate = true;
+    data = normalizeData(remote);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    renderAll();
+    applyingRemoteUpdate = false;
+  }
+
+  function initFirebase(){
+    if(!firebaseConfig.apiKey || firebaseConfig.apiKey === 'REPLACE_ME'){
+      setSyncStatus('📴 Live sync isn\'t set up yet — this plan is local to this device only.', 'off');
+      return;
+    }
+    try{
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      db.enablePersistence().catch(() => {});
+      sharedDocRef = db.collection('wedding-planner').doc('shared-plan');
+      firestoreReady = true;
+      setSyncStatus('🔄 Connecting…', 'off');
+      sharedDocRef.get().then(doc => {
+        if(!doc.exists){
+          pushSharedPlan();
+        }
+      }).catch(() => {}).finally(() => {
+        sharedDocRef.onSnapshot(handleRemoteSnapshot, () => {
+          setSyncStatus('⚠️ Sync connection lost — showing your last known plan.', 'warn');
+        });
+      });
+    }catch(e){
+      setSyncStatus('⚠️ Live sync failed to start — this plan is local to this device only.', 'warn');
+    }
+  }
+
+  const toast = document.getElementById('toast');
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+  function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+  const CONFETTI_EMOJI = ['💍','💐','🎉','💕','✨','🥂','👧🏽','👦🏽','👰🏻‍♀️','🤵🏻'];
+  function launchConfetti(){
+    for(let i=0;i<26;i++){
+      const span = document.createElement('span');
+      span.className = 'confetti-piece';
+      span.textContent = pickRandom(CONFETTI_EMOJI);
+      span.style.left = Math.random()*100 + 'vw';
+      span.style.animationDuration = (2 + Math.random()*1.5) + 's';
+      document.body.appendChild(span);
+      setTimeout(() => span.remove(), 3800);
+    }
+  }
+
+  const TASK_DONE_MESSAGES = ['Nailed it! 🎉','Boom, done! ✨','One step closer to "I do"! 💍','Crushing this checklist! 💪','Look at you go! 🥂'];
+  const BOOKED_MESSAGES = ['Booked! 🎉 One less thing to worry about.','It\'s official — booked! 💐','Yes! Locked that one in. ✨','Woohoo, booked! 🥂'];
+  const GUEST_ATTENDING_MESSAGES = ['They\'re coming! 🎉','One more seat filled! 💌','Yay, RSVP\'d yes! ✨','The guest list grows! 🥂'];
+  const WELCOME_MESSAGES = ['Welcome back! 👰🏻‍♀️🤵🏻🎉','So happy you\'re here! 👰🏻‍♀️🤵🏻💕','Let\'s keep planning! 👧🏽👦🏽✨','Your flower girl and ring bearer say hi! 👧🏽👦🏽'];
+
+  // ---------- Tabs ----------
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabPanels = document.querySelectorAll('.tab-panel');
+  function activateTab(name){
+    tabButtons.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    tabPanels.forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+    localStorage.setItem('wedding-planner-last-tab', name);
+  }
+  tabButtons.forEach(b => b.addEventListener('click', () => activateTab(b.dataset.tab)));
+
+  // ---------- Dashboard ----------
+  const settingPartner1 = document.getElementById('settingPartner1');
+  const settingPartner2 = document.getElementById('settingPartner2');
+  const settingWeddingDate = document.getElementById('settingWeddingDate');
+
+  function loadSettingsUI(){
+    settingPartner1.value = data.settings.partner1;
+    settingPartner2.value = data.settings.partner2;
+    settingWeddingDate.value = data.settings.weddingDate;
+  }
+  [settingPartner1, settingPartner2].forEach((el, i) => {
+    el.addEventListener('input', () => {
+      data.settings[i === 0 ? 'partner1' : 'partner2'] = el.value;
+      save();
+      renderHeader();
+    });
+  });
+  settingWeddingDate.addEventListener('change', () => {
+    data.settings.weddingDate = settingWeddingDate.value;
+    save();
+    renderHeader();
+    renderCalendar();
+  });
+
+  function renderHeader(){
+    const h1 = document.querySelector('header h1');
+    const p1 = data.settings.partner1 || 'Partner One';
+    const p2 = data.settings.partner2 || 'Partner Two';
+    h1.textContent = `${p1} & ${p2}`;
+    document.getElementById('headerSub').textContent = `Let's plan the best day of your lives, ${p1} & ${p2}! 💕`;
+    renderWhoAmIOptions();
+
+    const countdownLine = document.getElementById('countdownLine');
+    if(!data.settings.weddingDate){
+      countdownLine.textContent = 'Set your wedding date above to start the countdown! ⏳';
+      return;
+    }
+    const wedding = parseDateKey(data.settings.weddingDate);
+    const today = parseDateKey(todayKey());
+    const diffDays = Math.round((wedding - today) / 86400000);
+    if(diffDays > 30){
+      countdownLine.textContent = `💍 ${diffDays} days until ${fmtNiceDate(data.settings.weddingDate)} — plenty of time to make it perfect!`;
+    } else if(diffDays > 7){
+      countdownLine.textContent = `✨ Only ${diffDays} days to go! The countdown is officially on.`;
+    } else if(diffDays > 1){
+      countdownLine.textContent = `🎉 ${diffDays} days left — it's so close you can almost smell the flowers!`;
+    } else if(diffDays === 1){
+      countdownLine.textContent = `🥂 Tomorrow's the day! Try to get some sleep tonight.`;
+    } else if(diffDays === 0){
+      countdownLine.textContent = `💍 Today is THE day — congratulations!! 🎉`;
+    } else {
+      countdownLine.textContent = `🎉 Happily married since ${fmtNiceDate(data.settings.weddingDate)}!`;
+    }
+  }
+
+  function computeBudgetTotals(){
+    return data.budget.reduce((acc, row) => {
+      acc.planned += parseNum(row.planned);
+      acc.actual += parseNum(row.actual);
+      acc.paid += parseNum(row.paid);
+      return acc;
+    }, {planned:0, actual:0, paid:0});
+  }
+
+  function renderDashboard(){
+    const totals = computeBudgetTotals();
+    const totalBudget = parseNum(data.settings.totalBudget);
+    const spentBasis = totals.actual || totals.planned;
+    const remaining = totalBudget - spentBasis;
+    const pct = totalBudget > 0 ? Math.min(100, Math.round((spentBasis / totalBudget) * 100)) : 0;
+
+    document.getElementById('dashBudgetStats').innerHTML = `
+      <div class="stat-box"><div class="num">${fmtMoney(totalBudget)}</div><div class="lbl">Total Budget</div></div>
+      <div class="stat-box"><div class="num">${fmtMoney(totals.actual)}</div><div class="lbl">Actual Cost</div></div>
+      <div class="stat-box"><div class="num">${fmtMoney(totals.paid)}</div><div class="lbl">Paid So Far</div></div>
+      <div class="stat-box"><div class="num">${fmtMoney(remaining)}</div><div class="lbl">Remaining</div></div>
+    `;
+    const bar = document.getElementById('dashBudgetBar');
+    bar.style.width = pct + '%';
+    bar.classList.toggle('over', spentBasis > totalBudget);
+    document.getElementById('dashBudgetNote').textContent =
+      totals.actual > 0
+        ? `${pct}% of your total budget spent (based on actual costs).`
+        : `${pct}% of your total budget allocated so far (based on planned amounts — add actual costs as you book).`;
+
+    const doneCount = data.tasks.filter(t => t.done).length;
+    const totalCount = data.tasks.length;
+    const taskPct = totalCount ? Math.round((doneCount/totalCount)*100) : 0;
+    document.getElementById('dashTaskStats').innerHTML = `
+      <div class="stat-box"><div class="num">${doneCount}/${totalCount}</div><div class="lbl">Tasks Done</div></div>
+      <div class="stat-box"><div class="num">${taskPct}%</div><div class="lbl">Complete</div></div>
+    `;
+    document.getElementById('dashTaskBar').style.width = taskPct + '%';
+    document.getElementById('dashCelebrateBanner').innerHTML = (totalCount && taskPct === 100)
+      ? '<div class="celebrate-banner">🏆 Checklist complete! You two are absolute wedding-planning legends.</div>'
+      : '';
+
+    const upcomingItems = [];
+    data.tasks.filter(t => !t.done && t.dueDate).forEach(t => upcomingItems.push({date:t.dueDate, label:t.title, tag:t.category, kind:'task'}));
+    data.events.forEach(e => upcomingItems.push({date:e.date, label:e.title, tag:e.category, kind:'event'}));
+    const todayK = todayKey();
+    const upcoming = upcomingItems.filter(i => i.date >= todayK).sort((a,b) => a.date.localeCompare(b.date)).slice(0,5);
+    const dashUpcoming = document.getElementById('dashUpcoming');
+    if(!upcoming.length){
+      dashUpcoming.innerHTML = '<div class="empty-msg">All clear for now — enjoy the calm before the confetti! ✨</div>';
+    } else {
+      dashUpcoming.innerHTML = upcoming.map(i => `
+        <div class="agenda-row">
+          <div>
+            <div style="font-weight:800; font-size:0.85rem;">${i.kind === 'task' ? '✅' : '📌'} ${escapeHtml(i.label)}</div>
+            <div style="color:var(--muted); font-size:0.78rem;">${fmtNiceDate(i.date)}${i.tag ? ' · ' + escapeHtml(i.tag) : ''}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function vendorSummaryRow(icon, label, count, goodCount, goodLabel){
+      return `<div class="agenda-row"><div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+        <div style="font-weight:800; font-size:0.88rem;">${icon} ${escapeHtml(label)}</div>
+        <div><span class="badge good">${goodCount} ${goodLabel||'booked'}</span> <span class="badge muted">${count} total</span></div>
+      </div></div>`;
+    }
+    const byLoc = loc => data.photographers.filter(p => p.location === loc);
+    const vendorHtml = [
+      ...PHOTOGRAPHER_LOCATIONS.slice(0,3).map(loc => vendorSummaryRow('📸', 'Photographer — ' + loc, byLoc(loc).length, byLoc(loc).filter(p=>p.status==='Booked').length)),
+      vendorSummaryRow('👗', 'Dress', data.dress.length, data.dress.filter(d=>d.status==='Ordered'||d.status==='Ready').length),
+      vendorSummaryRow('🤵', 'Tux', data.tux.length, data.tux.filter(t=>t.status==='Ordered'||t.status==='Ready').length),
+      vendorSummaryRow('🍽️', 'Venue & Catering', data.venues.length, data.venues.filter(v=>v.status==='Booked').length),
+      vendorSummaryRow('👪', 'Guest List', data.guests.length, data.guests.filter(g=>g.rsvp==='Attending').length, 'attending')
+    ].join('');
+    document.getElementById('dashVendorSummary').innerHTML = vendorHtml;
+  }
+
+  // ---------- Budget ----------
+  const totalBudgetInput = document.getElementById('totalBudgetInput');
+  totalBudgetInput.addEventListener('input', () => {
+    data.settings.totalBudget = parseNum(totalBudgetInput.value);
+    save();
+    renderDashboard();
+    renderBudgetTable();
+  });
+
+  function renderBudgetTable(){
+    totalBudgetInput.value = data.settings.totalBudget;
+    const tbody = document.getElementById('budgetTbody');
+    tbody.innerHTML = data.budget.map((row, idx) => {
+      const owed = parseNum(row.actual) - parseNum(row.paid);
+      const variance = parseNum(row.planned) - parseNum(row.actual);
+      const varClass = variance >= 0 ? 'variance-pos' : 'variance-neg';
+      const varText = (row.actual > 0) ? (variance >= 0 ? `${fmtMoney(variance)} under` : `${fmtMoney(Math.abs(variance))} over`) : '—';
+      return `
+        <tr data-idx="${idx}">
+          <td><input type="text" data-field="category" value="${escapeHtml(row.category)}"></td>
+          <td><input type="number" min="0" step="50" data-field="planned" value="${row.planned}"></td>
+          <td><input type="number" min="0" step="50" data-field="actual" value="${row.actual}"></td>
+          <td><input type="number" min="0" step="50" data-field="paid" value="${row.paid}"></td>
+          <td>${fmtMoney(owed)}</td>
+          <td class="${varClass}">${varText}</td>
+          <td><input type="text" data-field="notes" value="${escapeHtml(row.notes||'')}" placeholder="notes"></td>
+          <td><button class="del-btn" data-action="delete" title="Remove">✕</button></td>
+        </tr>
+      `;
+    }).join('');
+
+    const totals = computeBudgetTotals();
+    const totalOwed = totals.actual - totals.paid;
+    const totalVariance = totals.planned - totals.actual;
+    document.getElementById('budgetTfoot').innerHTML = `
+      <tr>
+        <td>Total</td>
+        <td>${fmtMoney(totals.planned)}</td>
+        <td>${fmtMoney(totals.actual)}</td>
+        <td>${fmtMoney(totals.paid)}</td>
+        <td>${fmtMoney(totalOwed)}</td>
+        <td class="${totalVariance >= 0 ? 'variance-pos' : 'variance-neg'}">${totals.actual > 0 ? fmtMoney(Math.abs(totalVariance)) + (totalVariance>=0?' under':' over') : '—'}</td>
+        <td colspan="2"></td>
+      </tr>
+    `;
+  }
+
+  document.getElementById('budgetTbody').addEventListener('input', (e) => {
+    const field = e.target.dataset.field;
+    if(!field) return;
+    const idx = Number(e.target.closest('tr').dataset.idx);
+    const numeric = ['planned','actual','paid'].includes(field);
+    data.budget[idx][field] = numeric ? parseNum(e.target.value) : e.target.value;
+    save();
+    if(numeric){
+      renderDashboard();
+      // Update just owed/variance cells without full re-render to keep focus
+      const row = data.budget[idx];
+      const tr = e.target.closest('tr');
+      const owed = parseNum(row.actual) - parseNum(row.paid);
+      const variance = parseNum(row.planned) - parseNum(row.actual);
+      tr.children[4].textContent = fmtMoney(owed);
+      const varCell = tr.children[5];
+      varCell.className = variance >= 0 ? 'variance-pos' : 'variance-neg';
+      varCell.textContent = row.actual > 0 ? (variance >= 0 ? `${fmtMoney(variance)} under` : `${fmtMoney(Math.abs(variance))} over`) : '—';
+      const totals = computeBudgetTotals();
+      const tfoot = document.getElementById('budgetTfoot');
+      const totalOwed = totals.actual - totals.paid;
+      const totalVariance = totals.planned - totals.actual;
+      tfoot.querySelector('tr').innerHTML = `
+        <td>Total</td>
+        <td>${fmtMoney(totals.planned)}</td>
+        <td>${fmtMoney(totals.actual)}</td>
+        <td>${fmtMoney(totals.paid)}</td>
+        <td>${fmtMoney(totalOwed)}</td>
+        <td class="${totalVariance >= 0 ? 'variance-pos' : 'variance-neg'}">${totals.actual > 0 ? fmtMoney(Math.abs(totalVariance)) + (totalVariance>=0?' under':' over') : '—'}</td>
+        <td colspan="2"></td>
+      `;
+    }
+  });
+  document.getElementById('budgetTbody').addEventListener('click', (e) => {
+    if(e.target.dataset.action === 'delete'){
+      const idx = Number(e.target.closest('tr').dataset.idx);
+      data.budget.splice(idx,1);
+      save();
+      renderBudgetTable();
+      renderDashboard();
+    }
+  });
+  document.getElementById('addBudgetRowBtn').addEventListener('click', () => {
+    data.budget.push({id: uid(), category:'New Category', planned:0, actual:0, paid:0, notes:''});
+    save();
+    renderBudgetTable();
+    renderDashboard();
+  });
+
+  // ---------- Checklist ----------
+  const taskAddFields = document.getElementById('taskAddFields');
+  taskAddFields.innerHTML = `
+    <div><label>Task</label><input type="text" id="newTaskTitle" placeholder="e.g. Book hair &amp; makeup trial"></div>
+    <div><label>Category</label><select id="newTaskCategory">${optionsHtml(CHECKLIST_CATEGORIES)}</select></div>
+    <div><label>Due Date</label><input type="date" id="newTaskDue"></div>
+    <div><label>Priority</label><select id="newTaskPriority">${optionsHtml(PRIORITIES,'Medium')}</select></div>
+  `;
+  document.getElementById('addTaskBtn').addEventListener('click', () => {
+    const title = document.getElementById('newTaskTitle').value.trim();
+    if(!title){ showToast('Give the task a name first.'); return; }
+    data.tasks.push({
+      id: uid(), title,
+      category: document.getElementById('newTaskCategory').value,
+      dueDate: document.getElementById('newTaskDue').value,
+      priority: document.getElementById('newTaskPriority').value,
+      done: false, notes: ''
+    });
+    save();
+    document.getElementById('newTaskTitle').value = '';
+    document.getElementById('newTaskDue').value = '';
+    renderTaskFilterOptions();
+    renderTasks();
+    renderDashboard();
+    renderCalendar();
+    showToast('Task added ✅');
+  });
+
+  function renderTaskFilterOptions(){
+    const sel = document.getElementById('taskFilterCategory');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">All Categories</option>' + optionsHtml(CHECKLIST_CATEGORIES, current);
+    sel.value = current;
+  }
+  document.getElementById('taskFilterCategory').addEventListener('change', renderTasks);
+  document.getElementById('taskFilterStatus').addEventListener('change', renderTasks);
+
+  function renderTasks(){
+    const catFilter = document.getElementById('taskFilterCategory').value;
+    const statusFilter = document.getElementById('taskFilterStatus').value;
+    const todayK = todayKey();
+    let list = data.tasks.map((t, idx) => ({...t, idx}));
+    if(catFilter) list = list.filter(t => t.category === catFilter);
+    if(statusFilter === 'open') list = list.filter(t => !t.done);
+    if(statusFilter === 'done') list = list.filter(t => t.done);
+    list.sort((a,b) => (a.dueDate||'9999').localeCompare(b.dueDate||'9999'));
+
+    const container = document.getElementById('taskList');
+    document.getElementById('taskEmptyMsg').style.display = list.length ? 'none' : 'block';
+    container.innerHTML = list.map(t => {
+      const overdue = !t.done && t.dueDate && t.dueDate < todayK;
+      return `
+      <div class="task-row${t.done?' done':''}" data-idx="${t.idx}">
+        <input type="checkbox" data-action="toggle" ${t.done?'checked':''}>
+        <div class="task-fields">
+          <input type="text" class="task-title-input" data-field="title" value="${escapeHtml(t.title)}">
+          <select data-field="category">${optionsHtml(CHECKLIST_CATEGORIES, t.category)}</select>
+          <input type="date" data-field="dueDate" value="${t.dueDate||''}" class="${overdue?'due-overdue':''}">
+          <select data-field="priority">${optionsHtml(PRIORITIES, t.priority)}</select>
+        </div>
+        <button class="del-btn" data-action="delete" title="Remove">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('taskList').addEventListener('change', (e) => {
+    const row = e.target.closest('.task-row');
+    if(!row) return;
+    const idx = Number(row.dataset.idx);
+    if(e.target.dataset.action === 'toggle'){
+      data.tasks[idx].done = e.target.checked;
+      save();
+      renderTasks();
+      renderDashboard();
+      if(data.tasks[idx].done){
+        launchConfetti();
+        const allDone = data.tasks.length && data.tasks.every(t => t.done);
+        showToast(allDone ? '🏆 Every task done — you two are wedding-planning champions!' : pickRandom(TASK_DONE_MESSAGES));
+      } else {
+        showToast('Reopened — no worries, you\'ve got this.');
+      }
+      return;
+    }
+    const field = e.target.dataset.field;
+    if(field){
+      data.tasks[idx][field] = e.target.value;
+      save();
+      renderTasks();
+      renderDashboard();
+      renderCalendar();
+    }
+  });
+  document.getElementById('taskList').addEventListener('input', (e) => {
+    const field = e.target.dataset.field;
+    if(field !== 'title') return;
+    const idx = Number(e.target.closest('.task-row').dataset.idx);
+    data.tasks[idx].title = e.target.value;
+    save();
+  });
+  document.getElementById('taskList').addEventListener('click', (e) => {
+    if(e.target.dataset.action === 'delete'){
+      const idx = Number(e.target.closest('.task-row').dataset.idx);
+      data.tasks.splice(idx,1);
+      save();
+      renderTasks();
+      renderDashboard();
+      renderCalendar();
+    }
+  });
+
+  // ---------- Generic Vendor CRUD (Photographers / Dress / Venue) ----------
+  function buildCrud(section){
+    const addEl = document.getElementById(section.addElId);
+    const listEl = document.getElementById(section.listElId);
+    const emptyEl = document.getElementById(section.emptyElId);
+
+    function fieldInput(field, value){
+      const val = value === undefined ? (field.default || '') : value;
+      if(field.type === 'select') return `<select data-field="${field.key}">${optionsHtml(field.options, val)}</select>`;
+      if(field.type === 'textarea') return `<textarea data-field="${field.key}" placeholder="${field.placeholder||''}">${escapeHtml(val)}</textarea>`;
+      if(field.type === 'number') return `<input type="number" data-field="${field.key}" value="${val}" placeholder="${field.placeholder||''}">`;
+      if(field.type === 'date') return `<input type="date" data-field="${field.key}" value="${val}">`;
+      if(field.type === 'url') return `<input type="url" data-field="${field.key}" value="${escapeHtml(val)}" placeholder="${field.placeholder||'https://'}">`;
+      return `<input type="text" data-field="${field.key}" value="${escapeHtml(val)}" placeholder="${field.placeholder||''}">`;
+    }
+
+    function renderAddForm(){
+      addEl.innerHTML = `
+        <div class="fields-grid">
+          ${section.fields.map(f => `<div class="${f.full?'full':''}"><label>${escapeHtml(f.label)}</label>${fieldInput(f)}</div>`).join('')}
+        </div>
+        <div class="inline-actions"><button class="pill green" data-action="add-new">+ ${escapeHtml(section.addLabel)}</button></div>
+      `;
+    }
+    renderAddForm();
+
+    addEl.addEventListener('click', (e) => {
+      if(e.target.dataset.action !== 'add-new') return;
+      const entry = { id: uid() };
+      section.fields.forEach(f => {
+        const input = addEl.querySelector(`[data-field="${f.key}"]`);
+        entry[f.key] = f.type === 'number' ? parseNum(input.value) : input.value;
+      });
+      if(section.titleField && !entry[section.titleField]){
+        showToast('Please fill in a name first.');
+        return;
+      }
+      section.data.push(entry);
+      save();
+      renderAddForm();
+      renderList();
+      renderDashboard();
+      if(section.onChange) section.onChange();
+      showToast(section.addedToast || 'Added.');
+    });
+
+    function groupedEntries(){
+      if(!section.groupBy) return [{group:null, items: section.data.map((e,i)=>({entry:e, idx:i}))}];
+      const groups = section.groupOrder.map(g => ({group:g, items:[]}));
+      const extra = {group:'__other__', items:[]};
+      section.data.forEach((entry, idx) => {
+        const g = groups.find(g => g.group === entry[section.groupBy]);
+        if(g) g.items.push({entry, idx});
+        else extra.items.push({entry, idx});
+      });
+      const all = groups.filter(g => g.items.length || true);
+      if(extra.items.length) all.push(extra);
+      return all;
+    }
+
+    function renderList(){
+      const groups = groupedEntries();
+      const totalCount = section.data.length;
+      emptyEl.style.display = totalCount ? 'none' : 'block';
+      listEl.innerHTML = groups.map(g => {
+        if(!g.items.length && section.groupBy) return `<div class="crud-group-title">${section.groupIcon||''} ${escapeHtml(g.group)}</div><div class="empty-msg">${section.groupEmptyText || 'Nothing here yet.'}</div>`;
+        const header = section.groupBy ? `<div class="crud-group-title">${section.groupIcon||''} ${escapeHtml(g.group === '__other__' ? 'Other' : g.group)}</div>` : '';
+        const cards = g.items.map(({entry, idx}) => {
+          const title = entry[section.titleField] || section.defaultTitle;
+          const status = section.statusField ? entry[section.statusField] : null;
+          return `
+            <div class="crud-card" data-idx="${idx}">
+              <div class="crud-card-head">
+                <input type="text" class="title-input" data-field="${section.titleField}" value="${escapeHtml(entry[section.titleField]||'')}" placeholder="${escapeHtml(section.defaultTitle)}">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  ${status ? `<span class="badge ${statusClass(status)}">${escapeHtml(status)}</span>` : ''}
+                  <button class="del-btn" data-action="delete" title="Remove">✕</button>
+                </div>
+              </div>
+              <div class="crud-card-fields">
+                ${section.fields.filter(f => f.key !== section.titleField).map(f => `
+                  <div class="field-wrap ${f.full?'full':''}">
+                    <label>${escapeHtml(f.label)}</label>
+                    ${fieldInput(f, entry[f.key])}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }).join('');
+        return header + cards;
+      }).join('');
+    }
+    renderList();
+
+    listEl.addEventListener('input', (e) => {
+      const field = e.target.dataset.field;
+      if(!field || e.target.tagName === 'SELECT') return;
+      const idx = Number(e.target.closest('.crud-card').dataset.idx);
+      const fieldDef = section.fields.find(f => f.key === field);
+      section.data[idx][field] = fieldDef && fieldDef.type === 'number' ? parseNum(e.target.value) : e.target.value;
+      save();
+      if(field === section.statusField || field === section.groupBy){
+        renderList();
+      }
+      renderDashboard();
+      if(section.onChange) section.onChange();
+    });
+    listEl.addEventListener('change', (e) => {
+      if(e.target.tagName !== 'SELECT') return;
+      const idx = Number(e.target.closest('.crud-card').dataset.idx);
+      const field = e.target.dataset.field;
+      const newValue = e.target.value;
+      section.data[idx][field] = newValue;
+      save();
+      renderList();
+      renderDashboard();
+      if(section.onChange) section.onChange();
+      if(field === section.statusField && newValue === 'Attending'){
+        launchConfetti();
+        showToast(pickRandom(GUEST_ATTENDING_MESSAGES));
+      } else if(field === section.statusField && ['Booked','Ready','Ordered'].includes(newValue)){
+        launchConfetti();
+        showToast(pickRandom(BOOKED_MESSAGES));
+      }
+    });
+    listEl.addEventListener('click', (e) => {
+      if(e.target.dataset.action === 'delete'){
+        const idx = Number(e.target.closest('.crud-card').dataset.idx);
+        if(confirm('Remove this entry?')){
+          section.data.splice(idx,1);
+          save();
+          renderList();
+          renderDashboard();
+          if(section.onChange) section.onChange();
+        }
+      }
+    });
+
+    return { renderList, renderAddForm, setData: (arr) => { section.data = arr; }, refresh: () => { if(section.onChange) section.onChange(); } };
+  }
+
+  const photographerSection = buildCrud({
+    addElId: 'photographersAdd', listElId: 'photographersList', emptyElId: 'photographersEmptyMsg',
+    data: data.photographers, titleField: 'name', defaultTitle: 'New Photographer',
+    statusField: 'status', groupBy: 'location', groupOrder: PHOTOGRAPHER_LOCATIONS.slice(0,3), groupIcon: '📍',
+    groupEmptyText: 'No candidates yet — go find someone amazing! 🌟',
+    addLabel: 'Add Photographer', addedToast: 'Photographer added 📸',
+    fields: [
+      {key:'name', label:'Photographer / Studio', type:'text', placeholder:'e.g. Highland Light Photography'},
+      {key:'location', label:'Location', type:'select', options: PHOTOGRAPHER_LOCATIONS, default: 'Scotland'},
+      {key:'contact', label:'Phone / Email', type:'text', placeholder:'name@studio.com'},
+      {key:'price', label:'Quoted Price ($)', type:'number'},
+      {key:'status', label:'Status', type:'select', options: VENDOR_STATUS, default:'Researching'},
+      {key:'portfolio', label:'Portfolio Link', type:'url'},
+      {key:'notes', label:'Notes', type:'textarea', full:true, placeholder:'Package details, availability, style…'}
+    ]
+  });
+
+  const dressSection = buildCrud({
+    addElId: 'dressAdd', listElId: 'dressList', emptyElId: 'dressEmptyMsg',
+    data: data.dress, titleField: 'boutique', defaultTitle: 'New Boutique',
+    statusField: 'status',
+    addLabel: 'Add Appointment', addedToast: 'Appointment added 👗',
+    fields: [
+      {key:'boutique', label:'Boutique / Store', type:'text', placeholder:'e.g. Something Blue Bridal'},
+      {key:'appointmentDate', label:'Appointment Date', type:'date'},
+      {key:'item', label:'Dress / Item', type:'text', placeholder:'Style name or description'},
+      {key:'price', label:'Price ($)', type:'number'},
+      {key:'status', label:'Status', type:'select', options: DRESS_STATUS, default:'Researching'},
+      {key:'notes', label:'Notes', type:'textarea', full:true, placeholder:'Alterations needed, sizing, favorites…'}
+    ]
+  });
+
+  const tuxSection = buildCrud({
+    addElId: 'tuxAdd', listElId: 'tuxList', emptyElId: 'tuxEmptyMsg',
+    data: data.tux, titleField: 'shop', defaultTitle: 'New Shop',
+    statusField: 'status',
+    addLabel: 'Add Fitting', addedToast: 'Fitting added 🤵',
+    fields: [
+      {key:'shop', label:'Tux Shop / Rental', type:'text', placeholder:'e.g. Men\'s Wearhouse'},
+      {key:'wearer', label:'Who\'s it for?', type:'text', placeholder:'e.g. Tommy (Groom), Best Man Sam'},
+      {key:'appointmentDate', label:'Fitting Date', type:'date'},
+      {key:'style', label:'Style / Color', type:'text', placeholder:'e.g. Charcoal grey, notch lapel'},
+      {key:'price', label:'Price ($)', type:'number'},
+      {key:'status', label:'Status', type:'select', options: TUX_STATUS, default:'Researching'},
+      {key:'notes', label:'Notes', type:'textarea', full:true, placeholder:'Measurements, pickup date, alterations…'}
+    ]
+  });
+
+  const venueSection = buildCrud({
+    addElId: 'venueAdd', listElId: 'venueList', emptyElId: 'venueEmptyMsg',
+    data: data.venues, titleField: 'name', defaultTitle: 'New Venue / Caterer',
+    statusField: 'status',
+    addLabel: 'Add Venue / Caterer', addedToast: 'Added to venue list 🍽️',
+    fields: [
+      {key:'name', label:'Venue / Caterer Name', type:'text', placeholder:'e.g. Old Town Alexandria Hall'},
+      {key:'type', label:'Type', type:'select', options: VENUE_TYPES, default:'Venue + Catering'},
+      {key:'location', label:'Location (DMV area)', type:'text', placeholder:'e.g. Arlington, VA'},
+      {key:'capacity', label:'Guest Capacity', type:'number'},
+      {key:'price', label:'Estimated Cost ($)', type:'number'},
+      {key:'cuisine', label:'Cuisine / Style', type:'text', placeholder:'e.g. Farm-to-table, buffet'},
+      {key:'status', label:'Status', type:'select', options: VENDOR_STATUS, default:'Researching'},
+      {key:'notes', label:'Notes', type:'textarea', full:true, placeholder:'Tour notes, minimums, availability…'}
+    ]
+  });
+
+  function renderGuestStats(){
+    const guests = data.guests;
+    const total = guests.length;
+    const attending = guests.filter(g => g.rsvp === 'Attending');
+    const declined = guests.filter(g => g.rsvp === 'Declined').length;
+    const pending = guests.filter(g => g.rsvp === 'Pending' || g.rsvp === 'Invited').length;
+    const headcount = attending.length + attending.filter(g => g.plusOne === 'Yes').length;
+    document.getElementById('guestStats').innerHTML = `
+      <div class="stat-box"><div class="num">${total}</div><div class="lbl">On the List</div></div>
+      <div class="stat-box"><div class="num">${attending.length}</div><div class="lbl">Attending</div></div>
+      <div class="stat-box"><div class="num">${pending}</div><div class="lbl">Awaiting RSVP</div></div>
+      <div class="stat-box"><div class="num">${headcount}</div><div class="lbl">Headcount (+1s)</div></div>
+    `;
+  }
+
+  const guestSection = buildCrud({
+    addElId: 'guestsAdd', listElId: 'guestsList', emptyElId: 'guestsEmptyMsg',
+    data: data.guests, titleField: 'name', defaultTitle: 'New Guest',
+    statusField: 'rsvp', groupBy: 'side', groupOrder: GUEST_SIDES, groupIcon: '👪',
+    groupEmptyText: 'No one here yet — add a guest above! 💌',
+    addLabel: 'Add Guest', addedToast: 'Guest added to the list 💌',
+    onChange: renderGuestStats,
+    fields: [
+      {key:'name', label:'Guest Name', type:'text', placeholder:'e.g. Aunt Carol'},
+      {key:'side', label:'Side', type:'select', options: GUEST_SIDES, default: 'Both'},
+      {key:'category', label:'Category', type:'select', options: GUEST_CATEGORIES, default: 'Friends'},
+      {key:'plusOne', label:'Plus One', type:'select', options: YES_NO, default: 'No'},
+      {key:'rsvp', label:'RSVP', type:'select', options: GUEST_RSVP, default: 'Invited'},
+      {key:'mealChoice', label:'Meal Choice', type:'text', placeholder:'e.g. Chicken, Fish, Vegetarian'},
+      {key:'notes', label:'Notes', type:'textarea', full:true, placeholder:'Dietary needs, hotel block, plus-one\'s name…'}
+    ]
+  });
+  renderGuestStats();
+
+  // ---------- Calendar ----------
+  let viewYear, viewMonth, selectedDateKey = null;
+  (function initCalendarView(){
+    const t = new Date();
+    viewYear = t.getFullYear();
+    viewMonth = t.getMonth();
+  })();
+
+  function fmtMonthLabel(y,m){ return new Date(y,m,1).toLocaleDateString(undefined,{month:'long', year:'numeric'}); }
+
+  function renderCalendar(){
+    document.getElementById('monthLabel').textContent = fmtMonthLabel(viewYear, viewMonth);
+    const grid = document.getElementById('daysGrid');
+    grid.innerHTML = '';
+    const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+    const numDays = new Date(viewYear, viewMonth+1, 0).getDate();
+    const todayK = todayKey();
+
+    for(let i=0;i<firstDay;i++){
+      const empty = document.createElement('div');
+      empty.className = 'day-cell empty';
+      grid.appendChild(empty);
+    }
+    for(let d=1; d<=numDays; d++){
+      const key = dateKey(new Date(viewYear, viewMonth, d));
+      const cell = document.createElement('div');
+      cell.className = 'day-cell' + (key < todayK ? ' past' : '') + (key === todayK ? ' today' : '') + (key === selectedDateKey ? ' selected' : '');
+      const hasTask = data.tasks.some(t => t.dueDate === key);
+      const hasEvent = data.events.some(e => e.date === key);
+      cell.innerHTML = `<span class="dnum">${d}</span><span class="day-dots">${hasTask?'<span class="dot task"></span>':''}${hasEvent?'<span class="dot event"></span>':''}</span>`;
+      cell.addEventListener('click', () => { selectedDateKey = key; renderCalendar(); renderAgenda(); });
+      grid.appendChild(cell);
+    }
+  }
+  document.getElementById('prevMonth').addEventListener('click', () => {
+    viewMonth--; if(viewMonth<0){viewMonth=11; viewYear--;} renderCalendar();
+  });
+  document.getElementById('nextMonth').addEventListener('click', () => {
+    viewMonth++; if(viewMonth>11){viewMonth=0; viewYear++;} renderCalendar();
+  });
+
+  function renderAgenda(){
+    const title = document.getElementById('agendaTitle');
+    const sub = document.getElementById('agendaSub');
+    const body = document.getElementById('agendaBody');
+    if(!selectedDateKey){
+      title.textContent = 'Agenda';
+      sub.textContent = 'Select a date to see what\'s happening and add appointments.';
+      body.innerHTML = '';
+      return;
+    }
+    title.textContent = fmtNiceDate(selectedDateKey);
+    sub.textContent = 'Tasks due and appointments for this day.';
+
+    const tasksToday = data.tasks.map((t,idx)=>({...t,idx})).filter(t => t.dueDate === selectedDateKey);
+    const eventsToday = data.events.map((e,idx)=>({...e,idx})).filter(e => e.date === selectedDateKey);
+
+    let html = '';
+    if(tasksToday.length){
+      html += tasksToday.map(t => `
+        <div class="agenda-row">
+          <input type="checkbox" data-kind="task" data-idx="${t.idx}" ${t.done?'checked':''} style="width:20px;height:20px;accent-color:var(--accent);">
+          <div><div style="font-weight:800; font-size:0.85rem; ${t.done?'text-decoration:line-through;color:var(--muted);':''}">✅ ${escapeHtml(t.title)}</div>
+          <div style="color:var(--muted); font-size:0.78rem;">${escapeHtml(t.category)} · ${escapeHtml(t.priority)} priority</div></div>
+        </div>`).join('');
+    }
+    if(eventsToday.length){
+      html += eventsToday.map(e => `
+        <div class="agenda-row">
+          <div style="flex:1;">
+            <div style="font-weight:800; font-size:0.85rem;">📌 ${escapeHtml(e.title)}</div>
+            <div style="color:var(--muted); font-size:0.78rem;">${escapeHtml(e.category)}${e.notes ? ' · ' + escapeHtml(e.notes) : ''}</div>
+          </div>
+          <button class="del-btn" data-kind="event-delete" data-idx="${e.idx}" title="Remove">✕</button>
+        </div>`).join('');
+    }
+    if(!tasksToday.length && !eventsToday.length){
+      html += '<div class="empty-msg">A free day! Add an appointment below, or just enjoy the breathing room. 🌸</div>';
+    }
+    html += `
+      <h3 style="font-size:0.9rem; margin:18px 0 8px;">Add an Appointment</h3>
+      <div class="fields-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div style="grid-column:1/-1;"><label>Title</label><input type="text" id="newEventTitle" placeholder="e.g. Dress fitting at Something Blue"></div>
+        <div><label>Category</label><select id="newEventCategory">${optionsHtml(EVENT_CATEGORIES)}</select></div>
+        <div><label>Notes</label><input type="text" id="newEventNotes" placeholder="optional"></div>
+      </div>
+      <div class="inline-actions"><button class="pill green" id="addEventBtn">+ Add Appointment</button></div>
+    `;
+    body.innerHTML = html;
+
+    body.querySelectorAll('[data-kind="task"]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const idx = Number(cb.dataset.idx);
+        data.tasks[idx].done = cb.checked;
+        save();
+        renderAgenda();
+        renderTasks();
+        renderDashboard();
+        if(cb.checked){
+          launchConfetti();
+          showToast(pickRandom(TASK_DONE_MESSAGES));
+        }
+      });
+    });
+    body.querySelectorAll('[data-kind="event-delete"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = Number(btn.dataset.idx);
+        data.events.splice(idx,1);
+        save();
+        renderAgenda();
+        renderCalendar();
+        renderDashboard();
+      });
+    });
+    const addEventBtn = document.getElementById('addEventBtn');
+    if(addEventBtn){
+      addEventBtn.addEventListener('click', () => {
+        const titleVal = document.getElementById('newEventTitle').value.trim();
+        if(!titleVal){ showToast('Give the appointment a title first.'); return; }
+        data.events.push({
+          id: uid(), date: selectedDateKey, title: titleVal,
+          category: document.getElementById('newEventCategory').value,
+          notes: document.getElementById('newEventNotes').value
+        });
+        save();
+        renderAgenda();
+        renderCalendar();
+        renderDashboard();
+        showToast('Appointment added 📌');
+      });
+    }
+  }
+
+  // ---------- Backup / Reset ----------
+  document.getElementById('exportDataBtn').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'wedding-planner-backup.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast('Backup downloaded 📥');
+  });
+  document.getElementById('importDataBtn').addEventListener('click', () => {
+    document.getElementById('importFileInput').click();
+  });
+  document.getElementById('importFileInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const parsed = JSON.parse(reader.result);
+        if(!confirm('Import this backup? It will replace all current data.')) return;
+        data = normalizeData(parsed);
+        save();
+        renderAll();
+        showToast('Backup imported ✅');
+      }catch(err){
+        showToast('That file could not be read as a backup.');
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+  document.getElementById('resetDataBtn').addEventListener('click', () => {
+    if(confirm('Reset all wedding planning data? This cannot be undone.')){
+      data = defaultData();
+      save();
+      renderAll();
+      showToast('Data reset.');
+    }
+  });
+  document.getElementById('downloadAppBtn').addEventListener('click', () => {
+    const html = document.documentElement.outerHTML;
+    const blob = new Blob(['<!DOCTYPE html>\n' + html], {type:'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'wedding-planner.html';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast('App saved — open it anywhere, no internet needed!');
+  });
+
+  // ---------- Install prompt ----------
+  const installStatus = document.getElementById('installStatus');
+  const installBtn = document.getElementById('installBtn');
+  let deferredInstallPrompt = null;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const isFileProtocol = location.protocol === 'file:';
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  if('serviceWorker' in navigator && !isFileProtocol){
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  }
+  function renderInstallStatus(){
+    if(isStandalone){
+      installStatus.textContent = 'Installed — you\'re running this as an app already. 💍';
+      installBtn.style.display = 'none';
+      return;
+    }
+    if(isFileProtocol){
+      installStatus.textContent = 'Opened as a local file — host this folder (e.g. Netlify/GitHub Pages) to install it as an app, or use "Save Offline Copy" instead.';
+      return;
+    }
+    if(deferredInstallPrompt){
+      installStatus.textContent = 'Ready to install — add it to your home screen or desktop like a real app.';
+      installBtn.style.display = 'inline-block';
+      return;
+    }
+    if(isIOS){
+      installStatus.textContent = 'Install on iOS: tap the Share icon, then "Add to Home Screen".';
+      return;
+    }
+    installStatus.textContent = 'Use your browser\'s "Install App" option (often in the address bar or menu) to add this to your device.';
+  }
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    renderInstallStatus();
+  });
+  installBtn.addEventListener('click', async () => {
+    if(!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    installBtn.style.display = 'none';
+    renderInstallStatus();
+  });
+  window.addEventListener('appinstalled', () => { showToast('Installed! 💍'); renderInstallStatus(); });
+  renderInstallStatus();
+
+  // ---------- Init ----------
+  function renderAll(){
+    loadSettingsUI();
+    renderHeader();
+    renderDashboard();
+    renderBudgetTable();
+    renderTaskFilterOptions();
+    renderTasks();
+    renderCalendar();
+    renderAgenda();
+    photographerSection.setData(data.photographers);
+    dressSection.setData(data.dress);
+    tuxSection.setData(data.tux);
+    venueSection.setData(data.venues);
+    guestSection.setData(data.guests);
+    photographerSection.renderAddForm();
+    dressSection.renderAddForm();
+    tuxSection.renderAddForm();
+    venueSection.renderAddForm();
+    guestSection.renderAddForm();
+    photographerSection.renderList();
+    dressSection.renderList();
+    tuxSection.renderList();
+    venueSection.renderList();
+    guestSection.renderList();
+    renderGuestStats();
+    renderSyncInfo();
+  }
+
+  renderAll();
+  activateTab(localStorage.getItem('wedding-planner-last-tab') || 'dashboard');
+  initFirebase();
+
+  setTimeout(() => {
+    launchConfetti();
+    showToast(pickRandom(WELCOME_MESSAGES));
+  }, 500);
+})();
+</script>
+</body>
+</html>
