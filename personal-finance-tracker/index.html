@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Bloom Budget</title>
+<meta name="theme-color" content="#c9a8f0">
+<meta name="description" content="Track spending, plan savings goals, and manage bills & loans with fun pastel visuals">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bloom Budget">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --lavender:#cbb2f0;
+    --lavender-soft:#e6d9fb;
+    --lavender-deep:#9c7fd6;
+    --pink:#ffb8d9;
+    --pink-soft:#ffe1ef;
+    --pink-deep:#ff85b8;
+    --yellow:#ffe38a;
+    --yellow-soft:#fff6d6;
+    --yellow-deep:#f6c945;
+    --mint:#b8f0d8;
+    --mint-deep:#5fcf9e;
+    --peach:#ffcdb0;
+    --peach-deep:#ff9a66;
+    --sky:#b8dcf0;
+    --sky-deep:#6fb3e0;
+    --ink:#4a3f66;
+    --muted:#8d81ab;
+    --bg:#faf6ff;
+    --panel:#ffffff;
+    --danger:#ff6f91;
+    --danger-deep:#e0446e;
+    --good:#5fcf9e;
+    --shadow: 0 10px 28px rgba(150, 120, 200, 0.16);
+    --shadow-sm: 0 4px 14px rgba(150, 120, 200, 0.12);
+    --radius: 22px;
+    --radius-sm: 14px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:'Nunito', system-ui, sans-serif;
+    background:
+      radial-gradient(circle at 8% 6%, var(--yellow-soft) 0%, transparent 38%),
+      radial-gradient(circle at 95% 12%, var(--pink-soft) 0%, transparent 40%),
+      radial-gradient(circle at 50% 100%, var(--lavender-soft) 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    padding-bottom:70px;
+  }
+  h1,h2,h3,h4{font-family:'Baloo 2', 'Nunito', sans-serif; margin:0;}
+  button{font-family:inherit;}
+  ::selection{background:var(--pink); color:#fff;}
+
+  header.app-header{
+    text-align:center;
+    padding:30px 16px 14px;
+    position:relative;
+  }
+  header.app-header h1{
+    font-size:clamp(1.7rem, 5vw, 2.4rem);
+    background:linear-gradient(90deg, var(--lavender-deep), var(--pink-deep), var(--yellow-deep));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    letter-spacing:0.5px;
+  }
+  header.app-header p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-weight:600;
+  }
+  .settings-btn{
+    position:absolute;
+    top:26px;
+    right:18px;
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    border:none;
+    background:var(--panel);
+    box-shadow:var(--shadow-sm);
+    font-size:1.3rem;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:transform .15s ease;
+  }
+  .settings-btn:hover{transform:rotate(25deg) scale(1.05);}
+
+  nav.tabs{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    flex-wrap:wrap;
+    padding:6px 16px 22px;
+    max-width:760px;
+    margin:0 auto;
+  }
+  nav.tabs button{
+    border:none;
+    background:var(--panel);
+    color:var(--muted);
+    padding:10px 18px;
+    border-radius:999px;
+    font-weight:800;
+    font-size:0.92rem;
+    cursor:pointer;
+    box-shadow:var(--shadow-sm);
+    transition:all .15s ease;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  nav.tabs button:hover{transform:translateY(-2px);}
+  nav.tabs button.active{
+    background:linear-gradient(120deg, var(--lavender), var(--pink));
+    color:#fff;
+    box-shadow:0 8px 18px rgba(200,140,210,0.35);
+  }
+
+  main{max-width:980px; margin:0 auto; padding:0 16px;}
+  .tab-section{display:none; animation:fadeIn .35s ease;}
+  .tab-section.active{display:block;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));
+    gap:14px;
+    margin-bottom:20px;
+  }
+  .stat-card{
+    border-radius:var(--radius);
+    padding:18px 20px;
+    box-shadow:var(--shadow);
+    color:#fff;
+    position:relative;
+    overflow:hidden;
+  }
+  .stat-card::after{
+    content:'';
+    position:absolute;
+    right:-20px; top:-20px;
+    width:90px; height:90px;
+    background:rgba(255,255,255,0.18);
+    border-radius:50%;
+  }
+  .stat-card .label{font-weight:700; opacity:0.9; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px;}
+  .stat-card .value{font-family:'Baloo 2'; font-size:1.7rem; margin-top:4px; font-weight:700;}
+  .stat-card .sub{font-size:0.8rem; margin-top:6px; opacity:0.92; font-weight:600;}
+  .stat-balance{background:linear-gradient(135deg, var(--lavender), var(--lavender-deep));}
+  .stat-income{background:linear-gradient(135deg, var(--mint), var(--mint-deep));}
+  .stat-expense{background:linear-gradient(135deg, var(--pink), var(--pink-deep));}
+  .stat-rate{background:linear-gradient(135deg, var(--yellow), var(--yellow-deep));}
+
+  .card{
+    background:var(--panel);
+    border-radius:var(--radius);
+    padding:20px;
+    box-shadow:var(--shadow);
+    margin-bottom:20px;
+  }
+  .card h2{font-size:1.2rem; margin-bottom:4px;}
+  .card .card-sub{color:var(--muted); font-size:0.85rem; font-weight:600; margin-bottom:14px;}
+  .card-row{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+
+  .btn{
+    border:none;
+    border-radius:999px;
+    padding:11px 20px;
+    font-weight:800;
+    cursor:pointer;
+    font-size:0.92rem;
+    transition:transform .12s ease, box-shadow .12s ease;
+    box-shadow:var(--shadow-sm);
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn:active{transform:translateY(0) scale(0.98);}
+  .btn-primary{background:linear-gradient(120deg, var(--lavender), var(--pink)); color:#fff;}
+  .btn-yellow{background:linear-gradient(120deg, var(--yellow), var(--peach)); color:#7a5a10;}
+  .btn-mint{background:linear-gradient(120deg, var(--mint), var(--sky)); color:#215f47;}
+  .btn-outline{background:#fff; color:var(--lavender-deep); border:2px solid var(--lavender-soft);}
+  .btn-danger{background:var(--pink-soft); color:var(--danger-deep);}
+  .btn-sm{padding:7px 14px; font-size:0.8rem;}
+  .btn-block{width:100%;}
+  .btn[disabled]{opacity:0.55; cursor:not-allowed; transform:none;}
+  .fab-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;}
+
+  form.form-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  form.form-grid .full{grid-column:1 / -1;}
+  label{font-size:0.82rem; font-weight:700; color:var(--muted); display:block; margin-bottom:5px;}
+  input, select, textarea{
+    width:100%;
+    padding:11px 13px;
+    border-radius:var(--radius-sm);
+    border:2px solid var(--lavender-soft);
+    background:#fbf9ff;
+    font-family:inherit;
+    font-size:0.95rem;
+    color:var(--ink);
+    outline:none;
+    transition:border-color .15s ease;
+  }
+  input:focus, select:focus, textarea:focus{border-color:var(--lavender-deep);}
+  .type-toggle{display:flex; gap:8px; grid-column:1 / -1;}
+  .type-toggle button{
+    flex:1;
+    padding:11px;
+    border-radius:var(--radius-sm);
+    border:2px solid var(--lavender-soft);
+    background:#fff;
+    font-weight:800;
+    cursor:pointer;
+    color:var(--muted);
+  }
+  .type-toggle button.active[data-type="income"]{background:linear-gradient(120deg, var(--mint), var(--sky)); color:#215f47; border-color:transparent;}
+  .type-toggle button.active[data-type="expense"]{background:linear-gradient(120deg, var(--pink), var(--pink-deep)); color:#fff; border-color:transparent;}
+
+  .tx-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px;}
+  .tx-item{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 14px;
+    background:#fbf9ff;
+    border-radius:var(--radius-sm);
+    border:1px solid var(--lavender-soft);
+  }
+  .tx-icon{
+    width:42px; height:42px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.2rem; flex-shrink:0;
+    background:var(--lavender-soft);
+  }
+  .tx-info{flex:1; min-width:0;}
+  .tx-info .cat{font-weight:800; font-size:0.92rem;}
+  .tx-info .meta{font-size:0.78rem; color:var(--muted); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .tx-amount{font-family:'Baloo 2'; font-weight:700; font-size:1.02rem; white-space:nowrap;}
+  .tx-amount.income{color:var(--mint-deep);}
+  .tx-amount.expense{color:var(--pink-deep);}
+  .tx-amount.transfer{color:var(--lavender-deep);}
+  .tx-del{
+    border:none; background:transparent; color:var(--muted); cursor:pointer;
+    font-size:1.1rem; padding:4px 8px; border-radius:50%;
+  }
+  .tx-del:hover{background:var(--pink-soft); color:var(--danger-deep);}
+  .empty-state{text-align:center; padding:36px 16px; color:var(--muted); font-weight:600;}
+  .empty-state .big{font-size:2.4rem; margin-bottom:8px;}
+
+  .filter-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
+  .filter-row select{width:auto; flex:1; min-width:140px;}
+
+  /* Donut chart */
+  .chart-flex{display:flex; gap:24px; flex-wrap:wrap; align-items:center;}
+  .donut{
+    width:180px; height:180px; border-radius:50%;
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+  }
+  .donut-hole{
+    width:64%; height:64%; background:var(--panel); border-radius:50%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,0.02);
+  }
+  .donut-hole .amt{font-family:'Baloo 2'; font-weight:700; font-size:1.15rem; color:var(--ink);}
+  .donut-hole .lbl{font-size:0.7rem; color:var(--muted); font-weight:700;}
+  .legend{list-style:none; margin:0; padding:0; flex:1; min-width:180px; display:flex; flex-direction:column; gap:8px;}
+  .legend li{display:flex; align-items:center; gap:8px; font-size:0.86rem; font-weight:700;}
+  .legend .dot{width:12px; height:12px; border-radius:50%; flex-shrink:0;}
+  .legend .pct{margin-left:auto; color:var(--muted); font-weight:800;}
+
+  /* Bar chart */
+  .barchart{display:flex; align-items:flex-end; gap:14px; height:180px; padding-top:10px; overflow-x:auto;}
+  .bar-group{display:flex; flex-direction:column; align-items:center; gap:6px; min-width:52px;}
+  .bar-pair{display:flex; align-items:flex-end; gap:4px; height:140px;}
+  .bar{width:16px; border-radius:8px 8px 3px 3px; transition:height .4s ease;}
+  .bar.bar-income{background:linear-gradient(180deg, var(--mint), var(--mint-deep));}
+  .bar.bar-expense{background:linear-gradient(180deg, var(--pink), var(--pink-deep));}
+  .bar-group .m-label{font-size:0.72rem; font-weight:800; color:var(--muted);}
+  .bar-legend{display:flex; gap:16px; margin-top:12px; font-size:0.8rem; font-weight:700; flex-wrap:wrap;}
+  .bar-legend span{display:flex; align-items:center; gap:6px;}
+  .bar-legend .dot{width:10px; height:10px; border-radius:50%;}
+
+  /* progress bars */
+  .progress-track{
+    width:100%; height:16px; border-radius:999px; background:var(--lavender-soft);
+    overflow:hidden; position:relative;
+  }
+  .progress-fill{
+    height:100%; border-radius:999px;
+    background:linear-gradient(90deg, var(--lavender), var(--pink));
+    transition:width .5s ease;
+  }
+  .progress-fill.loan{background:linear-gradient(90deg, var(--peach), var(--pink-deep));}
+
+  .badge{
+    display:inline-block; padding:3px 11px; border-radius:999px;
+    font-size:0.72rem; font-weight:800;
+  }
+  .badge-good{background:#defced; color:var(--mint-deep);}
+  .badge-warn{background:#ffe9d1; color:var(--peach-deep);}
+  .badge-behind{background:var(--pink-soft); color:var(--danger-deep);}
+  .badge-done{background:linear-gradient(120deg, var(--yellow), var(--peach)); color:#7a5a10;}
+
+  .goal-card, .bill-card{
+    background:#fbf9ff;
+    border:1px solid var(--lavender-soft);
+    border-radius:var(--radius);
+    padding:18px;
+    margin-bottom:14px;
+  }
+  .goal-head{display:flex; align-items:center; gap:12px; margin-bottom:10px;}
+  .goal-emoji{font-size:1.8rem;}
+  .goal-title{font-weight:800; font-size:1.05rem; flex:1;}
+  .goal-nums{display:flex; justify-content:space-between; font-size:0.85rem; font-weight:700; color:var(--muted); margin:8px 0 4px;}
+  .goal-meta-row{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; font-size:0.8rem;}
+  .goal-actions{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;}
+
+  .section-title{display:flex; align-items:center; gap:8px; margin:26px 0 10px;}
+  .section-title h3{font-size:1.05rem; color:var(--lavender-deep);}
+  .section-title .count{background:var(--lavender-soft); color:var(--lavender-deep); padding:2px 10px; border-radius:999px; font-size:0.75rem; font-weight:800;}
+
+  .bill-head{display:flex; align-items:center; gap:10px;}
+  .bill-amt{font-family:'Baloo 2'; font-weight:700; font-size:1.05rem; margin-left:auto;}
+  .due-chip{font-size:0.75rem; font-weight:800; padding:3px 10px; border-radius:999px; background:var(--yellow-soft); color:#8a6c10;}
+  .due-chip.overdue{background:var(--pink-soft); color:var(--danger-deep);}
+  .due-chip.paid{background:#defced; color:var(--mint-deep);}
+
+  .fun-fact{
+    display:flex; align-items:center; gap:14px;
+    background:linear-gradient(120deg, var(--lavender-soft), var(--pink-soft));
+    border-radius:var(--radius); padding:16px 18px; margin-bottom:12px;
+    font-weight:700; font-size:0.92rem;
+  }
+  .fun-fact .emoji{font-size:1.6rem;}
+
+  .rank-row{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+  .rank-row .name{width:150px; font-weight:800; font-size:0.85rem; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .rank-row .track{flex:1; height:12px; border-radius:999px; background:var(--lavender-soft); overflow:hidden;}
+  .rank-row .fill{height:100%; border-radius:999px;}
+  .rank-row .amt{width:74px; text-align:right; font-weight:800; font-size:0.82rem; flex-shrink:0;}
+
+  /* modal */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(74,63,102,0.35);
+    display:none; align-items:center; justify-content:center; padding:16px; z-index:100;
+    backdrop-filter:blur(2px);
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    background:var(--panel); border-radius:24px; padding:24px;
+    width:100%; max-width:480px; max-height:88vh; overflow-y:auto;
+    box-shadow:0 20px 60px rgba(90,60,120,0.3);
+    animation:popIn .25s ease;
+  }
+  @keyframes popIn{from{opacity:0; transform:scale(0.92) translateY(10px);} to{opacity:1; transform:scale(1) translateY(0);}}
+  .modal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+  .modal-head h2{font-size:1.3rem; color:var(--lavender-deep);}
+  .modal-close{border:none; background:var(--lavender-soft); width:34px; height:34px; border-radius:50%; font-size:1.1rem; cursor:pointer; color:var(--lavender-deep);}
+
+  .toast-wrap{
+    position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+    display:flex; flex-direction:column; gap:8px; z-index:200; align-items:center;
+    width:100%; max-width:420px; padding:0 12px;
+  }
+  .toast{
+    background:var(--ink); color:#fff; padding:12px 18px; border-radius:999px;
+    font-weight:700; font-size:0.88rem; box-shadow:var(--shadow);
+    animation:toastIn .3s ease, toastOut .3s ease 2.4s forwards;
+    display:flex; align-items:center; gap:8px; white-space:nowrap;
+  }
+  @keyframes toastIn{from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);}}
+  @keyframes toastOut{to{opacity:0; transform:translateY(-8px);}}
+
+  .confetti-piece{
+    position:fixed; top:-10px; border-radius:2px; pointer-events:none; z-index:300;
+    animation:fall linear forwards;
+  }
+  @keyframes fall{to{transform:translateY(105vh) rotate(540deg); opacity:0.2;}}
+
+  footer.app-footer{text-align:center; color:var(--muted); font-size:0.78rem; font-weight:600; padding:30px 16px 10px;}
+
+  @media (max-width:520px){
+    form.form-grid{grid-template-columns:1fr;}
+    .stat-card .value{font-size:1.4rem;}
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>🌸 Bloom Budget</h1>
+  <p>Grow your savings, one pastel step at a time</p>
+  <button class="settings-btn" id="settingsBtn" title="Settings" aria-label="Settings">⚙️</button>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="dashboard" class="active">🏡 Dashboard</button>
+  <button data-tab="transactions">🧾 Transactions</button>
+  <button data-tab="goals">🎯 Goals</button>
+  <button data-tab="bills">📅 Bills &amp; Loans</button>
+  <button data-tab="insights">✨ Insights</button>
+</nav>
+
+<main>
+
+  <!-- DASHBOARD -->
+  <section class="tab-section active" id="tab-dashboard">
+    <div class="grid" id="statCards"></div>
+
+    <div class="fab-row">
+      <button class="btn btn-primary" id="quickAddBtn">➕ Add Transaction</button>
+      <button class="btn btn-mint" id="quickGoalBtn">🎯 Contribute to a Goal</button>
+    </div>
+
+    <div id="dashFunFact"></div>
+
+    <div class="card">
+      <h2>📊 Spending by Category</h2>
+      <div class="card-sub" id="dashChartSub">This month</div>
+      <div class="chart-flex" id="dashDonut"></div>
+    </div>
+
+    <div class="card">
+      <h2>📈 Income vs. Expenses</h2>
+      <div class="card-sub">Last 6 months</div>
+      <div id="dashBar"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-row">
+        <h2>🕓 Recent Activity</h2>
+        <button class="btn btn-outline btn-sm" data-goto="transactions">See all</button>
+      </div>
+      <ul class="tx-list" id="recentTxList"></ul>
+    </div>
+  </section>
+
+  <!-- TRANSACTIONS -->
+  <section class="tab-section" id="tab-transactions">
+    <div class="fab-row">
+      <button class="btn btn-primary" id="addTxBtn2">➕ Add Transaction</button>
+    </div>
+    <div class="card">
+      <div class="filter-row">
+        <select id="filterType">
+          <option value="all">All types</option>
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+          <option value="goal_deposit">Goal deposit</option>
+          <option value="goal_withdraw">Goal withdrawal</option>
+        </select>
+        <select id="filterCategory"><option value="all">All categories</option></select>
+        <select id="filterMonth"><option value="all">All time</option></select>
+      </div>
+      <ul class="tx-list" id="fullTxList"></ul>
+    </div>
+  </section>
+
+  <!-- GOALS -->
+  <section class="tab-section" id="tab-goals">
+    <div class="fab-row">
+      <button class="btn btn-primary" id="addGoalBtn">➕ New Savings Goal</button>
+    </div>
+    <div id="goalsList"></div>
+  </section>
+
+  <!-- BILLS & LOANS -->
+  <section class="tab-section" id="tab-bills">
+    <div class="fab-row">
+      <button class="btn btn-yellow" id="addBillBtn">➕ Add Recurring Bill</button>
+      <button class="btn btn-mint" id="addLoanBtn">➕ Add Loan / Debt</button>
+    </div>
+
+    <div class="section-title"><h3>🗓️ Short-Term Bills</h3><span class="count" id="billsCount">0</span></div>
+    <div class="card" id="totalBillsCard" style="margin-bottom:14px;"></div>
+    <div id="billsList"></div>
+
+    <div class="section-title"><h3>🎓 Long-Term Debt (Student Loans &amp; More)</h3><span class="count" id="loansCount">0</span></div>
+    <div id="loansList"></div>
+  </section>
+
+  <!-- INSIGHTS -->
+  <section class="tab-section" id="tab-insights">
+    <div class="card">
+      <h2>🔥 Fun Facts About Your Habits</h2>
+      <div id="funFacts"></div>
+    </div>
+    <div class="card">
+      <h2>🏆 Category Leaderboard</h2>
+      <div class="card-sub">This month, ranked highest to lowest</div>
+      <div id="leaderboard"></div>
+    </div>
+    <div class="card">
+      <h2>🌙 This Month vs. Last Month</h2>
+      <div id="momCompare"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="app-footer">Made with 💜 · Your data stays only on this device</footer>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------------- Data & Constants ---------------- */
+
+const STORAGE_KEY = 'bloomBudgetData_v1';
+
+const EXPENSE_CATEGORIES = [
+  {key:'Rent', emoji:'🏠'},
+  {key:'WiFi', emoji:'📶'},
+  {key:'Utilities', emoji:'💡'},
+  {key:'Phone Bill', emoji:'📱'},
+  {key:'Subscriptions', emoji:'📺'},
+  {key:'Food', emoji:'🍔'},
+  {key:'Entertainment', emoji:'🎬'},
+  {key:'Shopping', emoji:'🛍️'},
+  {key:'Household Supplies', emoji:'🧺'},
+  {key:'Transportation', emoji:'🚗'},
+  {key:'Student Loan (Federal)', emoji:'🎓'},
+  {key:'Student Loan (Private)', emoji:'🏦'},
+  {key:'Other', emoji:'🔖'},
+];
+const INCOME_CATEGORIES = [
+  {key:'Salary', emoji:'💼'},
+  {key:'Freelance', emoji:'💻'},
+  {key:'Gift', emoji:'🎁'},
+  {key:'Refund', emoji:'↩️'},
+  {key:'Other Income', emoji:'💰'},
+];
+const CAT_EMOJI = {};
+EXPENSE_CATEGORIES.concat(INCOME_CATEGORIES).forEach(c => CAT_EMOJI[c.key] = c.emoji);
+CAT_EMOJI['Savings Goal'] = '🐷';
+
+const PALETTE = ['#cbb2f0','#ff9ac6','#ffd75e','#7fd6b8','#ff9a66','#7fc2e8','#c9a8f0','#ff85a6','#f6e17a','#5fcf9e','#ffb3c9','#a8c8f0'];
+
+const GOAL_EMOJIS = ['🎯','✈️','🏡','🚗','💍','🎓','🏖️','📱','🖥️','🎉','👶','🐶','💪','🛡️','🎸'];
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function fmtMoney(n){
+  const sign = n < 0 ? '-' : '';
+  return sign + '$' + Math.abs(n).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtMoneyShort(n){
+  return '$' + Math.round(n).toLocaleString();
+}
+function monthKey(dateStr){ return dateStr.slice(0,7); }
+function daysBetween(a, b){ return Math.round((b - a) / 86400000); }
+function addMonths(date, n){ const d = new Date(date); d.setMonth(d.getMonth()+n); return d; }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+let state = loadState();
+
+function defaultState(){
+  return { startingBalance: 0, transactions: [], goals: [], bills: [], loans: [] };
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    return Object.assign(defaultState(), parsed);
+  }catch(e){ return defaultState(); }
+}
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+/* ---------------- Derived / Computed Data ---------------- */
+
+function getGoalSaved(goalId){
+  return state.transactions
+    .filter(t => t.goalId === goalId)
+    .reduce((sum, t) => sum + (t.kind === 'goal_deposit' ? t.amount : -t.amount), 0);
+}
+
+function getBalance(){
+  let bal = Number(state.startingBalance) || 0;
+  state.transactions.forEach(t => {
+    if(t.kind === 'income') bal += t.amount;
+    else if(t.kind === 'expense') bal -= t.amount;
+    else if(t.kind === 'goal_deposit') bal -= t.amount;
+    else if(t.kind === 'goal_withdraw') bal += t.amount;
+  });
+  return bal;
+}
+
+function txInMonth(t, ym){ return monthKey(t.date) === ym; }
+function currentMonthKey(){ return monthKey(todayStr()); }
+
+function monthTotals(ym){
+  let income = 0, expense = 0;
+  state.transactions.forEach(t => {
+    if(!txInMonth(t, ym)) return;
+    if(t.kind === 'income') income += t.amount;
+    else if(t.kind === 'expense') expense += t.amount;
+  });
+  return {income, expense};
+}
+
+function categoryTotals(ym){
+  const totals = {};
+  state.transactions.forEach(t => {
+    if(t.kind !== 'expense') return;
+    if(ym && !txInMonth(t, ym)) return;
+    totals[t.category] = (totals[t.category] || 0) + t.amount;
+  });
+  return totals;
+}
+
+function lastNMonths(n){
+  const out = [];
+  const now = new Date();
+  for(let i = n - 1; i >= 0; i--){
+    const d = addMonths(now, -i);
+    out.push(d.toISOString().slice(0,7));
+  }
+  return out;
+}
+
+/* ---------------- Toasts & Confetti ---------------- */
+
+function toast(msg, emoji){
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<span>${emoji || '✨'}</span><span>${escapeHtml(msg)}</span>`;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 2800);
+}
+
+function confettiBurst(){
+  const colors = [PALETTE[0], PALETTE[1], PALETTE[2], PALETTE[3], PALETTE[4]];
+  for(let i = 0; i < 60; i++){
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    const size = 6 + Math.random() * 6;
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.width = size + 'px';
+    piece.style.height = (size * 0.4) + 'px';
+    piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+    piece.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+    piece.style.transform = `rotate(${Math.random()*360}deg)`;
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 4000);
+  }
+}
+
+/* ---------------- Modal helpers ---------------- */
+
+const overlay = document.getElementById('modalOverlay');
+const modalBox = document.getElementById('modalBox');
+
+function openModal(html){
+  modalBox.innerHTML = html;
+  overlay.classList.add('open');
+}
+function closeModal(){
+  overlay.classList.remove('open');
+  modalBox.innerHTML = '';
+}
+overlay.addEventListener('click', (e) => { if(e.target === overlay) closeModal(); });
+
+function categoryOptions(list){
+  return list.map(c => `<option value="${escapeHtml(c.key)}">${c.emoji} ${escapeHtml(c.key)}</option>`).join('');
+}
+
+/* ---------------- Add Transaction Modal ---------------- */
+
+function openTxModal(presetType){
+  const type = presetType || 'expense';
+  openModal(`
+    <div class="modal-head"><h2>➕ Add Transaction</h2><button class="modal-close" onclick="window.__bb.closeModal()">✕</button></div>
+    <form id="txForm" class="form-grid">
+      <div class="type-toggle">
+        <button type="button" data-type="income" class="${type==='income'?'active':''}">💰 Income</button>
+        <button type="button" data-type="expense" class="${type==='expense'?'active':''}">💸 Expense</button>
+      </div>
+      <div class="full">
+        <label>Category</label>
+        <select id="txCategory" required></select>
+      </div>
+      <div>
+        <label>Amount ($)</label>
+        <input type="number" id="txAmount" step="0.01" min="0.01" placeholder="0.00" required>
+      </div>
+      <div>
+        <label>Date</label>
+        <input type="date" id="txDate" value="${todayStr()}" required>
+      </div>
+      <div class="full">
+        <label>Note (optional)</label>
+        <input type="text" id="txNote" placeholder="e.g. Groceries at Trader Joe's">
+      </div>
+      <div class="full">
+        <button type="submit" class="btn btn-primary btn-block">Save Transaction</button>
+      </div>
+    </form>
+  `);
+  let currentType = type;
+  const catSelect = document.getElementById('txCategory');
+  function refreshCats(){
+    catSelect.innerHTML = categoryOptions(currentType === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES);
+  }
+  refreshCats();
+  modalBox.querySelectorAll('.type-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentType = btn.dataset.type;
+      modalBox.querySelectorAll('.type-toggle button').forEach(b => b.classList.toggle('active', b === btn));
+      refreshCats();
+    });
+  });
+  document.getElementById('txForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const amount = parseFloat(document.getElementById('txAmount').value);
+    if(!amount || amount <= 0) return;
+    const category = catSelect.value;
+    const date = document.getElementById('txDate').value || todayStr();
+    const note = document.getElementById('txNote').value.trim();
+    state.transactions.push({ id: uid(), kind: currentType, category, amount, date, note, ts: Date.now() });
+    saveState();
+    closeModal();
+    toast(`${currentType === 'income' ? 'Income' : 'Expense'} of ${fmtMoney(amount)} added`, currentType === 'income' ? '💰' : '💸');
+    renderAll();
+  });
+}
+
+/* ---------------- Goals ---------------- */
+
+function openGoalModal(){
+  openModal(`
+    <div class="modal-head"><h2>🎯 New Savings Goal</h2><button class="modal-close" onclick="window.__bb.closeModal()">✕</button></div>
+    <form id="goalForm" class="form-grid">
+      <div class="full">
+        <label>Goal name</label>
+        <input type="text" id="goalName" placeholder="e.g. Emergency Fund, Japan Trip" required>
+      </div>
+      <div class="full">
+        <label>Pick an icon</label>
+        <div id="emojiPicker" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+      </div>
+      <div>
+        <label>Target amount ($)</label>
+        <input type="number" id="goalTarget" step="0.01" min="1" required>
+      </div>
+      <div>
+        <label>Deadline</label>
+        <input type="date" id="goalDeadline" required>
+      </div>
+      <div class="full">
+        <label>Already saved (optional, $)</label>
+        <input type="number" id="goalStarting" step="0.01" min="0" value="0">
+      </div>
+      <div class="full">
+        <button type="submit" class="btn btn-primary btn-block">Create Goal</button>
+      </div>
+    </form>
+  `);
+  let chosenEmoji = GOAL_EMOJIS[0];
+  const picker = document.getElementById('emojiPicker');
+  GOAL_EMOJIS.forEach((em, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = em;
+    b.style.cssText = `font-size:1.3rem; width:42px; height:42px; border-radius:12px; border:2px solid var(--lavender-soft); background:${i===0?'var(--lavender-soft)':'#fff'}; cursor:pointer;`;
+    b.addEventListener('click', () => {
+      chosenEmoji = em;
+      Array.from(picker.children).forEach(c => c.style.background = '#fff');
+      b.style.background = 'var(--lavender-soft)';
+    });
+    picker.appendChild(b);
+  });
+  const deadlineInput = document.getElementById('goalDeadline');
+  const d = new Date(); d.setMonth(d.getMonth() + 6);
+  deadlineInput.value = d.toISOString().slice(0,10);
+
+  document.getElementById('goalForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('goalName').value.trim();
+    const target = parseFloat(document.getElementById('goalTarget').value);
+    const deadline = deadlineInput.value;
+    const starting = parseFloat(document.getElementById('goalStarting').value) || 0;
+    if(!name || !target) return;
+    const goalId = uid();
+    state.goals.push({ id: goalId, name, emoji: chosenEmoji, target, deadline, createdAt: todayStr() });
+    if(starting > 0){
+      state.transactions.push({ id: uid(), kind: 'goal_deposit', category: 'Savings Goal', amount: starting, date: todayStr(), note: `Starting balance for ${name}`, goalId, ts: Date.now() });
+    }
+    saveState();
+    closeModal();
+    toast(`Goal "${name}" created!`, chosenEmoji);
+    renderAll();
+  });
+}
+
+function openContributeModal(goalId, mode){
+  const goal = state.goals.find(g => g.id === goalId);
+  if(!goal) return;
+  const isDeposit = mode !== 'withdraw';
+  openModal(`
+    <div class="modal-head"><h2>${isDeposit ? '💸 Add Funds' : '🏧 Withdraw'} — ${goal.emoji} ${escapeHtml(goal.name)}</h2><button class="modal-close" onclick="window.__bb.closeModal()">✕</button></div>
+    <form id="contribForm" class="form-grid">
+      <div class="full">
+        <label>Amount ($)</label>
+        <input type="number" id="contribAmount" step="0.01" min="0.01" required autofocus>
+      </div>
+      <div class="full">
+        <label>Note (optional)</label>
+        <input type="text" id="contribNote" placeholder="e.g. Birthday money">
+      </div>
+      <div class="full">
+        <button type="submit" class="btn ${isDeposit ? 'btn-primary' : 'btn-danger'} btn-block">${isDeposit ? 'Add to Goal' : 'Withdraw from Goal'}</button>
+      </div>
+    </form>
+  `);
+  document.getElementById('contribForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const amount = parseFloat(document.getElementById('contribAmount').value);
+    if(!amount || amount <= 0) return;
+    const note = document.getElementById('contribNote').value.trim();
+    const saved = getGoalSaved(goalId);
+    if(!isDeposit && amount > saved){
+      alert("You can't withdraw more than what's saved in this goal.");
+      return;
+    }
+    state.transactions.push({ id: uid(), kind: isDeposit ? 'goal_deposit' : 'goal_withdraw', category: 'Savings Goal', amount, date: todayStr(), note, goalId, ts: Date.now() });
+    saveState();
+    closeModal();
+    const newSaved = getGoalSaved(goalId);
+    if(isDeposit && newSaved >= goal.target && saved < goal.target){
+      confettiBurst();
+      toast(`🎉 Goal "${goal.name}" complete!!`, '🎉');
+    } else {
+      toast(`${isDeposit ? 'Added' : 'Withdrew'} ${fmtMoney(amount)} ${isDeposit ? 'to' : 'from'} ${goal.name}`, goal.emoji);
+    }
+    renderAll();
+  });
+}
+
+function openGoalPicker(){
+  if(state.goals.length === 0){
+    openGoalModal();
+    return;
+  }
+  openModal(`
+    <div class="modal-head"><h2>🎯 Contribute to a Goal</h2><button class="modal-close" onclick="window.__bb.closeModal()">✕</button></div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      ${state.goals.map(g => `
+        <button class="btn btn-outline btn-block" style="justify-content:flex-start; text-align:left;" onclick="window.__bb.closeModal(); window.__bb.openContributeModal('${g.id}','deposit')">
+          ${g.emoji} ${escapeHtml(g.name)}
+        </button>
+      `).join('')}
+    </div>
+  `);
+}
+
+function deleteGoal(id){
+  const goal = state.goals.find(g => g.id === id);
+  if(!goal) return;
+  if(!confirm(`Delete goal "${goal.name}"? This will also remove its saved contribution history.`)) return;
+  state.goals = state.goals.filter(g => g.id !== id);
+  state.transactions = state.transactions.filter(t => t.goalId !== id);
+  saveState();
+  toast('Goal deleted', '🗑️');
+  renderAll();
+}
+
+/* ---------------- Bills ---------------- */
+
+function openBillModal(){
+  openModal(`
+    <div class="modal-head"><h2>📅 New Recurring Bill</h2><button class="modal-close" onclick="window.__bb.closeModal()">✕</button></div>
+    <form id="billForm" class="form-grid">
+      <div class="full">
+        <label>Bill name</label>
+        <input type="text" id="billName" placeholder="e.g. Netflix, Rent, Electric Co." required>
+      </div>
+      <div class="full">
+        <label>Category</label>
+        <select id="billCategory">${categoryOptions(EXPENSE_CATEGORIES)}</select>
+      </div>
+      <div>
+        <label>Amount ($)</label>
+        <input type="number" id="billAmount" step="0.01" min="0.01" required>
+      </div>
+      <div>
+        <label>Due day of month</label>
+        <input type="number" id="billDueDay" min="1" max="28" value="1" required>
+      </div>
+      <div class="full">
+        <button type="submit" class="btn btn-yellow btn-block">Add Bill</button>
+      </div>
+    </form>
+  `);
+  document.getElementById('billForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('billName').value.trim();
+    const category = document.getElementById('billCategory').value;
+    const amount = parseFloat(document.getElementById('billAmount').value);
+    const dueDay = parseInt(document.getElementById('billDueDay').value, 10);
+    if(!name || !amount || !dueDay) return;
+    state.bills.push({ id: uid(), name, category, amount, dueDay, lastPaid: null });
+    saveState();
+    closeModal();
+    toast(`Bill "${name}" added`, CAT_EMOJI[category] || '📅');
+    renderAll();
+  });
+}
+
+function nextDueDate(dueDay){
+  const now = new Date();
+  let due = new Date(now.getFullYear(), now.getMonth(), dueDay);
+  if(due < new Date(now.getFullYear(), now.getMonth(), now.getDate())) due = new Date(now.getFullYear(), now.getMonth()+1, dueDay);
+  return due;
+}
+
+function markBillPaid(id){
+  const bill = state.bills.find(b => b.id === id);
+  if(!bill) return;
+  const ym = currentMonthKey();
+  if(bill.lastPaid === ym) return;
+  state.transactions.push({ id: uid(), kind: 'expense', category: bill.category, amount: bill.amount, date: todayStr(), note: `Bill: ${bill.name}`, billId: id, ts: Date.now() });
+  bill.lastPaid = ym;
+  saveState();
+  toast(`Marked "${bill.name}" as paid`, '✅');
+  renderAll();
+}
+
+function undoBillPaid(id){
+  const bill = state.bills.find(b => b.id === id);
+  if(!bill) return;
+  const ym = currentMonthKey();
+  const idx = [...state.transactions].reverse().findIndex(t => t.billId === id && monthKey(t.date) === ym);
+  if(idx === -1) return;
+  const realIdx = state.transactions.length - 1 - idx;
+  state.transactions.splice(realIdx, 1);
+  bill.lastPaid = null;
+  saveState();
+  renderAll();
+}
+
+function deleteBill(id){
+  const bill = state.bills.find(b => b.id === id);
+  if(!bill) return;
+  if(!confirm(`Delete recurring bill "${bill.name}"? Past payment history stays in your transactions.`)) return;
+  state.bills = state.bills.filter(b => b.id !== id);
+  saveState();
+  toast('Bill removed', '🗑️');
+  renderAll();
+}
+
+/* ---------------- Loans ---------------- */
+
+function openLoanModal(){
+  openModal(`
+    <div class="modal-head"><h2>🎓 New Loan / Debt</h2><button class="modal-close" onclick="window.__bb.closeModal()">✕</button></div>
+    <form id="loanForm" class="form-grid">
+      <div class="full">
+        <label>Name</label>
+        <input type="text" id="loanName" placeholder="e.g. Sallie Mae, Fed Direct Loan" required>
+      </div>
+      <div class="full">
+        <label>Type</label>
+        <select id="loanType">
+          <option value="federal">🎓 Student Loan — Federal</option>
+          <option value="private">🏦 Student Loan — Private</option>
+          <option value="other">💳 Other Debt</option>
+        </select>
+      </div>
+      <div>
+        <label>Current balance ($)</label>
+        <input type="number" id="loanBalance" step="0.01" min="0.01" required>
+      </div>
+      <div>
+        <label>Original balance ($, optional)</label>
+        <input type="number" id="loanOriginal" step="0.01" min="0">
+      </div>
+      <div>
+        <label>Monthly payment ($)</label>
+        <input type="number" id="loanPayment" step="0.01" min="0.01" required>
+      </div>
+      <div>
+        <label>Due day of month</label>
+        <input type="number" id="loanDueDay" min="1" max="28" value="1" required>
+      </div>
+      <div class="full">
+        <button type="submit" class="btn btn-mint btn-block">Add Loan</button>
+      </div>
+    </form>
+  `);
+  document.getElementById('loanForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('loanName').value.trim();
+    const type = document.getElementById('loanType').value;
+    const balance = parseFloat(document.getElementById('loanBalance').value);
+    let original = parseFloat(document.getElementById('loanOriginal').value);
+    const payment = parseFloat(document.getElementById('loanPayment').value);
+    const dueDay = parseInt(document.getElementById('loanDueDay').value, 10);
+    if(!name || !balance || !payment || !dueDay) return;
+    if(!original || original < balance) original = balance;
+    state.loans.push({ id: uid(), name, type, balance, originalBalance: original, payment, dueDay, lastPaid: null });
+    saveState();
+    closeModal();
+    toast(`Loan "${name}" added`, type === 'federal' ? '🎓' : type === 'private' ? '🏦' : '💳');
+    renderAll();
+  });
+}
+
+function makeLoanPayment(id){
+  const loan = state.loans.find(l => l.id === id);
+  if(!loan) return;
+  const ym = currentMonthKey();
+  if(loan.lastPaid === ym) return;
+  const catLabel = loan.type === 'federal' ? 'Student Loan (Federal)' : loan.type === 'private' ? 'Student Loan (Private)' : 'Other';
+  const pay = Math.min(loan.payment, loan.balance);
+  state.transactions.push({ id: uid(), kind: 'expense', category: catLabel, amount: pay, date: todayStr(), note: `Loan payment: ${loan.name}`, loanId: id, ts: Date.now() });
+  loan.balance = Math.max(0, loan.balance - pay);
+  loan.lastPaid = ym;
+  saveState();
+  if(loan.balance <= 0){
+    confettiBurst();
+    toast(`🎉 "${loan.name}" is paid off!`, '🎉');
+  } else {
+    toast(`Payment of ${fmtMoney(pay)} made on "${loan.name}"`, '✅');
+  }
+  renderAll();
+}
+
+function deleteLoan(id){
+  const loan = state.loans.find(l => l.id === id);
+  if(!loan) return;
+  if(!confirm(`Delete loan "${loan.name}"? Past payment history stays in your transactions.`)) return;
+  state.loans = state.loans.filter(l => l.id !== id);
+  saveState();
+  toast('Loan removed', '🗑️');
+  renderAll();
+}
+
+/* ---------------- Settings Modal ---------------- */
+
+function openSettingsModal(){
+  openModal(`
+    <div class="modal-head"><h2>⚙️ Settings</h2><button class="modal-close" onclick="window.__bb.closeModal()">✕</button></div>
+    <label>Starting balance ($)</label>
+    <input type="number" id="startBalInput" step="0.01" value="${Number(state.startingBalance)||0}" style="margin-bottom:16px;">
+    <button class="btn btn-primary btn-block" id="saveStartBal" style="margin-bottom:22px;">Save</button>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn btn-outline" id="exportBtn" style="flex:1;">⬇️ Export Data</button>
+      <label class="btn btn-outline" style="flex:1; text-align:center; cursor:pointer;">
+        ⬆️ Import Data
+        <input type="file" id="importFile" accept="application/json" style="display:none;">
+      </label>
+    </div>
+    <button class="btn btn-danger btn-block" id="resetAllBtn" style="margin-top:16px;">🗑️ Reset All Data</button>
+  `);
+  document.getElementById('saveStartBal').addEventListener('click', () => {
+    state.startingBalance = parseFloat(document.getElementById('startBalInput').value) || 0;
+    saveState();
+    toast('Starting balance updated', '⚙️');
+    renderAll();
+    closeModal();
+  });
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'bloom-budget-backup.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+  document.getElementById('importFile').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const imported = JSON.parse(reader.result);
+        state = Object.assign(defaultState(), imported);
+        saveState();
+        toast('Data imported!', '⬆️');
+        closeModal();
+        renderAll();
+      }catch(err){ alert('Could not read that file — is it a valid Bloom Budget export?'); }
+    };
+    reader.readAsText(file);
+  });
+  document.getElementById('resetAllBtn').addEventListener('click', () => {
+    if(!confirm('This will permanently erase all transactions, goals, bills, and loans on this device. Continue?')) return;
+    state = defaultState();
+    saveState();
+    closeModal();
+    toast('All data reset', '🗑️');
+    renderAll();
+  });
+}
+
+/* ---------------- Rendering ---------------- */
+
+function renderStatCards(){
+  const ym = currentMonthKey();
+  const {income, expense} = monthTotals(ym);
+  const balance = getBalance();
+  const rate = income > 0 ? ((income - expense) / income * 100) : (expense > 0 ? -100 : 0);
+  const el = document.getElementById('statCards');
+  el.innerHTML = `
+    <div class="stat-card stat-balance">
+      <div class="label">Balance</div>
+      <div class="value">${fmtMoney(balance)}</div>
+      <div class="sub">Total across all activity</div>
+    </div>
+    <div class="stat-card stat-income">
+      <div class="label">Income (This Month)</div>
+      <div class="value">${fmtMoney(income)}</div>
+      <div class="sub">💼 Keep it flowing</div>
+    </div>
+    <div class="stat-card stat-expense">
+      <div class="label">Spent (This Month)</div>
+      <div class="value">${fmtMoney(expense)}</div>
+      <div class="sub">💸 Across all categories</div>
+    </div>
+    <div class="stat-card stat-rate">
+      <div class="label">Savings Rate</div>
+      <div class="value">${rate.toFixed(0)}%</div>
+      <div class="sub">${rate >= 20 ? '🌟 Great job!' : rate >= 0 ? '👍 Keep going' : '⚠️ Spending more than earning'}</div>
+    </div>
+  `;
+}
+
+function renderDonut(targetElId, ym, subElId){
+  const totals = categoryTotals(ym);
+  const entries = Object.entries(totals).sort((a,b) => b[1]-a[1]);
+  const total = entries.reduce((s,[,v]) => s+v, 0);
+  const el = document.getElementById(targetElId);
+  if(subElId){
+    document.getElementById(subElId).textContent = ym ? `${ym} · Total: ${fmtMoney(total)}` : `Total: ${fmtMoney(total)}`;
+  }
+  if(entries.length === 0){
+    el.innerHTML = `<div class="empty-state" style="width:100%;"><div class="big">🌤️</div>No expenses yet — add one to see your breakdown!</div>`;
+    return;
+  }
+  let acc = 0;
+  const stops = entries.map(([cat, amt], i) => {
+    const pct = amt/total*100;
+    const start = acc;
+    acc += pct;
+    return `${PALETTE[i % PALETTE.length]} ${start}% ${acc}%`;
+  }).join(', ');
+  el.innerHTML = `
+    <div class="donut" style="background:conic-gradient(${stops});">
+      <div class="donut-hole"><div class="amt">${fmtMoneyShort(total)}</div><div class="lbl">total</div></div>
+    </div>
+    <ul class="legend">
+      ${entries.map(([cat, amt], i) => `
+        <li><span class="dot" style="background:${PALETTE[i % PALETTE.length]}"></span>${CAT_EMOJI[cat]||'🔖'} ${escapeHtml(cat)} <span class="pct">${(amt/total*100).toFixed(0)}%</span></li>
+      `).join('')}
+    </ul>
+  `;
+}
+
+function renderBarChart(elId){
+  const months = lastNMonths(6);
+  const data = months.map(ym => ({ym, ...monthTotals(ym)}));
+  const max = Math.max(1, ...data.map(d => Math.max(d.income, d.expense)));
+  const el = document.getElementById(elId);
+  el.innerHTML = `
+    <div class="barchart">
+      ${data.map(d => `
+        <div class="bar-group">
+          <div class="bar-pair">
+            <div class="bar bar-income" style="height:${Math.max(3, d.income/max*140)}px" title="Income: ${fmtMoney(d.income)}"></div>
+            <div class="bar bar-expense" style="height:${Math.max(3, d.expense/max*140)}px" title="Expense: ${fmtMoney(d.expense)}"></div>
+          </div>
+          <div class="m-label">${new Date(d.ym+'-02').toLocaleDateString(undefined,{month:'short'})}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="bar-legend">
+      <span><span class="dot" style="background:var(--mint-deep)"></span>Income</span>
+      <span><span class="dot" style="background:var(--pink-deep)"></span>Expense</span>
+    </div>
+  `;
+}
+
+function txIcon(t){
+  if(t.kind === 'goal_deposit' || t.kind === 'goal_withdraw'){
+    const goal = state.goals.find(g => g.id === t.goalId);
+    return goal ? goal.emoji : '🐷';
+  }
+  return CAT_EMOJI[t.category] || '🔖';
+}
+function txLabel(t){
+  if(t.kind === 'goal_deposit'){
+    const goal = state.goals.find(g => g.id === t.goalId);
+    return `Saved for ${goal ? goal.name : 'a goal'}`;
+  }
+  if(t.kind === 'goal_withdraw'){
+    const goal = state.goals.find(g => g.id === t.goalId);
+    return `Withdrew from ${goal ? goal.name : 'a goal'}`;
+  }
+  return t.category;
+}
+function txAmountClass(t){
+  if(t.kind === 'income' || t.kind === 'goal_withdraw') return 'income';
+  if(t.kind === 'expense' || t.kind === 'goal_deposit') return t.kind === 'goal_deposit' ? 'transfer' : 'expense';
+  return '';
+}
+function txAmountSign(t){
+  return (t.kind === 'income' || t.kind === 'goal_withdraw') ? '+' : '-';
+}
+
+function renderTxItem(t){
+  return `
+    <li class="tx-item">
+      <div class="tx-icon">${txIcon(t)}</div>
+      <div class="tx-info">
+        <div class="cat">${escapeHtml(txLabel(t))}</div>
+        <div class="meta">${t.date}${t.note ? ' · ' + escapeHtml(t.note) : ''}</div>
+      </div>
+      <div class="tx-amount ${txAmountClass(t)}">${txAmountSign(t)}${fmtMoney(t.amount)}</div>
+      <button class="tx-del" title="Delete" onclick="window.__bb.deleteTx('${t.id}')">✕</button>
+    </li>
+  `;
+}
+
+function deleteTx(id){
+  if(!confirm('Delete this transaction?')) return;
+  state.transactions = state.transactions.filter(t => t.id !== id);
+  saveState();
+  toast('Transaction deleted', '🗑️');
+  renderAll();
+}
+
+function renderRecent(){
+  const list = [...state.transactions].sort((a,b) => b.ts - a.ts).slice(0,6);
+  const el = document.getElementById('recentTxList');
+  el.innerHTML = list.length ? list.map(renderTxItem).join('') :
+    `<div class="empty-state"><div class="big">🌱</div>Nothing here yet — add your first transaction!</div>`;
+}
+
+function populateFilters(){
+  const catSel = document.getElementById('filterCategory');
+  const monthSel = document.getElementById('filterMonth');
+  const cats = [...new Set(state.transactions.map(t => t.category))].sort();
+  catSel.innerHTML = '<option value="all">All categories</option>' + cats.map(c => `<option value="${escapeHtml(c)}">${CAT_EMOJI[c]||'🔖'} ${escapeHtml(c)}</option>`).join('');
+  const months = [...new Set(state.transactions.map(t => monthKey(t.date)))].sort().reverse();
+  monthSel.innerHTML = '<option value="all">All time</option>' + months.map(m => `<option value="${m}">${new Date(m+'-02').toLocaleDateString(undefined,{month:'long', year:'numeric'})}</option>`).join('');
+}
+
+function renderFullTxList(){
+  const type = document.getElementById('filterType').value;
+  const cat = document.getElementById('filterCategory').value;
+  const month = document.getElementById('filterMonth').value;
+  let list = [...state.transactions].sort((a,b) => b.ts - a.ts);
+  if(type !== 'all') list = list.filter(t => t.kind === type);
+  if(cat !== 'all') list = list.filter(t => t.category === cat);
+  if(month !== 'all') list = list.filter(t => monthKey(t.date) === month);
+  const el = document.getElementById('fullTxList');
+  el.innerHTML = list.length ? list.map(renderTxItem).join('') :
+    `<div class="empty-state"><div class="big">🔍</div>No transactions match these filters.</div>`;
+}
+
+function goalStatus(goal, saved){
+  if(saved >= goal.target) return {label:'Complete! 🎉', cls:'badge-done'};
+  const today = new Date();
+  const deadline = new Date(goal.deadline);
+  const created = new Date(goal.createdAt || goal.deadline);
+  const totalDays = Math.max(1, daysBetween(created, deadline));
+  const elapsedDays = Math.min(totalDays, Math.max(0, daysBetween(created, today)));
+  const expectedFraction = elapsedDays / totalDays;
+  const actualFraction = goal.target > 0 ? saved / goal.target : 0;
+  if(deadline < today) return {label:'Past deadline', cls:'badge-behind'};
+  if(actualFraction + 0.05 >= expectedFraction) return {label:'On track 🌟', cls:'badge-good'};
+  return {label:'Behind pace ⏰', cls:'badge-warn'};
+}
+
+function renderGoals(){
+  const el = document.getElementById('goalsList');
+  if(state.goals.length === 0){
+    el.innerHTML = `<div class="card"><div class="empty-state"><div class="big">🎯</div>No goals yet. Set one to start tracking your progress toward something exciting!</div></div>`;
+    return;
+  }
+  el.innerHTML = state.goals.map(goal => {
+    const saved = getGoalSaved(goal.id);
+    const pct = Math.min(100, goal.target > 0 ? (saved/goal.target*100) : 0);
+    const today = new Date();
+    const deadline = new Date(goal.deadline);
+    const daysLeft = Math.max(0, daysBetween(today, deadline));
+    const monthsLeft = Math.max(1/30.44, daysLeft/30.44);
+    const remaining = Math.max(0, goal.target - saved);
+    const perMonth = remaining / monthsLeft;
+    const status = goalStatus(goal, saved);
+    return `
+      <div class="goal-card">
+        <div class="goal-head">
+          <div class="goal-emoji">${goal.emoji}</div>
+          <div class="goal-title">${escapeHtml(goal.name)}</div>
+          <span class="badge ${status.cls}">${status.label}</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="goal-nums"><span>${fmtMoney(saved)} saved</span><span>${pct.toFixed(0)}% of ${fmtMoney(goal.target)}</span></div>
+        <div class="goal-meta-row">
+          <span class="due-chip">${daysLeft > 0 ? `📅 ${daysLeft} days left` : '📅 Deadline reached'}</span>
+          ${remaining > 0 ? `<span class="due-chip">💡 ${fmtMoney(perMonth)}/mo to hit goal</span>` : ''}
+        </div>
+        <div class="goal-actions">
+          <button class="btn btn-primary btn-sm" onclick="window.__bb.openContributeModal('${goal.id}','deposit')">➕ Add Funds</button>
+          <button class="btn btn-outline btn-sm" onclick="window.__bb.openContributeModal('${goal.id}','withdraw')">➖ Withdraw</button>
+          <button class="btn btn-danger btn-sm" onclick="window.__bb.deleteGoal('${goal.id}')">🗑️ Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderBills(){
+  const ym = currentMonthKey();
+  document.getElementById('billsCount').textContent = state.bills.length;
+  const total = state.bills.reduce((s,b) => s+b.amount, 0);
+  const paidTotal = state.bills.filter(b => b.lastPaid === ym).reduce((s,b) => s+b.amount, 0);
+  document.getElementById('totalBillsCard').innerHTML = `
+    <div class="card-row">
+      <div><strong>Monthly obligation:</strong> ${fmtMoney(total)}</div>
+      <div style="color:var(--muted); font-weight:700;">${fmtMoney(paidTotal)} paid this month</div>
+    </div>
+    <div class="progress-track" style="margin-top:10px;"><div class="progress-fill" style="width:${total>0?Math.min(100,paidTotal/total*100):0}%"></div></div>
+  `;
+  const el = document.getElementById('billsList');
+  if(state.bills.length === 0){
+    el.innerHTML = `<div class="card"><div class="empty-state"><div class="big">🗓️</div>No recurring bills yet — add rent, subscriptions, WiFi, and more.</div></div>`;
+    return;
+  }
+  el.innerHTML = state.bills.map(bill => {
+    const due = nextDueDate(bill.dueDay);
+    const daysLeft = daysBetween(new Date(), due);
+    const isPaid = bill.lastPaid === currentMonthKey();
+    const overdue = !isPaid && daysLeft <= 0;
+    return `
+      <div class="bill-card">
+        <div class="bill-head">
+          <div class="tx-icon">${CAT_EMOJI[bill.category]||'📅'}</div>
+          <div>
+            <div style="font-weight:800;">${escapeHtml(bill.name)}</div>
+            <div style="font-size:0.78rem; color:var(--muted); font-weight:600;">${escapeHtml(bill.category)}</div>
+          </div>
+          <div class="bill-amt">${fmtMoney(bill.amount)}</div>
+        </div>
+        <div style="margin-top:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <span class="due-chip ${isPaid ? 'paid' : overdue ? 'overdue' : ''}">${isPaid ? '✅ Paid this month' : overdue ? '⏰ Due today/overdue' : `📅 Due in ${daysLeft} day${daysLeft===1?'':'s'}`}</span>
+          ${isPaid ? `<button class="btn btn-outline btn-sm" onclick="window.__bb.undoBillPaid('${bill.id}')">Undo</button>` : `<button class="btn btn-yellow btn-sm" onclick="window.__bb.markBillPaid('${bill.id}')">Mark as Paid</button>`}
+          <button class="btn btn-danger btn-sm" onclick="window.__bb.deleteBill('${bill.id}')">🗑️</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderLoans(){
+  document.getElementById('loansCount').textContent = state.loans.length;
+  const el = document.getElementById('loansList');
+  if(state.loans.length === 0){
+    el.innerHTML = `<div class="card"><div class="empty-state"><div class="big">🎓</div>No loans tracked yet — add your federal or private student loans to plan payoff.</div></div>`;
+    return;
+  }
+  el.innerHTML = state.loans.map(loan => {
+    const pct = loan.originalBalance > 0 ? Math.min(100, (loan.originalBalance-loan.balance)/loan.originalBalance*100) : 0;
+    const due = nextDueDate(loan.dueDay);
+    const daysLeft = daysBetween(new Date(), due);
+    const isPaid = loan.lastPaid === currentMonthKey();
+    const monthsLeft = loan.payment > 0 ? Math.ceil(loan.balance/loan.payment) : 0;
+    const payoffDate = addMonths(new Date(), monthsLeft);
+    const emoji = loan.type === 'federal' ? '🎓' : loan.type === 'private' ? '🏦' : '💳';
+    const typeLabel = loan.type === 'federal' ? 'Federal Student Loan' : loan.type === 'private' ? 'Private Student Loan' : 'Other Debt';
+    return `
+      <div class="bill-card">
+        <div class="bill-head">
+          <div class="tx-icon">${emoji}</div>
+          <div>
+            <div style="font-weight:800;">${escapeHtml(loan.name)}</div>
+            <div style="font-size:0.78rem; color:var(--muted); font-weight:600;">${typeLabel}</div>
+          </div>
+          <div class="bill-amt">${fmtMoney(loan.balance)} left</div>
+        </div>
+        <div class="progress-track" style="margin-top:10px;"><div class="progress-fill loan" style="width:${pct}%"></div></div>
+        <div class="goal-nums"><span>${pct.toFixed(0)}% paid off</span><span>of ${fmtMoney(loan.originalBalance)}</span></div>
+        <div style="margin-top:6px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          ${loan.balance > 0 ? `<span class="due-chip">🏁 Payoff ~${payoffDate.toLocaleDateString(undefined,{month:'short', year:'numeric'})}</span>` : `<span class="badge badge-done">Paid off! 🎉</span>`}
+          ${loan.balance > 0 ? `<span class="due-chip ${!isPaid && daysLeft<=0 ? 'overdue' : isPaid ? 'paid' : ''}">${isPaid ? '✅ Paid this month' : daysLeft<=0 ? '⏰ Due now' : `📅 Due in ${daysLeft}d`}</span>` : ''}
+        </div>
+        <div class="goal-actions">
+          ${loan.balance > 0 && !isPaid ? `<button class="btn btn-mint btn-sm" onclick="window.__bb.makeLoanPayment('${loan.id}')">💵 Make Payment (${fmtMoney(Math.min(loan.payment,loan.balance))})</button>` : ''}
+          <button class="btn btn-danger btn-sm" onclick="window.__bb.deleteLoan('${loan.id}')">🗑️ Remove</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function pickFunFact(){
+  const ym = currentMonthKey();
+  const totals = categoryTotals(ym);
+  const entries = Object.entries(totals).sort((a,b) => b[1]-a[1]);
+  const facts = [];
+  if(entries.length){
+    facts.push({emoji: CAT_EMOJI[entries[0][0]]||'🔖', text:`Your biggest spend this month is <strong>${escapeHtml(entries[0][0])}</strong> at ${fmtMoney(entries[0][1])}.`});
+  }
+  const {income, expense} = monthTotals(ym);
+  if(income > 0 && expense < income){
+    facts.push({emoji:'🌟', text:`You've saved ${fmtMoney(income-expense)} so far this month. Keep it up!`});
+  } else if(expense > income && income > 0){
+    facts.push({emoji:'👀', text:`You've spent ${fmtMoney(expense-income)} more than you've earned this month.`});
+  }
+  const activeGoals = state.goals.filter(g => getGoalSaved(g.id) < g.target);
+  if(activeGoals.length){
+    const g = activeGoals[0];
+    facts.push({emoji:g.emoji, text:`You're ${((getGoalSaved(g.id)/g.target)*100).toFixed(0)}% of the way to "${escapeHtml(g.name)}"!`});
+  }
+  if(facts.length === 0) facts.push({emoji:'🌱', text:'Add a few transactions to start seeing fun facts about your habits!'});
+  return facts;
+}
+
+function renderDashFunFact(){
+  const facts = pickFunFact();
+  const f = facts[0];
+  document.getElementById('dashFunFact').innerHTML = `<div class="fun-fact"><span class="emoji">${f.emoji}</span><span>${f.text}</span></div>`;
+}
+
+function renderInsights(){
+  const facts = pickFunFact();
+  document.getElementById('funFacts').innerHTML = facts.map(f => `<div class="fun-fact"><span class="emoji">${f.emoji}</span><span>${f.text}</span></div>`).join('');
+
+  const ym = currentMonthKey();
+  const totals = categoryTotals(ym);
+  const entries = Object.entries(totals).sort((a,b) => b[1]-a[1]);
+  const max = entries.length ? entries[0][1] : 1;
+  const lb = document.getElementById('leaderboard');
+  lb.innerHTML = entries.length ? entries.map(([cat, amt], i) => `
+    <div class="rank-row">
+      <div class="name">${CAT_EMOJI[cat]||'🔖'} ${escapeHtml(cat)}</div>
+      <div class="track"><div class="fill" style="width:${amt/max*100}%; background:${PALETTE[i%PALETTE.length]}"></div></div>
+      <div class="amt">${fmtMoney(amt)}</div>
+    </div>
+  `).join('') : `<div class="empty-state"><div class="big">📭</div>No expenses logged this month yet.</div>`;
+
+  const months = lastNMonths(2);
+  const thisM = monthTotals(months[1]);
+  const lastM = monthTotals(months[0]);
+  const diff = thisM.expense - lastM.expense;
+  const pctDiff = lastM.expense > 0 ? (diff/lastM.expense*100) : (thisM.expense > 0 ? 100 : 0);
+  document.getElementById('momCompare').innerHTML = `
+    <div class="card-row" style="margin-bottom:10px;">
+      <div><strong>This month spending:</strong> ${fmtMoney(thisM.expense)}</div>
+      <div><strong>Last month:</strong> ${fmtMoney(lastM.expense)}</div>
+    </div>
+    <div class="fun-fact" style="background:${diff <= 0 ? 'linear-gradient(120deg, var(--mint), var(--sky))' : 'linear-gradient(120deg, var(--pink-soft), var(--yellow-soft))'};">
+      <span class="emoji">${diff <= 0 ? '📉' : '📈'}</span>
+      <span>You're spending ${fmtMoney(Math.abs(diff))} ${diff <= 0 ? 'less' : 'more'} than last month (${Math.abs(pctDiff).toFixed(0)}% ${diff<=0?'down':'up'}).</span>
+    </div>
+  `;
+}
+
+function renderAll(){
+  renderStatCards();
+  renderDashFunFact();
+  renderDonut('dashDonut', currentMonthKey(), 'dashChartSub');
+  renderBarChart('dashBar');
+  renderRecent();
+  populateFilters();
+  renderFullTxList();
+  renderGoals();
+  renderBills();
+  renderLoans();
+  renderInsights();
+}
+
+/* ---------------- Tabs & Wiring ---------------- */
+
+document.getElementById('tabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-tab]');
+  if(!btn) return;
+  switchTab(btn.dataset.tab);
+});
+function switchTab(name){
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-section').forEach(s => s.classList.toggle('active', s.id === 'tab-' + name));
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.goto)));
+
+document.getElementById('quickAddBtn').addEventListener('click', () => openTxModal('expense'));
+document.getElementById('addTxBtn2').addEventListener('click', () => openTxModal('expense'));
+document.getElementById('quickGoalBtn').addEventListener('click', openGoalPicker);
+document.getElementById('addGoalBtn').addEventListener('click', openGoalModal);
+document.getElementById('addBillBtn').addEventListener('click', openBillModal);
+document.getElementById('addLoanBtn').addEventListener('click', openLoanModal);
+document.getElementById('settingsBtn').addEventListener('click', openSettingsModal);
+
+['filterType','filterCategory','filterMonth'].forEach(id => {
+  document.getElementById(id).addEventListener('change', renderFullTxList);
+});
+
+window.__bb = { closeModal, openContributeModal, deleteGoal, deleteBill, undoBillPaid, markBillPaid, deleteLoan, makeLoanPayment, deleteTx };
+
+renderAll();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
+}
+
+})();
+</script>
+</body>
+</html>

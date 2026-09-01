@@ -1,0 +1,17 @@
+{
+  "name": "Bloom Budget — Personal Finance Tracker",
+  "short_name": "Bloom Budget",
+  "description": "Track spending, plan savings goals, and manage bills & loans with fun pastel visuals",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#faf5ff",
+  "theme_color": "#c9a8f0",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
