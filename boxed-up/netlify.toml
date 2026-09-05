@@ -1,0 +1,3 @@
+[build]
+  base = "boxed-up/"
+  publish = "."

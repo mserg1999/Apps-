@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boxed Up</title>
+<meta name="description" content="An editable, checklist-style moving budget tracker — track costs, check items off as you buy them, and watch your move-in total add up.">
+<meta name="theme-color" content="#8FC7F2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Boxed Up">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Karla:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --bg: #EAF3FC;
+    --surface: #FFFFFF;
+    --surface-2: #EFF8F3;
+    --ink: #223142;
+    --ink-soft: #5C7086;
+    --ink-faint: #96A8BC;
+    --border: #D7E9F8;
+    --border-strong: #B9D9F0;
+    --accent: #8FC7F2;
+    --accent-strong: #4E9CDD;
+    --accent-ink: #0F3B5C;
+    --accent-soft: #DCEEFC;
+    --good: #74D2A0;
+    --good-soft: #E1F6EA;
+    --warn: #F1A487;
+    --warn-soft: #FCEAE2;
+    --shadow: rgba(35,60,90,0.12);
+    --radius-lg: 26px;
+    --radius-md: 20px;
+    --radius-sm: 14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg: #101A22;
+      --surface: #16232D;
+      --surface-2: #1A2B2A;
+      --ink: #E9F1FA;
+      --ink-soft: #9FB4C8;
+      --ink-faint: #6C8598;
+      --border: #243849;
+      --border-strong: #315068;
+      --accent: #6FB4E8;
+      --accent-strong: #8FC7F2;
+      --accent-ink: #0B2338;
+      --accent-soft: #1E3A50;
+      --good: #63C494;
+      --good-soft: #16302A;
+      --warn: #E8927A;
+      --warn-soft: #3B241C;
+      --shadow: rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg: #101A22;
+    --surface: #16232D;
+    --surface-2: #1A2B2A;
+    --ink: #E9F1FA;
+    --ink-soft: #9FB4C8;
+    --ink-faint: #6C8598;
+    --border: #243849;
+    --border-strong: #315068;
+    --accent: #6FB4E8;
+    --accent-strong: #8FC7F2;
+    --accent-ink: #0B2338;
+    --accent-soft: #1E3A50;
+    --good: #63C494;
+    --good-soft: #16302A;
+    --warn: #E8927A;
+    --warn-soft: #3B241C;
+    --shadow: rgba(0,0,0,0.35);
+  }
+
+  *{ box-sizing: border-box; }
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Karla", ui-sans-serif, system-ui, sans-serif;
+    line-height: 1.45;
+  }
+  h1, h2, .display{
+    font-family: "Fredoka", ui-rounded, system-ui, sans-serif;
+    text-wrap: balance;
+  }
+  .mono, .money, input[type="number"]{
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  a{ color: var(--accent-strong); }
+  ::selection{ background: var(--accent-soft); }
+
+  .wrap{
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 28px 20px 120px;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 30px 30px 26px;
+    box-shadow: 0 10px 28px var(--shadow);
+    overflow: hidden;
+  }
+  .tape{
+    position: absolute;
+    top: 18px;
+    left: -30px;
+    width: 220px;
+    height: 34px;
+    background: repeating-linear-gradient(
+      135deg,
+      var(--accent) 0 10px,
+      var(--accent-strong) 10px 20px
+    );
+    opacity: 0.9;
+    transform: rotate(-8deg);
+    box-shadow: 0 2px 6px var(--shadow);
+  }
+  .eyebrow{
+    margin: 0 0 2px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+  }
+  .hero h1{
+    margin: 0 0 6px;
+    font-size: clamp(2.1rem, 4.5vw, 2.7rem);
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .tagline{
+    margin: 0 0 20px;
+    max-width: 62ch;
+    color: var(--ink-soft);
+    font-size: 1.02rem;
+  }
+  .hero-controls{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 22px;
+  }
+  .field-inline{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+  .field-inline input{
+    font-family: "Karla", sans-serif;
+    font-size: 0.95rem;
+    padding: 7px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-strong);
+    background: var(--surface-2);
+    color: var(--ink);
+  }
+  .field-inline input:focus-visible{
+    outline: 2px solid var(--accent-strong);
+    outline-offset: 1px;
+  }
+
+  /* ---------- Stats ---------- */
+  .stats{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin: 18px 0;
+  }
+  .stat-tile{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    box-shadow: 0 4px 14px var(--shadow);
+  }
+  .stat-tile--total{ border-color: var(--accent); }
+  .stat-label{
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .stat-value{
+    font-family: "Fredoka", sans-serif;
+    font-size: 1.7rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-sub{
+    font-size: 0.84rem;
+    color: var(--ink-soft);
+    min-height: 1.2em;
+  }
+  .stat-sub.good{ color: var(--good); font-weight: 700; }
+  .stat-sub.warn{ color: var(--warn); font-weight: 700; }
+  .mini-progress{
+    margin-top: 6px;
+    height: 7px;
+    border-radius: 5px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .mini-progress-fill{
+    height: 100%;
+    background: var(--good);
+    width: 0%;
+    transition: width .35s ease;
+  }
+
+  .howto{
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    background: var(--surface-2);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    margin: 0 0 24px;
+  }
+  .howto svg{ flex: none; margin-top: 2px; color: var(--accent-strong); }
+
+  .install-card{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--accent-soft);
+    border: 1.5px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    margin: 0 0 24px;
+    flex-wrap: wrap;
+  }
+  .install-icon{
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--accent-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .install-copy{ flex: 1 1 260px; }
+  .install-title{
+    margin: 0 0 2px;
+    font-family: "Fredoka", sans-serif;
+    font-weight: 600;
+    font-size: 1.02rem;
+    color: var(--ink);
+  }
+  .install-text{
+    margin: 0;
+    font-size: 0.87rem;
+    color: var(--ink-soft);
+  }
+  .btn-install{
+    flex: none;
+    background: var(--accent);
+    color: var(--accent-ink);
+    padding: 10px 20px;
+  }
+  .btn-install:hover{ background: var(--accent-strong); }
+
+  /* ---------- Categories ---------- */
+  .categories{
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .category{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 6px 18px var(--shadow);
+    overflow: hidden;
+  }
+  .category-head{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 2px dashed var(--border);
+    flex-wrap: wrap;
+  }
+  .cat-icon{
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cat-icon svg{ width: 19px; height: 19px; }
+  .cat-name{
+    flex: 1 1 160px;
+    min-width: 120px;
+    font-family: "Fredoka", sans-serif;
+    font-size: 1.18rem;
+    font-weight: 600;
+    background: transparent;
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    color: var(--ink);
+  }
+  .cat-name:hover{ border-color: var(--border-strong); background: var(--surface-2); }
+  .cat-name:focus-visible{ outline: 2px solid var(--accent-strong); border-color: transparent; background: var(--surface-2); }
+  .cat-badge{
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 10px;
+    white-space: nowrap;
+  }
+  .cat-badge.all-bought{
+    color: var(--good);
+    background: var(--good-soft);
+    border-color: transparent;
+  }
+  .cat-subtotal{
+    font-size: 1.05rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .cat-remove{
+    flex: none;
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+  }
+  .cat-remove:hover{ color: var(--warn); background: var(--warn-soft); }
+
+  .table-wrap{ overflow-x: auto; }
+  table.items{
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 640px;
+  }
+  table.items thead th{
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding: 10px 10px 6px;
+  }
+  table.items thead th.col-check, table.items thead th.col-del{ width: 34px; }
+  table.items tbody tr{
+    border-top: 1px solid var(--border);
+  }
+  table.items tbody tr.is-bought{
+    background: var(--good-soft);
+  }
+  table.items td{
+    padding: 6px 10px;
+    vertical-align: middle;
+  }
+  .cell-input{
+    width: 100%;
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    color: var(--ink);
+    font-size: 0.94rem;
+  }
+  .cell-input:hover{ border-color: var(--border-strong); }
+  .cell-input:focus-visible{ outline: 2px solid var(--accent-strong); border-color: var(--accent-strong); }
+  .name-input{ font-weight: 600; min-width: 170px; }
+  .note-input{ color: var(--ink-soft); min-width: 200px; font-size: 0.87rem; }
+  .num-input{ width: 78px; text-align: right; }
+  .money-input-wrap{
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0 10px 0 12px;
+  }
+  .money-input-wrap:hover{ border-color: var(--border-strong); }
+  .money-input-wrap:focus-within{ outline: 2px solid var(--accent-strong); border-color: var(--accent-strong); }
+  .money-input-wrap .num-input{
+    background: transparent;
+    border: none;
+    padding: 8px 2px;
+  }
+  .money-input-wrap .num-input:focus-visible{ outline: none; }
+  .money-input-wrap .prefix{ color: var(--ink-faint); font-family: "IBM Plex Mono", monospace; }
+  .line-total{
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  tr.is-bought .name-input,
+  tr.is-bought .line-total{
+    text-decoration: line-through;
+    color: var(--ink-faint);
+  }
+  input[type="checkbox"].check{
+    appearance: none;
+    -webkit-appearance: none;
+    width: 23px;
+    height: 23px;
+    border-radius: 50%;
+    border: 2px solid var(--border-strong);
+    background: var(--surface);
+    position: relative;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, transform .12s ease;
+  }
+  input[type="checkbox"].check:hover{ border-color: var(--good); }
+  input[type="checkbox"].check:checked{
+    background: var(--good);
+    border-color: var(--good);
+  }
+  input[type="checkbox"].check:checked::after{
+    content: "";
+    position: absolute;
+    left: 7px;
+    top: 3px;
+    width: 6px;
+    height: 11px;
+    border: solid white;
+    border-width: 0 2.5px 2.5px 0;
+    transform: rotate(40deg);
+  }
+  input[type="checkbox"].check:active{ transform: scale(0.9); }
+  .del-btn{
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    display: flex;
+  }
+  .del-btn:hover{ color: var(--warn); background: var(--warn-soft); }
+
+  .btn{
+    font-family: "Karla", sans-serif;
+    font-weight: 700;
+    font-size: 0.88rem;
+    border-radius: 999px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform .12s ease;
+  }
+  .btn:active{ transform: scale(0.97); }
+  .btn-add{
+    margin: 4px 18px 16px;
+    align-self: flex-start;
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    padding: 8px 16px;
+  }
+  .btn-add:hover{ background: var(--accent); color: var(--accent-ink); }
+  .add-category{
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+    padding: 14px;
+    background: var(--surface);
+    border: 2px dashed var(--border-strong);
+    color: var(--ink-soft);
+  }
+  .add-category:hover{ border-color: var(--accent); color: var(--accent-strong); }
+  .btn-text{
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    text-decoration: underline;
+    padding: 0;
+  }
+  .btn-text:hover{ color: var(--warn); }
+
+  .sticky-footer{
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 12px 20px;
+    border-radius: 999px;
+    box-shadow: 0 12px 30px var(--shadow);
+    font-size: 0.86rem;
+    max-width: calc(100vw - 32px);
+    white-space: nowrap;
+  }
+  .sticky-footer strong{
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 1rem;
+  }
+  .footer-sep{ opacity: 0.5; }
+  .sticky-footer .btn-text{
+    color: var(--bg);
+    opacity: 0.65;
+  }
+  .sticky-footer .btn-text:hover{ opacity: 1; color: var(--warn); }
+
+  @media (max-width: 720px){
+    .stats{ grid-template-columns: 1fr; }
+    .sticky-footer{ font-size: 0.78rem; padding: 10px 14px; gap: 7px; }
+    .sticky-footer span, .sticky-footer .footer-sep{ display: none; }
+    .sticky-footer #footerPacked{ display: inline; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="tape" aria-hidden="true"></div>
+    <p class="eyebrow">Move-in budget</p>
+    <h1>Boxed Up</h1>
+    <p class="tagline">Every couch, deposit, and roll of tape for the move — one editable ledger. Check items off as you buy them and the totals do the rest.</p>
+    <div class="hero-controls">
+      <label class="field-inline">
+        <span>Move-in date</span>
+        <input type="date" id="moveDate">
+      </label>
+      <label class="field-inline">
+        <span>Budget goal (optional)</span>
+        <input type="number" id="budgetGoal" placeholder="e.g. 5500" min="0" step="1">
+      </label>
+    </div>
+  </header>
+
+  <section class="stats" aria-label="Summary">
+    <div class="stat-tile">
+      <span class="stat-label">Countdown</span>
+      <span class="stat-value" id="countdownValue">—</span>
+      <span class="stat-sub" id="countdownSub"></span>
+    </div>
+    <div class="stat-tile stat-tile--total">
+      <span class="stat-label">Grand total</span>
+      <span class="stat-value money" id="grandTotal">$0</span>
+      <span class="stat-sub" id="goalChip"></span>
+    </div>
+    <div class="stat-tile">
+      <span class="stat-label">Packed</span>
+      <span class="stat-value" id="packedCount">0/0</span>
+      <div class="mini-progress"><div class="mini-progress-fill" id="packedFill"></div></div>
+    </div>
+  </section>
+
+  <section class="install-card" id="installCard">
+    <span class="install-icon" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><line x1="10.5" y1="18" x2="13.5" y2="18"/></svg>
+    </span>
+    <div class="install-copy">
+      <p class="install-title">Get this as an app</p>
+      <p class="install-text" id="installText">Open this page in your phone's browser and add it to your home screen — it'll launch full-screen with its own icon, just like an app.</p>
+    </div>
+    <button id="installBtn" class="btn btn-install" type="button" hidden>Install now</button>
+  </section>
+
+  <p class="howto">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><circle cx="12" cy="16.2" r="0.3" fill="currentColor" stroke="none"/></svg>
+    <span>Check a box off once you've bought it, tap any price, quantity, name or note to edit it, and add your own rows or whole categories anytime. Everything here saves automatically to this browser.</span>
+  </p>
+
+  <main id="categories" class="categories" aria-label="Budget categories"></main>
+
+  <button id="addCategoryBtn" class="btn add-category" type="button">+ Add another category</button>
+</div>
+
+<div class="sticky-footer">
+  <span>Grand total</span>
+  <strong id="footerTotal">$0</strong>
+  <span class="footer-sep">·</span>
+  <span id="footerPacked">0 of 0 packed</span>
+  <button id="downloadAppBtn" class="btn-text" type="button">Save offline copy</button>
+  <button id="resetBtn" class="btn-text" type="button">Reset sample</button>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var STORAGE_KEY = "boxedup-budget-v1";
+
+  var ICONS = {
+    furniture: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><rect x="3" y="11" width="18" height="6" rx="2"/><line x1="4" y1="17" x2="4" y2="19.5"/><line x1="20" y1="17" x2="20" y2="19.5"/></svg>',
+    kitchen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14" r="6"/><line x1="15.2" y1="9.8" x2="20.5" y2="4.5"/></svg>',
+    supplies: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="9" width="9" height="12" rx="2"/><path d="M10 9V6.5a1.5 1.5 0 0 1 1.5-1.5h1A1.5 1.5 0 0 1 14 6.5V9"/><line x1="15" y1="4.5" x2="18" y2="2.5"/></svg>',
+    logistics: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="12" height="8"/><path d="M14 11h4l4 3v2h-2"/><circle cx="7" cy="19" r="1.6"/><circle cx="17.5" cy="19" r="1.6"/></svg>',
+    fees: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="10" r="4"/><line x1="11.3" y1="13.3" x2="19.5" y2="21.5"/><line x1="15" y1="17.8" x2="17.6" y2="15.2"/></svg>',
+    utilities: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6M15 2v6M6 8h12v3.5A6 6 0 0 1 12 17.5 6 6 0 0 1 6 11.5V8z"/><line x1="12" y1="17.5" x2="12" y2="22"/></svg>',
+    firstweek: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8z"/><path d="M17 10h1.5a2 2 0 0 1 0 4H17"/><line x1="8" y1="3" x2="8" y2="5.5"/><line x1="12" y1="2" x2="12" y2="5.5"/></svg>',
+    box: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v9l9 4 9-4V8"/><line x1="12" y1="12" x2="12" y2="21"/></svg>'
+  };
+  var TRASH = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg>';
+  var CLOSE = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>';
+
+  function uid(){ return Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4); }
+
+  function item(name, cost, qty, note){
+    return { id: uid(), name: name, cost: cost, qty: qty, note: note, bought: false };
+  }
+
+  function defaultState(){
+    var d = new Date();
+    d.setHours(0,0,0,0);
+    var moveDate = new Date(d.getFullYear(), 9, 31); // Oct 31, this year
+    if (moveDate < d) moveDate = new Date(d.getFullYear() + 1, 9, 31);
+    var pad = function(n){ return String(n).padStart(2,"0"); };
+    var moveDateStr = moveDate.getFullYear() + "-" + pad(moveDate.getMonth()+1) + "-" + pad(moveDate.getDate());
+
+    return {
+      moveDate: moveDateStr,
+      budgetGoal: "",
+      categories: [
+        { id: uid(), name: "Furniture", icon: "furniture", items: [
+          item("Cloud couch (loveseat/small size)", 700, 1, "Article, Burrow, Wayfair, West Elm"),
+          item("Coffee table", 150, 1, "IKEA, Target, Wayfair"),
+          item("Full bed frame w/ drawers", 450, 1, "IKEA Brimnes/Malm, Wayfair"),
+          item("Mattress (if needed)", 0, 1, "Skip if bringing current mattress"),
+          item("Small kitchen table (2-seat)", 180, 1, "IKEA, World Market, Wayfair"),
+          item("Dining chairs", 0, 2, "Often bundled with table set"),
+          item("Shoe rack", 40, 1, "IKEA, Target, Amazon"),
+          item("Bedroom rug", 100, 1, "Rugs USA, Target, IKEA"),
+          item("Furniture assembly (TaskRabbit/handy)", 120, 1, "Bundle all pieces into one visit")
+        ]},
+        { id: uid(), name: "Kitchen", icon: "kitchen", items: [
+          item("Kitchen utensil set", 30, 1, "Target Threshold, OXO, Amazon"),
+          item("Pots and pans set", 100, 1, "Target, Walmart, Marshalls/TJ Maxx"),
+          item("Dishware set", 0, 1, "Add if needed"),
+          item("Glassware / cups", 0, 1, "Add if needed")
+        ]},
+        { id: uid(), name: "Household Supplies", icon: "supplies", items: [
+          item("Shower curtain + liner", 25, 1, "Target, Bed Bath & Beyond"),
+          item("Bath mat + towels", 40, 1, "Target, Marshalls"),
+          item("Trash cans (kitchen + bath)", 30, 2, "Target, Amazon"),
+          item("Cleaning products starter kit", 40, 1, "All-purpose spray, dish soap, sponges, paper towels"),
+          item("Toilet paper / paper towels bulk", 25, 1, "Costco, Target"),
+          item("Light bulbs", 15, 1, "Home Depot, Target"),
+          item("Hand soap / bathroom basics", 15, 1, "Target")
+        ]},
+        { id: uid(), name: "Moving Logistics", icon: "logistics", items: [
+          item("Movers", 500, 1, "Get 2-3 quotes; compare flat-rate vs hourly"),
+          item("Tip for movers", 80, 1, "15-20% of labor cost"),
+          item("Moving boxes + tape + bubble wrap", 60, 1, "Or free from liquor/grocery stores"),
+          item("Moving truck rental (if DIY)", 0, 1, "Skip if hiring full-service movers")
+        ]},
+        { id: uid(), name: "Move-in Fees", icon: "fees", items: [
+          item("Security deposit", 1800, 1, "Confirm exact amount with leasing office"),
+          item("Admin/application fee", 200, 1, "Ask for full itemized fee list upfront"),
+          item("Registration fee", 100, 1, "Building-specific"),
+          item("Amenities fee", 150, 1, "Building-specific"),
+          item("Parking permit/spot (if applicable)", 0, 1, "Add if building charges separately")
+        ]},
+        { id: uid(), name: "Utilities & Setup", icon: "utilities", items: [
+          item("WiFi router (purchase)", 90, 1, "Avoids monthly rental fee"),
+          item("WiFi installation/activation fee", 50, 1, "Often waived — confirm with provider"),
+          item("Electric/gas setup fee", 50, 1, "Utility company deposit or setup charge"),
+          item("Renter's insurance (first payment)", 20, 1, "Lemonade, State Farm — often ~$15-20/mo")
+        ]},
+        { id: uid(), name: "First Week", icon: "firstweek", items: [
+          item("First week groceries", 100, 1, "One person, basic staples"),
+          item("First-night essentials (toiletries etc.)", 0, 1, "Usually already owned")
+        ]}
+      ]
+    };
+  }
+
+  function loadState(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.categories)) return null;
+      return parsed;
+    }catch(e){ return null; }
+  }
+
+  function saveState(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+  }
+
+  var state = loadState() || defaultState();
+
+  function esc(s){
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+      return { "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c];
+    });
+  }
+
+  function fmt(n){
+    n = Number(n) || 0;
+    var opts = (Math.round(n * 100) % 100 !== 0)
+      ? { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+      : { maximumFractionDigits: 0 };
+    return "$" + n.toLocaleString("en-US", opts);
+  }
+
+  function findCategory(catId){
+    for (var i=0;i<state.categories.length;i++){ if (state.categories[i].id === catId) return state.categories[i]; }
+    return null;
+  }
+  function findItem(catId, itemId){
+    var cat = findCategory(catId);
+    if (!cat) return null;
+    for (var i=0;i<cat.items.length;i++){ if (cat.items[i].id === itemId) return cat.items[i]; }
+    return null;
+  }
+
+  function itemRowHTML(catId, it){
+    return (
+      '<tr data-item-id="' + it.id + '" data-cat-id="' + catId + '" class="' + (it.bought ? "is-bought" : "") + '">' +
+        '<td class="col-check"><input type="checkbox" class="check" data-action="toggle-bought" ' + (it.bought ? "checked" : "") + ' aria-label="Mark as purchased"></td>' +
+        '<td><input type="text" class="cell-input name-input" data-field="name" value="' + esc(it.name) + '" placeholder="Item name"></td>' +
+        '<td><div class="money-input-wrap"><span class="prefix">$</span><input type="number" class="cell-input num-input" data-field="cost" value="' + it.cost + '" min="0" step="0.01"></div></td>' +
+        '<td><input type="number" class="cell-input num-input qty-input" data-field="qty" value="' + it.qty + '" min="0" step="1"></td>' +
+        '<td class="line-total money">' + fmt(it.cost * it.qty) + '</td>' +
+        '<td><input type="text" class="cell-input note-input" data-field="note" value="' + esc(it.note) + '" placeholder="Notes / where to buy"></td>' +
+        '<td class="col-del"><button class="del-btn" type="button" data-action="delete-item" aria-label="Delete item">' + TRASH + '</button></td>' +
+      '</tr>'
+    );
+  }
+
+  function categorySubtotal(cat){
+    return cat.items.reduce(function(sum, it){ return sum + (Number(it.cost)||0) * (Number(it.qty)||0); }, 0);
+  }
+  function categoryBoughtCount(cat){
+    return cat.items.reduce(function(n, it){ return n + (it.bought ? 1 : 0); }, 0);
+  }
+
+  function categoryCardHTML(cat){
+    var subtotal = categorySubtotal(cat);
+    var bought = categoryBoughtCount(cat);
+    var total = cat.items.length;
+    var allBought = total > 0 && bought === total;
+    return (
+      '<article class="category" data-cat-id="' + cat.id + '">' +
+        '<header class="category-head">' +
+          '<span class="cat-icon">' + (ICONS[cat.icon] || ICONS.box) + '</span>' +
+          '<input type="text" class="cat-name" data-field="catname" value="' + esc(cat.name) + '" aria-label="Category name">' +
+          '<span class="cat-badge' + (allBought ? " all-bought" : "") + '" data-role="badge">' + bought + '/' + total + ' bought</span>' +
+          '<span class="cat-subtotal money" data-role="subtotal">' + fmt(subtotal) + '</span>' +
+          '<button class="cat-remove" type="button" data-action="delete-category" aria-label="Remove category">' + CLOSE + '</button>' +
+        '</header>' +
+        '<div class="table-wrap">' +
+          '<table class="items">' +
+            '<thead><tr><th class="col-check"></th><th>Item</th><th>Cost</th><th>Qty</th><th>Line total</th><th>Notes / where to buy</th><th class="col-del"></th></tr></thead>' +
+            '<tbody>' + cat.items.map(function(it){ return itemRowHTML(cat.id, it); }).join("") + '</tbody>' +
+          '</table>' +
+        '</div>' +
+        '<button class="btn btn-add" type="button" data-action="add-item" data-cat-id="' + cat.id + '">+ Add item</button>' +
+      '</article>'
+    );
+  }
+
+  var categoriesEl = document.getElementById("categories");
+  var moveDateInput = document.getElementById("moveDate");
+  var budgetGoalInput = document.getElementById("budgetGoal");
+
+  function renderAll(){
+    categoriesEl.innerHTML = state.categories.map(categoryCardHTML).join("");
+    moveDateInput.value = state.moveDate || "";
+    budgetGoalInput.value = state.budgetGoal || "";
+    updateCountdown();
+    updateGrandTotals();
+  }
+
+  function updateCountdown(){
+    var sub = document.getElementById("countdownSub");
+    var val = document.getElementById("countdownValue");
+    if (!state.moveDate){ val.textContent = "—"; sub.textContent = "set a move-in date"; return; }
+    var today = new Date(); today.setHours(0,0,0,0);
+    var target = new Date(state.moveDate + "T00:00:00");
+    var diff = Math.round((target - today) / 86400000);
+    if (diff > 1){ val.textContent = diff; sub.textContent = "days to go"; }
+    else if (diff === 1){ val.textContent = "1"; sub.textContent = "day to go — almost there!"; }
+    else if (diff === 0){ val.textContent = "0"; sub.textContent = "moving day is today!"; }
+    else { val.textContent = Math.abs(diff); sub.textContent = "days since move-in"; }
+  }
+
+  function updateCategoryTotals(catId){
+    var cat = findCategory(catId);
+    if (!cat) return;
+    var card = categoriesEl.querySelector('.category[data-cat-id="' + catId + '"]');
+    if (!card) return;
+    var subtotal = categorySubtotal(cat);
+    var bought = categoryBoughtCount(cat);
+    var total = cat.items.length;
+    card.querySelector('[data-role="subtotal"]').textContent = fmt(subtotal);
+    var badge = card.querySelector('[data-role="badge"]');
+    badge.textContent = bought + "/" + total + " bought";
+    badge.classList.toggle("all-bought", total > 0 && bought === total);
+  }
+
+  function updateGrandTotals(){
+    var moneyTotal = 0, moneyBought = 0, itemsTotal = 0, itemsBought = 0;
+    state.categories.forEach(function(cat){
+      cat.items.forEach(function(it){
+        var line = (Number(it.cost)||0) * (Number(it.qty)||0);
+        moneyTotal += line;
+        itemsTotal += 1;
+        if (it.bought){ moneyBought += line; itemsBought += 1; }
+      });
+    });
+
+    document.getElementById("grandTotal").textContent = fmt(moneyTotal);
+    document.getElementById("footerTotal").textContent = fmt(moneyTotal);
+    document.getElementById("packedCount").textContent = itemsBought + "/" + itemsTotal;
+    document.getElementById("footerPacked").textContent = itemsBought + " of " + itemsTotal + " packed";
+
+    var pct = itemsTotal > 0 ? (itemsBought / itemsTotal) * 100 : 0;
+    document.getElementById("packedFill").style.width = pct + "%";
+
+    var goalChip = document.getElementById("goalChip");
+    var goal = Number(state.budgetGoal);
+    if (state.budgetGoal !== "" && !isNaN(goal) && goal > 0){
+      var diff = goal - moneyTotal;
+      goalChip.className = "stat-sub " + (diff >= 0 ? "good" : "warn");
+      goalChip.textContent = diff >= 0
+        ? fmt(diff) + " under your goal"
+        : fmt(Math.abs(diff)) + " over your goal";
+    } else {
+      goalChip.className = "stat-sub";
+      goalChip.textContent = "no budget goal set";
+    }
+
+    saveState();
+  }
+
+  // ---- Event delegation ----
+  categoriesEl.addEventListener("input", function(e){
+    var t = e.target;
+    if (!t.matches("[data-field]")) return;
+    var field = t.dataset.field;
+
+    if (field === "catname"){
+      var card = t.closest(".category[data-cat-id]");
+      var cat = findCategory(card.dataset.catId);
+      if (cat) cat.name = t.value;
+      saveState();
+      return;
+    }
+
+    var row = t.closest("tr[data-item-id]");
+    if (!row) return;
+    var it = findItem(row.dataset.catId, row.dataset.itemId);
+    if (!it) return;
+
+    if (field === "name" || field === "note"){
+      it[field] = t.value;
+      saveState();
+    } else if (field === "cost" || field === "qty"){
+      it[field] = parseFloat(t.value) || 0;
+      row.querySelector(".line-total").textContent = fmt(it.cost * it.qty);
+      updateCategoryTotals(row.dataset.catId);
+      updateGrandTotals();
+    }
+  });
+
+  categoriesEl.addEventListener("change", function(e){
+    var t = e.target;
+    if (t.matches('[data-action="toggle-bought"]')){
+      var row = t.closest("tr[data-item-id]");
+      var it = findItem(row.dataset.catId, row.dataset.itemId);
+      if (!it) return;
+      it.bought = t.checked;
+      row.classList.toggle("is-bought", it.bought);
+      updateCategoryTotals(row.dataset.catId);
+      updateGrandTotals();
+    }
+  });
+
+  categoriesEl.addEventListener("click", function(e){
+    var addItemBtn = e.target.closest('[data-action="add-item"]');
+    if (addItemBtn){
+      var cat = findCategory(addItemBtn.dataset.catId);
+      if (!cat) return;
+      var newItem = item("", 0, 1, "");
+      cat.items.push(newItem);
+      var tbody = addItemBtn.closest(".category").querySelector("tbody");
+      tbody.insertAdjacentHTML("beforeend", itemRowHTML(cat.id, newItem));
+      updateCategoryTotals(cat.id);
+      updateGrandTotals();
+      var newRow = tbody.querySelector('tr[data-item-id="' + newItem.id + '"] .name-input');
+      if (newRow) newRow.focus();
+      return;
+    }
+
+    var delItemBtn = e.target.closest('[data-action="delete-item"]');
+    if (delItemBtn){
+      var row = delItemBtn.closest("tr[data-item-id]");
+      var cat2 = findCategory(row.dataset.catId);
+      if (cat2){
+        cat2.items = cat2.items.filter(function(it){ return it.id !== row.dataset.itemId; });
+      }
+      row.remove();
+      updateCategoryTotals(row.dataset.catId);
+      updateGrandTotals();
+      return;
+    }
+
+    var delCatBtn = e.target.closest('[data-action="delete-category"]');
+    if (delCatBtn){
+      var card = delCatBtn.closest(".category[data-cat-id]");
+      var catId = card.dataset.catId;
+      var cat3 = findCategory(catId);
+      var label = cat3 ? cat3.name || "this category" : "this category";
+      if (confirm('Remove "' + label + '" and all its items?')){
+        state.categories = state.categories.filter(function(c){ return c.id !== catId; });
+        card.remove();
+        updateGrandTotals();
+      }
+    }
+  });
+
+  document.getElementById("addCategoryBtn").addEventListener("click", function(){
+    var newCat = { id: uid(), name: "New Category", icon: "box", items: [] };
+    state.categories.push(newCat);
+    categoriesEl.insertAdjacentHTML("beforeend", categoryCardHTML(newCat));
+    saveState();
+    var input = categoriesEl.querySelector('.category[data-cat-id="' + newCat.id + '"] .cat-name');
+    if (input){ input.focus(); input.select(); }
+  });
+
+  moveDateInput.addEventListener("input", function(){
+    state.moveDate = moveDateInput.value;
+    updateCountdown();
+    saveState();
+  });
+  budgetGoalInput.addEventListener("input", function(){
+    state.budgetGoal = budgetGoalInput.value;
+    updateGrandTotals();
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", function(){
+    if (confirm("Reset everything back to the original sample budget? This clears your edits.")){
+      state = defaultState();
+      saveState();
+      renderAll();
+    }
+  });
+
+  // ---- Install as app ----
+  (function(){
+    try{
+      var installCard = document.getElementById("installCard");
+      var installText = document.getElementById("installText");
+      var installBtn = document.getElementById("installBtn");
+      var downloadBtn = document.getElementById("downloadAppBtn");
+      var ua = navigator.userAgent || "";
+      var isIOS = /iphone|ipad|ipod/i.test(ua) || (ua.indexOf("Macintosh") > -1 && "ontouchend" in document);
+      var isAndroid = /android/i.test(ua);
+      var isFileProtocol = location.protocol === "file:";
+      var isStandalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+      var deferredPrompt = null;
+
+      if ("serviceWorker" in navigator && !isFileProtocol){
+        navigator.serviceWorker.register("service-worker.js").catch(function(){});
+      }
+
+      function renderInstallCard(){
+        if (isStandalone){
+          installText.textContent = "Installed — you're already running this as an app.";
+          installBtn.hidden = true;
+          return;
+        }
+        if (isFileProtocol){
+          installText.textContent = "Opened as a local file — installing needs this hosted over http/https. Use \"Save Offline Copy\" below for a portable version instead.";
+          return;
+        }
+        if (deferredPrompt){
+          installText.textContent = "Ready to install — add it to your home screen or desktop like a real app.";
+          installBtn.hidden = false;
+          return;
+        }
+        if (isIOS){
+          installText.textContent = "On iPhone or iPad: tap the Share icon in Safari, then \"Add to Home Screen\" — Boxed Up will open full-screen with its own icon.";
+        } else if (isAndroid){
+          installText.textContent = "On Android: tap the ⋮ menu in Chrome, then \"Add to Home screen\" or \"Install app\".";
+        } else {
+          installText.textContent = "On desktop Chrome or Edge: click the install icon in the address bar (or the ⋮ menu → \"Install Boxed Up\") to run this as its own app window.";
+        }
+      }
+
+      window.addEventListener("beforeinstallprompt", function(e){
+        e.preventDefault();
+        deferredPrompt = e;
+        renderInstallCard();
+      });
+      installBtn.addEventListener("click", function(){
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function(){ deferredPrompt = null; installBtn.hidden = true; });
+      });
+      window.addEventListener("appinstalled", function(){
+        isStandalone = true;
+        renderInstallCard();
+      });
+
+      if (downloadBtn){
+        downloadBtn.addEventListener("click", function(){
+          var html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+          var blob = new Blob([html], { type: "text/html;charset=utf-8" });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = "boxed-up.html";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        });
+      }
+
+      renderInstallCard();
+    }catch(e){}
+  })();
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
