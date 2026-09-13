@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Julie's Wedding Dress Finder</title>
+<meta name="theme-color" content="#b76e79">
+<meta name="description" content="Profile, style board, and reliable-store search launcher for finding Julie's wedding dress">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Mulish:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blush:#f6e9e6;
+    --blush-deep:#e8c7c9;
+    --rose:#b76e79;
+    --rose-dark:#8f4a56;
+    --gold:#c9a24b;
+    --ivory:#fffaf6;
+    --panel:#ffffff;
+    --ink:#3a2e2f;
+    --muted:#8a7873;
+    --good:#3f7d5c;
+    --good-bg:#e7f3ec;
+    --caution:#a1721c;
+    --caution-bg:#faf1de;
+    --risk:#b4453e;
+    --risk-bg:#fbe9e7;
+    --shadow: 0 10px 30px rgba(80,45,50,0.10);
+    --radius: 16px;
+    --border: 1px solid #ecdcd9;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Mulish', system-ui, sans-serif;
+    background:
+      radial-gradient(circle at 8% 8%, #fff 0%, transparent 42%),
+      radial-gradient(circle at 92% 15%, var(--blush) 0%, transparent 45%),
+      var(--ivory);
+    color:var(--ink);
+    min-height:100vh;
+    padding-bottom:80px;
+  }
+  header{
+    text-align:center;
+    padding:40px 16px 12px;
+  }
+  header h1{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:700;
+    font-size:clamp(2rem, 5vw, 3.2rem);
+    margin:0 0 6px;
+    color:var(--rose-dark);
+    letter-spacing:0.5px;
+  }
+  header p{
+    margin:0;
+    color:var(--muted);
+    font-size:1.02rem;
+    max-width:640px;
+    margin:0 auto;
+  }
+  .save-indicator{
+    text-align:center;
+    font-size:0.82rem;
+    color:var(--muted);
+    margin-top:10px;
+  }
+  .save-indicator .dot{
+    display:inline-block;
+    width:7px;height:7px;border-radius:50%;
+    background:var(--good);
+    margin-right:5px;
+  }
+  main{
+    max-width:920px;
+    margin:0 auto;
+    padding:0 16px;
+  }
+  section.card{
+    background:var(--panel);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    border:var(--border);
+    padding:26px 28px;
+    margin:22px 0;
+  }
+  section.card h2{
+    font-family:'Cormorant Garamond', serif;
+    font-size:1.6rem;
+    color:var(--rose-dark);
+    margin:0 0 4px;
+  }
+  section.card > .sub{
+    color:var(--muted);
+    font-size:0.92rem;
+    margin:0 0 18px;
+    line-height:1.5;
+  }
+  label{
+    display:block;
+    font-weight:700;
+    font-size:0.86rem;
+    color:var(--ink);
+    margin-bottom:4px;
+  }
+  .field-hint{
+    font-size:0.78rem;
+    color:var(--muted);
+    margin-top:3px;
+  }
+  input[type=text], input[type=number], input[type=date], input[type=url], textarea, select{
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1.5px solid #e6d6d3;
+    background:#fffdfb;
+    font-family:inherit;
+    font-size:0.95rem;
+    color:var(--ink);
+  }
+  textarea{resize:vertical; min-height:70px;}
+  input:focus, textarea:focus, select:focus{
+    outline:none;
+    border-color:var(--rose);
+    box-shadow:0 0 0 3px rgba(183,110,121,0.15);
+  }
+  .grid{
+    display:grid;
+    gap:16px;
+  }
+  .grid.cols-2{ grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); }
+  .grid.cols-3{ grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); }
+  .unit-toggle{
+    display:inline-flex;
+    border:1.5px solid #e6d6d3;
+    border-radius:10px;
+    overflow:hidden;
+    margin-bottom:16px;
+  }
+  .unit-toggle button{
+    border:none;
+    background:#fffdfb;
+    padding:7px 16px;
+    font-size:0.85rem;
+    font-weight:700;
+    cursor:pointer;
+    color:var(--muted);
+  }
+  .unit-toggle button.active{
+    background:var(--rose);
+    color:#fff;
+  }
+  .chip-group{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .chip-group .chip-label{
+    width:100%;
+    font-weight:700;
+    font-size:0.82rem;
+    color:var(--rose-dark);
+    margin-bottom:2px;
+  }
+  .chip{
+    border:1.5px solid #e6d6d3;
+    background:#fffdfb;
+    color:var(--ink);
+    padding:6px 14px;
+    border-radius:999px;
+    font-size:0.86rem;
+    cursor:pointer;
+    user-select:none;
+  }
+  .chip.selected{
+    background:var(--rose);
+    border-color:var(--rose);
+    color:#fff;
+  }
+  button.btn{
+    border:none;
+    border-radius:999px;
+    padding:11px 22px;
+    font-weight:800;
+    font-size:0.9rem;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  button.btn.primary{ background:var(--rose); color:#fff; }
+  button.btn.primary:hover{ background:var(--rose-dark); }
+  button.btn.ghost{ background:#fff; color:var(--rose-dark); border:1.5px solid var(--blush-deep); }
+  button.btn.ghost:hover{ background:var(--blush); }
+  button.btn.danger{ background:#fff; color:var(--risk); border:1.5px solid #f0c6c2; }
+  button.btn.small{ padding:6px 14px; font-size:0.8rem; }
+  .actions-row{ display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+
+  .img-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(140px,1fr));
+    gap:14px;
+    margin-top:16px;
+  }
+  .img-card{
+    border:var(--border);
+    border-radius:12px;
+    overflow:hidden;
+    background:#fffdfb;
+  }
+  .img-card img{
+    width:100%;
+    height:140px;
+    object-fit:cover;
+    display:block;
+  }
+  .img-card .img-body{ padding:8px; }
+  .img-card input{ font-size:0.78rem; padding:6px 8px; margin-bottom:6px; }
+  .img-card .remove{
+    width:100%;
+    background:none;
+    border:none;
+    color:var(--risk);
+    font-size:0.76rem;
+    cursor:pointer;
+    padding:2px;
+  }
+  .upload-drop{
+    border:2px dashed var(--blush-deep);
+    border-radius:12px;
+    padding:22px;
+    text-align:center;
+    color:var(--muted);
+    font-size:0.88rem;
+    cursor:pointer;
+    background:#fffaf8;
+  }
+  .upload-drop:hover{ background:var(--blush); }
+
+  .store-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(250px,1fr));
+    gap:14px;
+  }
+  .store-card{
+    border:var(--border);
+    border-radius:12px;
+    padding:14px 16px;
+    background:#fffdfb;
+    position:relative;
+  }
+  .store-card.picked{ border-color:var(--rose); box-shadow:0 0 0 2px rgba(183,110,121,0.12); }
+  .store-card .top-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:8px;
+  }
+  .store-card .name{
+    font-weight:800;
+    font-size:1rem;
+  }
+  .store-card .tier{ color:var(--muted); font-size:0.78rem; }
+  .badge{
+    font-size:0.72rem;
+    font-weight:800;
+    padding:3px 9px;
+    border-radius:999px;
+    white-space:nowrap;
+  }
+  .badge.good{ background:var(--good-bg); color:var(--good); }
+  .badge.caution{ background:var(--caution-bg); color:var(--caution); }
+  .badge.risk{ background:var(--risk-bg); color:var(--risk); }
+  .store-card .policy{
+    font-size:0.82rem;
+    color:var(--ink);
+    margin:8px 0;
+    line-height:1.45;
+  }
+  .store-card .row-actions{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+    flex-wrap:wrap;
+  }
+  .store-card a.link{
+    font-size:0.78rem;
+    color:var(--rose-dark);
+    font-weight:700;
+    text-decoration:none;
+    border-bottom:1px solid var(--blush-deep);
+  }
+  .custom-store-row{
+    display:grid;
+    grid-template-columns:1fr 1fr auto;
+    gap:8px;
+    margin-top:10px;
+  }
+  .custom-store-list{ margin-top:10px; display:flex; flex-direction:column; gap:6px; }
+  .custom-store-list .item{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:0.85rem; background:#fffdfb; border:var(--border); border-radius:8px; padding:8px 12px;
+  }
+
+  .size-result{
+    background:var(--blush);
+    border-radius:12px;
+    padding:18px 20px;
+    margin-top:14px;
+  }
+  .size-result .big{
+    font-family:'Cormorant Garamond', serif;
+    font-size:2.4rem;
+    color:var(--rose-dark);
+    font-weight:700;
+  }
+  table.chart{ width:100%; border-collapse:collapse; margin-top:14px; font-size:0.82rem; }
+  table.chart th, table.chart td{ padding:6px 8px; text-align:center; border-bottom:1px solid #f1e3e0; }
+  table.chart th{ color:var(--rose-dark); }
+  table.chart tr.match td{ background:var(--blush); font-weight:800; }
+
+  .find-panel{
+    background:var(--blush);
+    border-radius:14px;
+    padding:18px 20px;
+    margin-top:16px;
+  }
+  .find-panel .query-preview{
+    font-size:0.86rem;
+    background:#fff;
+    border-radius:8px;
+    padding:10px 14px;
+    border:var(--border);
+    margin:10px 0;
+    word-break:break-word;
+  }
+  .lens-links{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+
+  .checklist{ list-style:none; padding:0; margin:0; }
+  .checklist li{
+    display:flex; gap:10px; align-items:flex-start;
+    padding:9px 0; border-bottom:1px solid #f4e7e4;
+    font-size:0.92rem;
+  }
+  .checklist li:last-child{ border-bottom:none; }
+  .checklist input[type=checkbox]{ width:18px; height:18px; margin-top:2px; accent-color:var(--rose); }
+  .checklist li.done label{ color:var(--muted); text-decoration:line-through; }
+
+  .timeline-result{ display:flex; flex-wrap:wrap; gap:14px; margin-top:14px; }
+  .timeline-result .tstop{
+    flex:1; min-width:150px;
+    background:#fffdfb; border:var(--border); border-radius:12px; padding:12px 14px;
+  }
+  .timeline-result .tstop .when{ font-weight:800; color:var(--rose-dark); font-size:0.95rem; }
+  .timeline-result .tstop .what{ font-size:0.8rem; color:var(--muted); margin-top:3px; }
+
+  .disclosure{
+    background:#fff8f0;
+    border:1px solid #f0dfc4;
+    border-radius:12px;
+    padding:14px 16px;
+    font-size:0.85rem;
+    color:#6b5738;
+    line-height:1.55;
+    margin-top:16px;
+  }
+  .disclosure strong{ color:#5a4726; }
+
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:0.8rem;
+    margin-top:30px;
+    padding:0 20px;
+  }
+
+  @media print{
+    body{ background:#fff; padding:0; }
+    .no-print{ display:none !important; }
+    section.card{ box-shadow:none; border:1px solid #ddd; break-inside:avoid; }
+    header p{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Julie's Wedding Dress Finder</h1>
+  <p>One place for measurements, budget, stores, and style inspiration — plus a fast, honest way to search reliable retailers and keep returns simple.</p>
+  <div class="save-indicator no-print"><span class="dot"></span><span id="saveStatus">All changes saved in this browser</span></div>
+</header>
+
+<main>
+
+  <!-- PROFILE -->
+  <section class="card">
+    <h2>Measurements &amp; Basics</h2>
+    <p class="sub">Measure over well-fitting undergarments, snug but not tight. These drive the size estimate below.</p>
+    <div class="unit-toggle no-print">
+      <button type="button" id="unitIn" class="active">Inches</button>
+      <button type="button" id="unitCm">Centimeters</button>
+    </div>
+    <div class="grid cols-3">
+      <div>
+        <label for="bust">Bust</label>
+        <input type="number" id="bust" min="0" step="0.25" placeholder="e.g. 36">
+      </div>
+      <div>
+        <label for="waist">Waist</label>
+        <input type="number" id="waist" min="0" step="0.25" placeholder="e.g. 28">
+      </div>
+      <div>
+        <label for="hip">Hip</label>
+        <input type="number" id="hip" min="0" step="0.25" placeholder="e.g. 39">
+      </div>
+      <div>
+        <label for="height">Height <span style="font-weight:400;color:var(--muted)">(for hem/train length)</span></label>
+        <input type="text" id="height" placeholder="e.g. 5'6&quot; or 168cm">
+      </div>
+      <div>
+        <label for="weddingDate">Wedding date</label>
+        <input type="date" id="weddingDate">
+      </div>
+      <div>
+        <label for="dressSizeNote">Usual street clothing size</label>
+        <input type="text" id="dressSizeNote" placeholder="e.g. US 8 (optional)">
+      </div>
+    </div>
+
+    <div class="grid cols-2" style="margin-top:16px;">
+      <div>
+        <label for="budgetMin">Budget — minimum ($)</label>
+        <input type="number" id="budgetMin" min="0" step="25" placeholder="0">
+      </div>
+      <div>
+        <label for="budgetMax">Budget — maximum ($)</label>
+        <input type="number" id="budgetMax" min="0" step="25" placeholder="e.g. 2000">
+        <div class="field-hint">Tip: hold back ~15–20% of this for alterations — most gowns need them.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STYLE -->
+  <section class="card">
+    <h2>Style Preferences</h2>
+    <p class="sub">Pick as many as apply. These feed straight into the search queries below.</p>
+
+    <div class="chip-group" id="chip-silhouette"><span class="chip-label">Silhouette</span></div>
+    <div class="chip-group" id="chip-neckline"><span class="chip-label">Neckline</span></div>
+    <div class="chip-group" id="chip-sleeve"><span class="chip-label">Sleeves</span></div>
+    <div class="chip-group" id="chip-fabric"><span class="chip-label">Fabric &amp; detail</span></div>
+    <div class="chip-group" id="chip-color"><span class="chip-label">Color</span></div>
+
+    <label for="extraNotes" style="margin-top:10px;">Anything else? (designers, must-haves, dealbreakers)</label>
+    <textarea id="extraNotes" placeholder="e.g. must have pockets, no beading, loves Grace Loves Lace"></textarea>
+  </section>
+
+  <!-- REFERENCE IMAGES -->
+  <section class="card">
+    <h2>Reference Pictures</h2>
+    <p class="sub">Save the styles Julie loves. Stored right in this browser — nothing is uploaded anywhere.</p>
+    <div class="upload-drop no-print" id="uploadDrop">
+      📎 Click to add reference photos (screenshots, Pinterest saves, magazine pics)
+      <input type="file" id="imgInput" accept="image/*" multiple style="display:none">
+    </div>
+    <div class="img-grid" id="imgGrid"></div>
+    <div class="disclosure">
+      <strong>Want to search by picture?</strong> This app can't silently crawl the internet on your behalf — but you can drop any of these photos into
+      <a href="https://lens.google.com" target="_blank" rel="noopener">Google Lens</a> or
+      <a href="https://www.pinterest.com/" target="_blank" rel="noopener">Pinterest</a> for visual matches, then check the results against the reliable stores below.
+    </div>
+  </section>
+
+  <!-- STORES -->
+  <section class="card">
+    <h2>Stores &amp; Return Reliability</h2>
+    <p class="sub">Checked stores are used to build your search links below. Return-policy summaries were checked against each retailer's published policy — always confirm at checkout, since policies change.</p>
+    <div class="store-grid" id="storeGrid"></div>
+
+    <div style="margin-top:18px;">
+      <label>Add another store you're considering</label>
+      <div class="custom-store-row">
+        <input type="text" id="customStoreName" placeholder="Store name">
+        <input type="url" id="customStoreUrl" placeholder="Website (optional), e.g. https://example.com">
+        <button class="btn ghost small no-print" id="addCustomStore" type="button">Add</button>
+      </div>
+      <div class="custom-store-list" id="customStoreList"></div>
+    </div>
+  </section>
+
+  <!-- SIZE ESTIMATE -->
+  <section class="card">
+    <h2>Bridal Size Estimate</h2>
+    <p class="sub">Bridal sizing runs smaller than street clothes and varies by brand — this is a general estimate from a standard industry chart, not any one store's real chart.</p>
+    <div id="sizeOutput"></div>
+    <table class="chart" id="sizeChartTable"></table>
+  </section>
+
+  <!-- FIND DRESSES -->
+  <section class="card">
+    <h2>Find Dresses</h2>
+    <p class="sub">Builds ready-to-click search links across only the stores you picked above — no guessing at store-specific search boxes, just a reliable Google search restricted to their sites.</p>
+    <button class="btn primary no-print" id="buildSearch" type="button">Build search links</button>
+    <div id="findResults"></div>
+    <div class="disclosure">
+      <strong>How this works.</strong> A page like this one runs entirely in your browser, so it can't reach across the internet and quietly scrape retailer sites on its own — browsers block that, and it would violate most stores' terms anyway. Instead it compiles what you entered into precise search links (including ones restricted to just your chosen stores) so real results are one click away, always from the retailer's own current listings.
+    </div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section class="card">
+    <h2>Shopping Timeline</h2>
+    <p class="sub">Based on your wedding date, using typical bridal-industry lead times. Set the date above first.</p>
+    <div id="timelineOutput"></div>
+  </section>
+
+  <!-- RETURNS CHECKLIST -->
+  <section class="card">
+    <h2>Before You Buy — Returns Checklist</h2>
+    <p class="sub">Wedding dresses are one of the most return-restricted categories in retail. Confirm every box before paying.</p>
+    <ul class="checklist" id="checklist"></ul>
+  </section>
+
+  <!-- DATA -->
+  <section class="card no-print">
+    <h2>Your Data</h2>
+    <p class="sub">Everything above is saved automatically to this browser only. Use export/import to move it to another device or share it with Julie.</p>
+    <div class="actions-row">
+      <button class="btn ghost" id="exportBtn" type="button">⬇ Export profile (.json)</button>
+      <button class="btn ghost" id="importBtnTrigger" type="button">⬆ Import profile</button>
+      <input type="file" id="importInput" accept="application/json" style="display:none">
+      <button class="btn ghost" id="printBtn" type="button">🖨 Print shopping brief</button>
+      <button class="btn danger" id="clearBtn" type="button">Clear all data</button>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Made for Julie's dress search. Stored locally in this browser — no accounts, no servers.
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = 'weddingDressFinder.v1';
+
+  var CHIP_GROUPS = {
+    silhouette: ['A-line','Ballgown','Mermaid / Trumpet','Sheath / Column','Empire waist','Tea-length'],
+    neckline: ['Sweetheart','V-neck','Off-the-shoulder','Halter','High neck','Square','Illusion'],
+    sleeve: ['Sleeveless','Cap sleeve','Short sleeve','Long sleeve','Illusion sleeve','Detachable sleeve'],
+    fabric: ['Lace','Satin','Tulle','Crepe','Chiffon','Organza','Beaded / embellished','Minimalist / plain'],
+    color: ['Ivory','White','Blush','Champagne','Off-white']
+  };
+
+  var STORES = [
+    {
+      id:'azazie', name:'Azazie', domain:'azazie.com', tier:'$$',
+      badge:'caution',
+      policy:'Standard sizes: 30-day returns, unworn with tags, return fee waived on wedding gowns. Custom-sized gowns (common for bridal orders) are FINAL SALE.',
+      defaultChecked:true
+    },
+    {
+      id:'bhldn', name:'Anthropologie Weddings (BHLDN)', domain:'anthropologie.com', path:'/bhldn-wedding-dresses', tier:'$$$',
+      badge:'caution',
+      policy:'30 days, unworn/unaltered with tags, ships back to their warehouse. Made-to-order gowns (most bridal styles) are FINAL SALE. (BHLDN is Anthropologie’s bridal line, now sold under the Anthropologie Weddings name.)',
+      defaultChecked:true
+    },
+    {
+      id:'lulus', name:'Lulus', domain:'lulus.com', tier:'$',
+      badge:'good',
+      policy:'21-day window (free within 10 days of delivery, $5.95 label fee after). Unworn with security tag attached. Good for informal/reception dresses.',
+      defaultChecked:true
+    },
+    {
+      id:'nordstrom', name:'Nordstrom', domain:'nordstrom.com', tier:'$$$$',
+      badge:'good',
+      policy:'Free returns in-store or by mail. Unworn, tags on, no signs of wear. Historically the most generous major retailer for special-occasion dresses.',
+      defaultChecked:true
+    },
+    {
+      id:'revolve', name:'Revolve', domain:'revolve.com', tier:'$$$',
+      badge:'good',
+      policy:'No restocking fee for normal orders. Bridal gowns get a 30-day return window. Any alterations void return eligibility.',
+      defaultChecked:true
+    },
+    {
+      id:'asos', name:'ASOS Bridal', domain:'asos.com', path:'/women/wedding/cat', tier:'$',
+      badge:'caution',
+      policy:'General ASOS returns apply (try on, don’t wear) but bridal-specific terms aren’t clearly published — confirm at checkout.',
+      defaultChecked:false
+    },
+    {
+      id:'davidsbridal', name:'David’s Bridal', domain:'davidsbridal.com', tier:'$$',
+      badge:'risk',
+      policy:'Normally a short 7-day window plus a $12.50 fee. As of 2025 the company has been in bankruptcy/liquidation proceedings — verify it’s still operating and taking returns before ordering.',
+      defaultChecked:false
+    },
+    {
+      id:'kleinfeld', name:'Kleinfeld Bridal', domain:'kleinfeldbridal.com', tier:'$$$$',
+      badge:'risk',
+      policy:'All sales final — gowns are special-ordered. In some cases a deposit can be transferred to a different gown, but there’s no standard refund path.',
+      defaultChecked:false
+    },
+    {
+      id:'etsy', name:'Etsy (independent sellers)', domain:'etsy.com', tier:'varies',
+      badge:'risk',
+      policy:'Return eligibility is set by each individual seller — many custom/made-to-order bridal listings are final sale. Check the specific listing’s policy before buying.',
+      defaultChecked:false
+    }
+  ];
+
+  var SIZE_CHART = [
+    {size:0, bust:32, waist:23.5, hip:34.5},
+    {size:2, bust:33, waist:24.5, hip:35.5},
+    {size:4, bust:34, waist:25.5, hip:36.5},
+    {size:6, bust:35, waist:26.5, hip:37.5},
+    {size:8, bust:36.5, waist:28, hip:39},
+    {size:10, bust:38, waist:29.5, hip:40.5},
+    {size:12, bust:39.5, waist:31, hip:42},
+    {size:14, bust:41, waist:32.5, hip:43.5},
+    {size:16, bust:43, waist:34.5, hip:45.5},
+    {size:18, bust:45, waist:36.5, hip:47.5},
+    {size:20, bust:47, waist:38.5, hip:49.5},
+    {size:22, bust:49, waist:40.5, hip:51.5},
+    {size:24, bust:51, waist:42.5, hip:53.5},
+    {size:26, bust:53, waist:44.5, hip:55.5},
+    {size:28, bust:55, waist:46.5, hip:57.5}
+  ];
+
+  var CHECKLIST_ITEMS = [
+    {id:'window', text:'Confirmed the exact return window in days, and whether it starts at delivery or at purchase.'},
+    {id:'finalsale', text:'Checked whether this specific gown is made-to-order / custom-sized — those are final sale almost everywhere, even at stores with normal return policies.'},
+    {id:'fees', text:'Checked for a restocking fee or return-shipping fee that gets deducted from the refund.'},
+    {id:'condition', text:'Know the condition rules: unworn, unwashed, tags/security ribbon still attached, original packaging kept.'},
+    {id:'refundtype', text:'Confirmed whether a return gets a refund to the original payment method or only store credit.'},
+    {id:'proof', text:'Plan to photograph the dress and tags right after opening, and keep every confirmation email.'},
+    {id:'deadline', text:'Ordering with enough buffer before the wedding date to actually use the return window and reorder if needed.'},
+    {id:'inperson', text:'For final-sale or custom orders: tried it on in person (or via a home try-on program) before paying.'}
+  ];
+
+  var state = loadState();
+
+  function defaultState(){
+    return {
+      unit: 'in',
+      profile: { bust:'', waist:'', hip:'', height:'', weddingDate:'', dressSizeNote:'', budgetMin:'', budgetMax:'' },
+      style: { silhouette:[], neckline:[], sleeve:[], fabric:[], color:[], extraNotes:'' },
+      images: [],
+      stores: {
+        selected: STORES.filter(function(s){ return s.defaultChecked; }).map(function(s){ return s.id; }),
+        custom: []
+      },
+      checklist: {}
+    };
+  }
+
+  function loadState(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return defaultState();
+      var parsed = JSON.parse(raw);
+      var d = defaultState();
+      return Object.assign(d, parsed, {
+        profile: Object.assign(d.profile, parsed.profile || {}),
+        style: Object.assign(d.style, parsed.style || {}),
+        stores: Object.assign(d.stores, parsed.stores || {}),
+        images: parsed.images || [],
+        checklist: parsed.checklist || {}
+      });
+    }catch(e){
+      return defaultState();
+    }
+  }
+
+  var saveTimer = null;
+  function save(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    var el = document.getElementById('saveStatus');
+    el.textContent = 'Saved just now';
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function(){ el.textContent = 'All changes saved in this browser'; }, 1600);
+  }
+
+  function el(tag, attrs, children){
+    var e = document.createElement(tag);
+    attrs = attrs || {};
+    Object.keys(attrs).forEach(function(k){
+      if(k === 'class') e.className = attrs[k];
+      else if(k === 'html') e.innerHTML = attrs[k];
+      else if(k.indexOf('on') === 0) e.addEventListener(k.slice(2), attrs[k]);
+      else e.setAttribute(k, attrs[k]);
+    });
+    (children||[]).forEach(function(c){ if(c) e.appendChild(c); });
+    return e;
+  }
+  function text(s){ return document.createTextNode(s); }
+
+  // ---- Units ----
+  function toIn(v){ return state.unit === 'cm' ? v/2.54 : v; }
+
+  document.getElementById('unitIn').addEventListener('click', function(){ setUnit('in'); });
+  document.getElementById('unitCm').addEventListener('click', function(){ setUnit('cm'); });
+  function setUnit(u){
+    state.unit = u;
+    document.getElementById('unitIn').classList.toggle('active', u==='in');
+    document.getElementById('unitCm').classList.toggle('active', u==='cm');
+    save();
+    renderSize();
+  }
+
+  // ---- Profile fields ----
+  var profileFields = ['bust','waist','hip','height','weddingDate','dressSizeNote','budgetMin','budgetMax'];
+  profileFields.forEach(function(id){
+    var input = document.getElementById(id);
+    input.addEventListener('input', function(){
+      state.profile[id] = input.value;
+      save();
+      if(['bust','waist','hip'].indexOf(id) !== -1) renderSize();
+      if(id === 'weddingDate') renderTimeline();
+    });
+  });
+
+  function fillProfileInputs(){
+    profileFields.forEach(function(id){
+      document.getElementById(id).value = state.profile[id] || '';
+    });
+    document.getElementById('unitIn').classList.toggle('active', state.unit !== 'cm');
+    document.getElementById('unitCm').classList.toggle('active', state.unit === 'cm');
+  }
+
+  // ---- Style chips ----
+  function renderChips(){
+    Object.keys(CHIP_GROUPS).forEach(function(group){
+      var container = document.getElementById('chip-' + group);
+      CHIP_GROUPS[group].forEach(function(label){
+        var selected = state.style[group].indexOf(label) !== -1;
+        var chip = el('button', {
+          type:'button',
+          class:'chip' + (selected ? ' selected' : ''),
+          onclick:function(){
+            var arr = state.style[group];
+            var idx = arr.indexOf(label);
+            if(idx === -1) arr.push(label); else arr.splice(idx,1);
+            save();
+            renderChips();
+          }
+        }, [text(label)]);
+        container.appendChild(chip);
+      });
+    });
+  }
+  function clearChipContainers(){
+    Object.keys(CHIP_GROUPS).forEach(function(group){
+      var container = document.getElementById('chip-' + group);
+      Array.prototype.slice.call(container.querySelectorAll('.chip')).forEach(function(c){ c.remove(); });
+    });
+  }
+
+  var extraNotes = document.getElementById('extraNotes');
+  extraNotes.addEventListener('input', function(){
+    state.style.extraNotes = extraNotes.value;
+    save();
+  });
+
+  // ---- Reference images ----
+  var uploadDrop = document.getElementById('uploadDrop');
+  var imgInput = document.getElementById('imgInput');
+  uploadDrop.addEventListener('click', function(){ imgInput.click(); });
+  imgInput.addEventListener('change', function(){
+    Array.prototype.forEach.call(imgInput.files, function(file){
+      var reader = new FileReader();
+      reader.onload = function(){
+        var img = new Image();
+        img.onload = function(){
+          var maxDim = 900;
+          var scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+          var canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          var dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+          state.images.push({ id: 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2,7), dataUrl: dataUrl, caption:'' });
+          save();
+          renderImages();
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+    imgInput.value = '';
+  });
+
+  function renderImages(){
+    var grid = document.getElementById('imgGrid');
+    grid.innerHTML = '';
+    state.images.forEach(function(img){
+      var captionInput = el('input', {
+        type:'text', placeholder:'Note (e.g. love this neckline)', value: img.caption,
+        oninput: function(e){ img.caption = e.target.value; save(); }
+      });
+      captionInput.value = img.caption;
+      var card = el('div', {class:'img-card'}, [
+        el('img', {src: img.dataUrl}),
+        el('div', {class:'img-body'}, [
+          captionInput,
+          el('button', {class:'remove no-print', type:'button', onclick:function(){
+            state.images = state.images.filter(function(i){ return i.id !== img.id; });
+            save();
+            renderImages();
+          }}, [text('Remove')])
+        ])
+      ]);
+      grid.appendChild(card);
+    });
+  }
+
+  // ---- Stores ----
+  function storeUrl(store){
+    var base = 'https://www.' + store.domain;
+    return base + (store.path || '');
+  }
+  function renderStores(){
+    var grid = document.getElementById('storeGrid');
+    grid.innerHTML = '';
+    STORES.forEach(function(store){
+      var picked = state.stores.selected.indexOf(store.id) !== -1;
+      var checkbox = el('input', {
+        type:'checkbox',
+        onchange:function(){
+          var idx = state.stores.selected.indexOf(store.id);
+          if(idx === -1) state.stores.selected.push(store.id); else state.stores.selected.splice(idx,1);
+          save();
+          renderStores();
+        }
+      });
+      checkbox.checked = picked;
+      var badgeText = store.badge === 'good' ? 'Reliable returns' : store.badge === 'caution' ? 'Read the fine print' : 'Expect final sale';
+      var card = el('div', {class:'store-card' + (picked?' picked':'')}, [
+        el('div', {class:'top-row'}, [
+          el('label', {style:'display:flex;align-items:center;gap:8px;font-weight:800;margin:0;'}, [checkbox, text(store.name)]),
+          el('span', {class:'badge ' + store.badge}, [text(badgeText)])
+        ]),
+        el('div', {class:'tier'}, [text('Typical price: ' + store.tier)]),
+        el('div', {class:'policy'}, [text(store.policy)]),
+        el('div', {class:'row-actions'}, [
+          el('a', {class:'link', href: storeUrl(store), target:'_blank', rel:'noopener'}, [text('Visit site ↗')])
+        ])
+      ]);
+      grid.appendChild(card);
+    });
+  }
+
+  document.getElementById('addCustomStore').addEventListener('click', function(){
+    var name = document.getElementById('customStoreName').value.trim();
+    var url = document.getElementById('customStoreUrl').value.trim();
+    if(!name) return;
+    state.stores.custom.push({ id:'custom_' + Date.now(), name:name, url:url });
+    document.getElementById('customStoreName').value = '';
+    document.getElementById('customStoreUrl').value = '';
+    save();
+    renderCustomStores();
+  });
+
+  function renderCustomStores(){
+    var list = document.getElementById('customStoreList');
+    list.innerHTML = '';
+    state.stores.custom.forEach(function(cs){
+      var row = el('div', {class:'item'}, [
+        el('span', {}, [text(cs.name + (cs.url ? ' — ' + cs.url : ''))]),
+        el('button', {class:'btn danger small no-print', type:'button', onclick:function(){
+          state.stores.custom = state.stores.custom.filter(function(x){ return x.id !== cs.id; });
+          save();
+          renderCustomStores();
+        }}, [text('Remove')])
+      ]);
+      list.appendChild(row);
+    });
+  }
+
+  // ---- Size estimate ----
+  function renderSize(){
+    var bust = parseFloat(toIn(parseFloat(document.getElementById('bust').value)));
+    var waist = parseFloat(toIn(parseFloat(document.getElementById('waist').value)));
+    var hip = parseFloat(toIn(parseFloat(document.getElementById('hip').value)));
+    var out = document.getElementById('sizeOutput');
+    var tableEl = document.getElementById('sizeChartTable');
+    out.innerHTML = '';
+    tableEl.innerHTML = '';
+
+    if(isNaN(bust) && isNaN(waist) && isNaN(hip)){
+      out.appendChild(el('p', {style:'color:var(--muted);'}, [text('Enter bust, waist, and/or hip above to see an estimate.')]));
+      return;
+    }
+
+    var candidateSizes = [];
+    if(!isNaN(bust)) candidateSizes.push(sizeForMeasure(bust,'bust'));
+    if(!isNaN(waist)) candidateSizes.push(sizeForMeasure(waist,'waist'));
+    if(!isNaN(hip)) candidateSizes.push(sizeForMeasure(hip,'hip'));
+    var recommended = Math.max.apply(null, candidateSizes);
+
+    out.appendChild(el('div', {class:'size-result'}, [
+      el('div', {}, [text('Estimated size to start with')]),
+      el('div', {class:'big'}, [text('US ' + recommended)]),
+      el('p', {style:'margin:8px 0 0;font-size:0.85rem;color:var(--ink);'}, [
+        text('Sized to your largest measurement against a standard bridal chart — alterations can take a gown in, but rarely let it out much. Always check the specific brand’s own size chart before ordering.')
+      ])
+    ]));
+
+    var head = el('tr', {}, [el('th',{},[text('Size')]), el('th',{},[text('Bust')]), el('th',{},[text('Waist')]), el('th',{},[text('Hip')])]);
+    tableEl.appendChild(head);
+    SIZE_CHART.forEach(function(row){
+      var isMatch = row.size === recommended;
+      tableEl.appendChild(el('tr', {class: isMatch ? 'match':''}, [
+        el('td',{},[text(String(row.size))]),
+        el('td',{},[text(row.bust+'"')]),
+        el('td',{},[text(row.waist+'"')]),
+        el('td',{},[text(row.hip+'"')])
+      ]));
+    });
+  }
+  function sizeForMeasure(measure, key){
+    for(var i=0;i<SIZE_CHART.length;i++){
+      if(SIZE_CHART[i][key] >= measure) return SIZE_CHART[i].size;
+    }
+    return SIZE_CHART[SIZE_CHART.length-1].size;
+  }
+
+  // ---- Find dresses / search builder ----
+  function buildStyleTerms(){
+    var terms = [];
+    ['silhouette','neckline','sleeve','fabric','color'].forEach(function(g){
+      terms = terms.concat(state.style[g]);
+    });
+    if(state.style.extraNotes) terms.push(state.style.extraNotes);
+    return terms.join(' ');
+  }
+  function budgetPhrase(){
+    var min = state.profile.budgetMin, max = state.profile.budgetMax;
+    if(min && max) return 'between $' + min + ' and $' + max;
+    if(max) return 'under $' + max;
+    if(min) return 'over $' + min;
+    return '';
+  }
+  function selectedStoreDomains(){
+    var chosen = STORES.filter(function(s){ return state.stores.selected.indexOf(s.id) !== -1; });
+    var domains = chosen.map(function(s){ return s.domain; });
+    state.stores.custom.forEach(function(cs){
+      if(cs.url){
+        try{ domains.push(new URL(cs.url).hostname.replace(/^www\./,'')); }catch(e){}
+      }
+    });
+    return domains;
+  }
+
+  document.getElementById('buildSearch').addEventListener('click', function(){
+    var styleTerms = buildStyleTerms();
+    var budget = budgetPhrase();
+    var baseQuery = ['wedding dress', styleTerms, budget].filter(Boolean).join(' ');
+    var domains = selectedStoreDomains();
+    var results = document.getElementById('findResults');
+    results.innerHTML = '';
+
+    if(domains.length === 0){
+      results.appendChild(el('p', {style:'color:var(--risk);'}, [text('Pick at least one store above first.')]));
+      return;
+    }
+
+    var orClause = '(' + domains.map(function(d){ return 'site:' + d; }).join(' OR ') + ')';
+    var combinedQuery = orClause + ' ' + baseQuery;
+    var combinedUrl = 'https://www.google.com/search?q=' + encodeURIComponent(combinedQuery) + '&tbm=shop';
+
+    var panel = el('div', {class:'find-panel'}, [
+      el('div', {style:'font-weight:800;color:var(--rose-dark);'}, [text('Search all ' + domains.length + ' chosen stores at once')]),
+      el('div', {class:'query-preview'}, [text(combinedQuery)]),
+      el('a', {class:'btn primary', href: combinedUrl, target:'_blank', rel:'noopener', style:'display:inline-block;text-decoration:none;'}, [text('Open combined search ↗')])
+    ]);
+    results.appendChild(panel);
+
+    var perStoreWrap = el('div', {class:'grid cols-2', style:'margin-top:16px;'});
+    STORES.filter(function(s){ return state.stores.selected.indexOf(s.id) !== -1; }).forEach(function(store){
+      var q = 'site:' + store.domain + ' ' + baseQuery;
+      var url = 'https://www.google.com/search?q=' + encodeURIComponent(q);
+      perStoreWrap.appendChild(el('div', {class:'store-card'}, [
+        el('div', {class:'name'}, [text(store.name)]),
+        el('a', {class:'link', href:url, target:'_blank', rel:'noopener', style:'display:block;margin-top:8px;'}, [text('Search this store ↗')])
+      ]));
+    });
+    results.appendChild(perStoreWrap);
+  });
+
+  // ---- Timeline ----
+  function renderTimeline(){
+    var out = document.getElementById('timelineOutput');
+    out.innerHTML = '';
+    var dateVal = state.profile.weddingDate;
+    if(!dateVal){
+      out.appendChild(el('p', {style:'color:var(--muted);'}, [text('Add a wedding date above to see a suggested timeline.')]));
+      return;
+    }
+    var wedding = new Date(dateVal + 'T00:00:00');
+    if(isNaN(wedding.getTime())) return;
+
+    function monthsBefore(n){
+      var d = new Date(wedding);
+      d.setMonth(d.getMonth() - n);
+      return d;
+    }
+    function weeksBefore(n){
+      var d = new Date(wedding);
+      d.setDate(d.getDate() - n*7);
+      return d;
+    }
+    function fmt(d){
+      return d.toLocaleDateString(undefined, {year:'numeric', month:'long', day:'numeric'});
+    }
+
+    var stops = [
+      {when: fmt(monthsBefore(9)), what:'Order by — especially for made-to-order/custom gowns, which can take months to produce.'},
+      {when: fmt(monthsBefore(4)), what:'First fitting — start alterations once the gown arrives.'},
+      {when: fmt(weeksBefore(2)), what:'Final fitting — last chance to catch anything before the day.'}
+    ];
+
+    var wrap = el('div', {class:'timeline-result'});
+    stops.forEach(function(s){
+      wrap.appendChild(el('div', {class:'tstop'}, [
+        el('div', {class:'when'}, [text(s.when)]),
+        el('div', {class:'what'}, [text(s.what)])
+      ]));
+    });
+    out.appendChild(wrap);
+  }
+
+  // ---- Checklist ----
+  function renderChecklist(){
+    var ul = document.getElementById('checklist');
+    ul.innerHTML = '';
+    CHECKLIST_ITEMS.forEach(function(item){
+      var checked = !!state.checklist[item.id];
+      var cb = el('input', {
+        type:'checkbox', id:'chk_'+item.id,
+        onchange:function(e){ state.checklist[item.id] = e.target.checked; save(); li.classList.toggle('done', e.target.checked); }
+      });
+      cb.checked = checked;
+      var li = el('li', {class: checked ? 'done' : ''}, [
+        cb,
+        el('label', {for:'chk_'+item.id}, [text(item.text)])
+      ]);
+      ul.appendChild(li);
+    });
+  }
+
+  // ---- Data management ----
+  document.getElementById('exportBtn').addEventListener('click', function(){
+    var blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'julie-wedding-dress-profile.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
+
+  document.getElementById('importBtnTrigger').addEventListener('click', function(){
+    document.getElementById('importInput').click();
+  });
+  document.getElementById('importInput').addEventListener('change', function(){
+    var file = this.files[0];
+    if(!file) return;
+    if(!confirm('Importing will replace everything currently in this browser. Continue?')){
+      this.value = '';
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var parsed = JSON.parse(reader.result);
+        var d = defaultState();
+        state = Object.assign(d, parsed, {
+          profile: Object.assign(d.profile, parsed.profile || {}),
+          style: Object.assign(d.style, parsed.style || {}),
+          stores: Object.assign(d.stores, parsed.stores || {}),
+          images: parsed.images || [],
+          checklist: parsed.checklist || {}
+        });
+        save();
+        renderAll();
+      }catch(e){
+        alert('That file could not be read as a saved profile.');
+      }
+    };
+    reader.readAsText(file);
+    this.value = '';
+  });
+
+  document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
+
+  document.getElementById('clearBtn').addEventListener('click', function(){
+    if(!confirm('This clears all measurements, style picks, photos, and store choices from this browser. This cannot be undone. Continue?')) return;
+    state = defaultState();
+    localStorage.removeItem(STORAGE_KEY);
+    save();
+    renderAll();
+  });
+
+  // ---- Init ----
+  function renderAll(){
+    fillProfileInputs();
+    clearChipContainers();
+    renderChips();
+    extraNotes.value = state.style.extraNotes || '';
+    renderImages();
+    renderStores();
+    renderCustomStores();
+    renderSize();
+    renderTimeline();
+    renderChecklist();
+    document.getElementById('findResults').innerHTML = '';
+  }
+  renderAll();
+
+})();
+</script>
+</body>
+</html>
