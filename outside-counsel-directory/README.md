@@ -1,21 +1,14 @@
-# Outside Counsel Directory
+# Outside Counsel Directory (Excel)
 
-A searchable directory of outside counsel / claims panel law firms, in a single `index.html` file with no dependencies.
+`Outside_Counsel_Directory.xlsx` is a searchable directory of outside counsel / claims panel law firms. It needs no macros, so it opens in Excel, Excel Online, or Google Sheets.
 
-## What it tracks
-- Law firm name
-- TIN (masked by default — click **Show** to reveal, **Copy** to copy)
-- States served
-- Primary, billing, and IT contacts (name, title, email, phone)
+## Tabs
+- **Search**: type part of a firm name in the yellow **Firm name contains** box and/or pick a state from the **State** dropdown. Matching firms appear below with their contacts. Clear both boxes to list every firm.
+- **Directory**: enter one firm per row, starting at row 5. The columns are Law Firm Name, TIN, States, and Name, Title, Email and Phone for each of the Primary, Billing and IT contacts.
+  - TIN must be entered as `12-3456789`. Duplicate TINs turn pink.
+  - Enter States as 2-letter codes separated by commas (`TX, OK, LA`).
+  - The header filter buttons sort and filter the list.
+  - It holds up to 500 firms.
+- **State Coverage**: how many firms serve each state. States with no firm are shown in pink.
 
-## Features
-- **Search** by firm name or state, using either the code (`TX`) or the name (`Texas`), plus a state dropdown filter. Click any state tag on a card to see every firm in that state. Press `/` to jump to search.
-- **Add / edit / delete** firms. TIN is auto-formatted (`12-3456789`) and checked for duplicates.
-- **Export CSV** of the current search results (opens in Excel).
-- **Backup / Restore** the whole directory as a JSON file.
-
-## Data storage
-Data is saved in the browser's local storage, so each person and browser has its own copy. Use **Backup** / **Restore** to move or share it. The four firms that appear on first open are fictional samples; delete them before you add real data.
-
-## Running it
-Open `index.html` in any browser, or host the folder on any static host (Netlify, GitHub Pages, etc.).
+The four `SAMPLE –` firms are fictional. Delete those rows before entering real data.
